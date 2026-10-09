@@ -5,6 +5,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { esc } from './case-data.mjs';
+import { iconTags, ogTags, SITE_NAME } from './meta.mjs';
 
 const CSS = `
 /* Layout: a dark cork board with cream case folders pinned to it, then how to play below. */
@@ -184,6 +185,8 @@ export function buildLobby({ out, cases, analytics = '', lang = 'zh' }) {
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="${L.desc}">
 <title>${L.title}</title>
+${iconTags(lang === 'en' ? '../' : '')}
+${ogTags({ lang, siteName: SITE_NAME[lang], title: L.title, desc: L.desc, path: lang === 'en' ? 'en/' : '', image: lang === 'en' ? 'og-en.png' : 'og.png' })}
 ${analytics}<style>${CSS}</style>
 </head>
 <body>

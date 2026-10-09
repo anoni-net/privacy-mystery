@@ -129,7 +129,7 @@ li { margin-bottom: 1mm; }
 .key { border: 1px solid #e3dccd; padding: 2mm 3mm; margin-top: 3mm; }
 `;
 
-function findChrome() {
+export function findChrome() {
   return [process.env.CHROME_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',

@@ -1,10 +1,11 @@
 // Static version: plain HTML and CSS, no JavaScript and no SVG, for Tor Browser's
 // "Safest" security level. Generated from the same case data as the interactive page,
 // in each language the case has (lang: 'zh' or 'en').
-import { writeFileSync, mkdirSync, cpSync } from 'node:fs';
+import { writeFileSync, mkdirSync, cpSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { loadCase, esc } from './case-data.mjs';
+import { iconTags, ogTags, SITE_NAME } from './meta.mjs';
 
 const short = s => createHash('sha256').update(s).digest('hex').slice(0, 10);
 // Accusation pages are named by hash of each suspect's key, so a URL never reveals who is right.
@@ -97,13 +98,17 @@ export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialS
 
   /* ---------- page shell ---------- */
   const NAV = ['desk.html', 'chat.html', 'web/search.html', 'files/index.html', 'photo.html', 'terminal.html', 'notes.html', 'hints.html', 'report.html'].map((h, i) => [h, L.nav[i]]);
-  const doc = ({ title, up, body, nav = true, here = '', cls = '' }) => `<!doctype html>
+  // static/ sits in the case folder, which sits in the language folder (en/ for English)
+  const toRoot = up => up + '../../' + (lang === 'zh' ? '' : '../');
+  const casePath = (lang === 'zh' ? '' : lang + '/') + JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8')).slug + '/';
+  const doc = ({ title, up, body, nav = true, here = '', cls = '', og = false }) => `<!doctype html>
 <html lang="${L.lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>${esc(title)} · ${L.title}</title>
+${iconTags(toRoot(up))}${og ? '\n' + ogTags({ lang, siteName: SITE_NAME[lang], title: `${L.title} · ${L.staticTag}`, desc: L.lead, path: casePath + 'static/', image: casePath + 'og.png' }) : ''}
 <link rel="stylesheet" href="${up}static.css">
 <link rel="stylesheet" href="${up}sites.css">
 </head>
@@ -117,7 +122,7 @@ ${body}
 `;
 
   /* ---------- entry ---------- */
-  put('index.html', doc({ title: L.start, up: '', nav: false, body: `<div class="cover">
+  put('index.html', doc({ title: L.start, up: '', nav: false, og: true, body: `<div class="cover">
   <p class="kicker">PRIVACY MYSTERY · CASE FILE 01</p>
   <h1>${L.title}</h1>
   <p class="lead">${L.lead}</p>
