@@ -4,9 +4,34 @@
   "title": "夜鷺事件",
   "hook": "「我已經關掉定位了。」",
   "summary": "一位吹哨者在匿名論壇爆料，附上一張備忘錄的照片。公司宣布 72 小時內要找出洩密者。你要比公司早一步，查出那張照片到底洩漏了什麼。",
-  "skills": ["EXIF 中繼資料", "時區", "檔名", "照片背景", "寫作風格", "匿名集合"],
+  "skills": [
+    "EXIF 中繼資料",
+    "時區",
+    "檔名",
+    "照片背景",
+    "寫作風格",
+    "匿名集合"
+  ],
   "time": "約 45–75 分鐘",
   "players": "單人或 2–4 人合作",
   "pdf": "night-heron.pdf",
-  "pdfName": "夜鷺事件.pdf"
+  "pdfName": "夜鷺事件.pdf",
+  "i18n": {
+    "en": {
+      "title": "Night Heron",
+      "hook": "“I turned off location.”",
+      "summary": "A whistleblower leaks a photo of an internal memo on an anonymous forum. The company says it will find the leaker within 72 hours. Get there first: work out what that photo gave away.",
+      "skills": [
+        "EXIF metadata",
+        "Time zones",
+        "File names",
+        "Photo backgrounds",
+        "Writing style",
+        "Anonymity sets"
+      ],
+      "time": "About 45–75 minutes",
+      "players": "Solo or 2–4 together",
+      "pdfName": "night-heron.pdf"
+    }
+  }
 }

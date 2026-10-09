@@ -2,7 +2,7 @@
 dist/
 
 # Decrypted solutions: never commit plaintext answers
-cases/*/solution.html
+cases/*/solution*.html
 
 node_modules/
 .DS_Store
