@@ -85,3 +85,10 @@ python3 scripts/make_images.py <PNG 所在資料夾> cases/01-night-heron
 
 - [anoni.net 文件庫：概念篇](https://anoni.net/docs/basics/)
 - [記者情境：消息來源保護](https://anoni.net/docs/scenarios/journalist/)
+
+## 授權 License
+
+- 程式碼：`scripts/` 以及遊戲頁面中的 HTML、CSS、JavaScript 程式，以 [MIT](LICENSE) 授權。
+- 內容：劇本、人物、對話、提示、解答與圖片，以 [CC BY 4.0](LICENSE-CONTENT) 授權。轉載或改編時請註明「anoni.net 匿名網路社群」並附上連結。
+
+Code is licensed under [MIT](LICENSE); story content, solutions and images under [CC BY 4.0](LICENSE-CONTENT).
