@@ -408,6 +408,7 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
   <div class="app-name" id="appName">加密通訊</div>
   <div class="spacer"></div>
   <div class="menu-items" id="menuItems">
+    <a class="menu-btn" href="../" title="回到所有案件">委託板</a>
     <a class="menu-btn" href="night-heron.pdf" download="夜鷺事件.pdf" title="可列印的 PDF 版，解答在最後幾頁">PDF 版</a>
     <button class="menu-btn" id="resetBtn" type="button">重新開始</button>
   </div>
@@ -446,7 +447,13 @@ function track(name, data) { try { if (window.umami) window.umami.track(name, da
 const SKEY = 'yelu-web-v2';
 const fresh = () => ({ phase: 'intro', intro: { node: 'n1', shown: 0 }, introLog: [], fileAccepted: false, disc: {}, pins: [], marks: {}, notes: {}, downloads: [], social: {}, hints: 0, wrong: 0, solved: false, yelu: [], awu: [], unread: { yelu: 0, awu: 0 }, start: Date.now(), report: {}, termKeyboard: false, helper: false, coach: 0, mistakes: 0, uploaded: [], peekLast: '' });
 let S = fresh();
-function save() { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} }
+function save() {
+  try {
+    localStorage.setItem(SKEY, JSON.stringify(S));
+    // The lobby's progress stamp: status and rank only, never names or answers.
+    if (S.phase === 'play' || S.introLog.length) localStorage.setItem('mystery-progress:__CASE_SLUG__', JSON.stringify(S.solved ? { status: 'solved', rank: rankFor()[0] } : { status: 'started' }));
+  } catch (e) {}
+}
 function load() { try { const v = JSON.parse(localStorage.getItem(SKEY) || 'null'); return v && typeof v === 'object' ? Object.assign(fresh(), v) : null; } catch (e) { return null; } }
 
 /* =====================================================================

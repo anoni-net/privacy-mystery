@@ -64,6 +64,7 @@ ${body}
   <div class="aside">
     <p>這是不需要 JavaScript 的靜態版，給 Tor Browser「最安全」等級或停用 JavaScript 的瀏覽器使用。內容和互動版相同，但不會記錄你的進度，建議準備紙筆，或打開「調查筆記」頁一起使用。</p>
     <p>能執行 JavaScript 的話，可以玩<a href="../">互動版</a>。</p>
+    <p><a href="../../">回到委託板</a>，看看其他案件。</p>
     <p>想離線或印出來玩：<a href="../night-heron.pdf" download="夜鷺事件.pdf">下載 PDF 版</a>（解答在最後幾頁，上下顛倒印刷）。</p>
   </div>
 </div>` }));

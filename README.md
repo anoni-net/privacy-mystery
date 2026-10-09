@@ -17,11 +17,11 @@ Privacy mystery games: unmask a whistleblower from a photo's metadata, backgroun
 ## 怎麼玩 How to play
 
 - **互動版**（預設）：模擬一台調查員工作站，有瀏覽器、終端機（真的要打 `exiftool`）、看圖工具和調查板。需要 JavaScript。不熟終端機的人可以打開終端機下方可選的「新手輔助」，它不影響評等。手機上的終端機預設用「指令積木」：點選指令和檔案組出指令，不必打字；想打字也可以切換。
-- **靜態版**（`/mystery/static/`）：只用 HTML 和 CSS，不需要 JavaScript、不用 SVG，給使用 Tor Browser「最安全」安全等級的人。內容和互動版相同：開場對話的每個選擇是一頁、終端機指令點開就看得到輸出、公司資料可以下載原始檔。互動版偵測到 JavaScript 無法使用時，會提示改玩靜態版。
+- **靜態版**（`/mystery/night-heron/static/`）：只用 HTML 和 CSS，不需要 JavaScript、不用 SVG，給使用 Tor Browser「最安全」安全等級的人。內容和互動版相同：開場對話的每個選擇是一頁、終端機指令點開就看得到輸出、公司資料可以下載原始檔。互動版偵測到 JavaScript 無法使用時，會提示改玩靜態版。
 
 The static version uses only HTML and CSS (no JavaScript, no SVG) for Tor Browser's "Safest" level. The interactive page points players there when JavaScript is unavailable.
 
-- **PDF 版**（`/mystery/night-heron.pdf`）：可以離線或印出來玩的 A4 案件檔案。解答在最後，前面有一頁黑色的「停」，解答頁上下顛倒、字小、淺灰色，避免翻書時不小心看到。互動版的選單列、靜態版首頁與「需要 JavaScript」提示都有下載連結。
+- **PDF 版**（`/mystery/night-heron/night-heron.pdf`）：可以離線或印出來玩的 A4 案件檔案。解答在最後，前面有一頁黑色的「停」，解答頁上下顛倒、字小、淺灰色，避免翻書時不小心看到。互動版的選單列、靜態版首頁與「需要 JavaScript」提示都有下載連結。
 
 The PDF edition is a printable A4 case file with the solution at the back, printed small, grey and upside down behind a "stop" page.
 
@@ -29,10 +29,17 @@ The PDF edition is a printable A4 case file with the solution at the back, print
 
 The leaked photo is a real JPEG with deliberately crafted EXIF, so you can inspect it with your own tools.
 
+## 大廳 Lobby
+
+`/mystery/` 是霧港隱私互助站的「委託板」：每個案件一份檔案夾，加上一張「準備中」的卡片。大廳只用 HTML 和 CSS，不需要 JavaScript；有 JavaScript 時會讀取瀏覽器裡的進度，在檔案夾蓋上「調查中」或「已結案」與評等（只有狀態與評等，沒有名字或答案）。新增案件時，在 `cases/<編號>-<代號>/` 放一份 `case.json`，大廳就會出現它。
+
+The lobby at `/mystery/` is a case board with one folder per `cases/*/case.json` and a "coming soon" card. It works without JavaScript; with it, folders get progress stamps from the browser's localStorage (status and rank only).
+
 ## 目錄 Layout
 
 ```
 cases/01-night-heron/
+  case.json            大廳卡片的資料：代號、名稱、引子、技巧標籤 Lobby card: slug, title, hook, skills
   case.js              劇本資料與遊戲內網站，兩個版本共用 Story data and in-game sites, shared by both versions
   web/index.src.html   互動版原始碼 Interactive version source
   web/sites.css        遊戲內網站的樣式 Styles for the in-game sites
@@ -45,6 +52,7 @@ scripts/
   build.mjs            建置網站 Build the site
   static.mjs           產生靜態版 Generate the static version
   pdf.mjs              產生 PDF 版 Generate the PDF edition
+  lobby.mjs            產生大廳（委託板）Generate the lobby
   case-data.mjs        在 Node 讀取 case.js Load case.js in Node
   encrypt.mjs          加密解答 Encrypt a solution
   decrypt.mjs          解密解答 Decrypt a solution
@@ -63,7 +71,7 @@ tools/
 CASE_KEY=兇手全名 node scripts/build.mjs
 ```
 
-輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。這樣建置出來的頁面不會向其他網站發出請求，也不載入網路字型。
+輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可：最上層是大廳（委託板），每個案件在自己的代號底下，例如 `/mystery/night-heron/`。這樣建置出來的頁面不會向其他網站發出請求，也不載入網路字型。
 
 `--target clearnet` 與 `--target onion` 只給 anoni.net 部署用，見下方「anoni.net 的部署」。`--out <資料夾>` 可以改變輸出位置。
 

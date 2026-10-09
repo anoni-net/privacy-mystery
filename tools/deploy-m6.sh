@@ -77,7 +77,7 @@ if ! (cd "$REPO" && export CASE_KEY="$(cat "$KEYFILE")" \
         CHROME_PATH="$REPO/tools/chrome-docker.sh" MYSTERY_PDF_MOUNT="$dest.tmp" MYSTERY_PDF_IMAGE="$img" \
         && node scripts/build.mjs --target clearnet --out "$dest.tmp/clearnet" \
         && node scripts/build.mjs --target onion --out "$dest.tmp/onion" \
-        && for t in clearnet onion; do for f in index.html static/index.html night-heron.pdf; do test -s "$dest.tmp/$t/$f" || exit 1; done; done \
+        && for t in clearnet onion; do for f in index.html night-heron/index.html night-heron/static/index.html night-heron/night-heron.pdf; do test -s "$dest.tmp/$t/$f" || exit 1; done; done \
         && ! grep -rqE --include='*.html' --include='*.css' --include='*.js' \
             'https://([a-z]+\.)?anoni\.net' "$dest.tmp/onion") >/dev/null 2>>"$LOG"; then
     echo "$(date -Iseconds) $sha 建置或檢查失敗，線上維持 ${current:-（尚未發布）}" >>"$LOG"
