@@ -1,4 +1,4 @@
-// Builds the site served at anoni.net/privacy-mystery into dist/privacy-mystery/.
+// Builds the site served at anoni.net/mystery into dist/mystery/.
 // Usage: node scripts/build.mjs [--fragment <file>]
 //   --fragment also writes the page without the <html>/<head> wrapper (for previews
 //   that supply their own document skeleton).
@@ -12,7 +12,7 @@ import { decryptB64 } from './crypt.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const caseDir = join(root, 'cases', '01-night-heron');
 const web = join(caseDir, 'web');
-const out = join(root, 'dist', 'privacy-mystery');
+const out = join(root, 'dist', 'mystery');
 
 const kb = file => Math.max(1, Math.round(statSync(file).size / 1024)) + ' KB';
 const blob = readFileSync(join(caseDir, 'solution.enc'), 'utf8').trim();
@@ -54,4 +54,4 @@ cpSync(join(web, 'assets'), join(out, 'assets'), { recursive: true });
 
 const i = process.argv.indexOf('--fragment');
 if (i > 0 && process.argv[i + 1]) writeFileSync(process.argv[i + 1], page);
-console.log('built', join('dist', 'privacy-mystery'));
+console.log('built', join('dist', 'mystery'));

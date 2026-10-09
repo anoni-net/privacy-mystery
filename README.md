@@ -1,8 +1,8 @@
 # privacy-mystery
 
-隱私推理遊戲。從一張照片的中繼資料、背景細節與文字習慣，找出不小心暴露身分的吹哨者。由匿名網路社群 [anoni.net](https://anoni.net/) 維護，網址為 <https://anoni.net/privacy-mystery>。
+隱私推理遊戲。從一張照片的中繼資料、背景細節與文字習慣，找出不小心暴露身分的吹哨者。由匿名網路社群 [anoni.net](https://anoni.net/) 維護，網址為 <https://anoni.net/mystery>。
 
-Privacy mystery games: unmask a whistleblower from a photo's metadata, background details, and writing style. Maintained by the [anoni.net](https://anoni.net/) community and served at <https://anoni.net/privacy-mystery>.
+Privacy mystery games: unmask a whistleblower from a photo's metadata, background details, and writing style. Maintained by the [anoni.net](https://anoni.net/) community and served at <https://anoni.net/mystery>.
 
 > 這份 README 不含任何解答。This README contains no spoilers.
 
@@ -46,9 +46,9 @@ scripts/
 node scripts/build.mjs
 ```
 
-輸出在 `dist/privacy-mystery/`，把整個資料夾放到網站的 `/privacy-mystery/` 底下即可。頁面不會向任何第三方發出請求，也不載入網路字型。
+輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。頁面不會向任何第三方發出請求，也不載入網路字型。
 
-The output in `dist/privacy-mystery/` is a self-contained static site. It makes no third-party requests and loads no web fonts.
+The output in `dist/mystery/` is a self-contained static site. It makes no third-party requests and loads no web fonts.
 
 ## 解答與防暴雷 Solutions and spoilers
 
