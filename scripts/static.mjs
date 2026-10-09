@@ -37,7 +37,7 @@ export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialS
 
   /* ---------- page shell ---------- */
   const NAV = [['desk.html', '工作站'], ['chat.html', '通訊'], ['web/search.html', '瀏覽器'], ['files/index.html', '檔案'], ['photo.html', '照片'], ['terminal.html', '終端機紀錄'], ['notes.html', '調查筆記'], ['hints.html', '提示'], ['report.html', '結案報告']];
-  const doc = ({ title, up, body, nav = true, here = '' }) => `<!doctype html>
+  const doc = ({ title, up, body, nav = true, here = '', cls = '' }) => `<!doctype html>
 <html lang="zh-Hant-TW">
 <head>
 <meta charset="utf-8">
@@ -47,7 +47,7 @@ export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialS
 <link rel="stylesheet" href="${up}static.css">
 <link rel="stylesheet" href="${up}sites.css">
 </head>
-<body>
+<body${cls ? ` class="${cls}"` : ''}>
 ${nav ? `<header class="top"><a class="brand" href="${up}desk.html">霧港工作站 <small>靜態版</small></a><nav aria-label="工作站">${NAV.map(([h, t]) => `<a href="${up}${h}"${h === here ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav></header>` : ''}
 <main class="main">
 ${body}
@@ -62,7 +62,7 @@ ${body}
   <h1>夜鷺事件</h1>
   <p class="lead">一張「已經關掉定位」的照片，能說出多少祕密？</p>
   <p>你是霧港隱私互助站的志工。今晚，一位吹哨者傳來了訊息。</p>
-  <p><a class="go" href="intro/start.html">打開加密訊息</a></p>
+  <p><a class="go" href="intro/start.html#reply">打開加密訊息</a></p>
   <div class="aside">
     <p>這是不需要 JavaScript 的靜態版，給 Tor Browser「最安全」等級或停用 JavaScript 的瀏覽器使用。內容和互動版相同，但不會記錄你的進度，建議準備紙筆，或打開「調查筆記」頁一起使用。</p>
     <p>能執行 JavaScript 的話，可以玩<a href="../">互動版</a>。</p>
@@ -74,10 +74,13 @@ ${body}
   const bubbles = log => log.map(m => m.sys ? `<p class="sys">${esc(m.sys)}</p>` : m.file
     ? `<div class="filecard"><span class="fi">ZIP</span><span><b>${esc(m.file)}</b><br><small>48 KB · 加密傳送</small></span></div>`
     : `<div class="bub ${m.me ? 'me' : 'them'}">${esc(m.text)}<span class="tm">${m.tm}</span></div>`).join('');
-  const chatPage = (id, log, actions) => put(`intro/${id}.html`, doc({ title: '加密通訊', up: '../', nav: false, body: `<section class="chat">
+  // Each reply loads a new page. Without JavaScript, two things keep the newest
+  // messages in view: the log is a column-reverse scroller (it opens scrolled to the
+  // bottom), and reply links carry #reply so small screens land on the replies.
+  const chatPage = (id, log, actions) => put(`intro/${id}.html`, doc({ title: '加密通訊', up: '../', nav: false, cls: 'chat-page', body: `<section class="chat intro">
   <header class="chat-head"><b>夜鷺</b><span>端對端加密 · 安全碼已驗證</span></header>
-  <div class="log">${bubbles([{ sys: '— 安全碼已驗證 · 訊息 24 小時後自動銷毀 —' }].concat(log))}</div>
-  <div class="replies">${actions}</div>
+  <div class="log"><div class="log-in">${bubbles([{ sys: '— 安全碼已驗證 · 訊息 24 小時後自動銷毀 —' }].concat(log))}</div></div>
+  <div class="replies" id="reply">${actions}</div>
 </section>` }));
   function walk(nodeId, log, id) {
     const node = C.INTRO[nodeId];
@@ -85,7 +88,7 @@ ${body}
     const say = log.concat(node.msgs.map((text, i) => ({ text, tm: tm(said + i) })));
     if (node.file) {
       const withFile = say.concat({ file: '夜鷺匯出.zip' });
-      chatPage(id, withFile, `<p class="label">按「接收」收下資料</p><a class="reply primary" href="${id}-f.html">接收檔案</a>`);
+      chatPage(id, withFile, `<p class="label">按「接收」收下資料</p><a class="reply primary" href="${id}-f.html#reply">接收檔案</a>`);
       return walk(node.next, withFile.concat({ sys: '已接收 夜鷺匯出.zip · 解壓縮到 ~/夜鷺匯出' }), id + '-f');
     }
     if (node.end) {
@@ -93,7 +96,7 @@ ${body}
       return;
     }
     if (node.choices) {
-      chatPage(id, say, `<p class="label">選擇你的回覆</p>${node.choices.map(([text], i) => `<a class="reply" href="${id}-${i}.html">${esc(text)}</a>`).join('')}`);
+      chatPage(id, say, `<p class="label">選擇你的回覆</p>${node.choices.map(([text], i) => `<a class="reply" href="${id}-${i}.html#reply">${esc(text)}</a>`).join('')}`);
       node.choices.forEach(([text, next], i) => walk(next, say.concat({ text, me: true, tm: tm(say.filter(m => !m.sys).length) }), `${id}-${i}`));
       return;
     }
@@ -126,7 +129,7 @@ ${bubbles([
   ])}</div></section>
 <h2>夜鷺說過的重點</h2>
 <ul class="facts"><li>發文用全新 Email 註冊的帳號，沒有用公司網路。</li><li>拍備忘錄前，關掉了相機的「儲存位置資訊」，照片裡沒有 GPS。</li><li>備忘錄 9/11 只寄給 6 個人，夜鷺是其中之一。</li><li>匯出的公司資料在「檔案」；大家的 PicNote 是公開的；論壇那篇文還在。</li></ul>
-<p><a href="intro/start.html">重看一次開場對話</a></p>` }));
+<p><a href="intro/start.html#reply">重看一次開場對話</a></p>` }));
 
   /* ---------- in-game websites (crawled from the shared site pages) ---------- */
   const slugs = new Map();
