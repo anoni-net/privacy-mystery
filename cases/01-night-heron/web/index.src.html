@@ -45,6 +45,7 @@ button { font: inherit; color: inherit; }
 #menubar .clock { font-variant-numeric: tabular-nums; color: var(--fg); }
 #menubar .menu-btn { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 2px 6px; border-radius: 4px; }
 #menubar .menu-btn:hover { background: var(--raise); color: var(--fg); }
+#menubar a.menu-btn { text-decoration: none; font-size: 13px; }
 
 /* ---------- desktop ---------- */
 #desktop { position: fixed; inset: 0; background:
@@ -289,6 +290,8 @@ button { font: inherit; color: inherit; }
 .nojs-card h1 { font-family: var(--font-serif); font-size: 22px; margin: 0 0 8px; text-wrap: balance; }
 .nojs-card p { margin: 0 0 10px; }
 .nojs-go { display: inline-block; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 8px 16px; border-radius: 8px; text-decoration: none; }
+.nojs-pdf { font-size: 13px; color: var(--muted); }
+.nojs-pdf a { color: var(--accent); }
 .nojs-stay { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 7px 12px; cursor: pointer; margin-left: 6px; }
 
 /* ---------- phone ---------- */
@@ -317,6 +320,7 @@ button { font: inherit; color: inherit; }
     <p>《夜鷺事件》互動版模擬一台調查員的電腦，需要 JavaScript 才能運作。你的瀏覽器目前停用了 JavaScript，例如 Tor Browser 的「最安全」安全等級。</p>
     <p>不需要 JavaScript 的靜態版，一樣可以完整破案：</p>
     <p><a class="nojs-go" href="static/">前往靜態版</a></p>
+    <p class="nojs-pdf">想離線或印出來玩，也可以<a href="night-heron.pdf" download="夜鷺事件.pdf">下載 PDF 版</a>（解答在最後幾頁）。</p>
   </div></div>
 </noscript>
 <div class="nojs" id="fallback" role="alert" hidden><div class="nojs-card">
@@ -324,6 +328,7 @@ button { font: inherit; color: inherit; }
   <p id="fallbackWhy">載入時發生錯誤。</p>
   <p>不需要 JavaScript 的靜態版，一樣可以完整破案：</p>
   <p><a class="nojs-go" href="static/">前往靜態版</a> <button type="button" class="nojs-stay" id="fallbackStay">繼續嘗試互動版</button></p>
+  <p class="nojs-pdf">想離線或印出來玩，也可以<a href="night-heron.pdf" download="夜鷺事件.pdf">下載 PDF 版</a>（解答在最後幾頁）。</p>
 </div></div>
 <script>
 window.__yeluBooted = false;
@@ -356,6 +361,7 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
   <div class="brand"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M30 78 C45 52, 62 44, 88 40 C78 48, 74 56, 72 66 C66 72, 50 78, 30 78 Z" fill="#e3a33b"/></svg>霧港工作站</div>
   <div class="app-name" id="appName">加密通訊</div>
   <div class="spacer"></div>
+  <a class="menu-btn" href="night-heron.pdf" download="夜鷺事件.pdf" title="可列印的 PDF 版，解答在最後幾頁">PDF 版</a>
   <button class="menu-btn" id="resetBtn" type="button">重新開始</button>
   <div class="clock" id="clock">9月16日 週三 21:17</div>
 </div>

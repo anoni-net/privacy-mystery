@@ -1,11 +1,10 @@
 // Static version: plain HTML and CSS, no JavaScript and no SVG, for Tor Browser's
 // "Safest" security level. Generated from the same case data as the interactive page.
-import { readFileSync, writeFileSync, mkdirSync, cpSync } from 'node:fs';
+import { writeFileSync, mkdirSync, cpSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
-import vm from 'node:vm';
+import { loadCase, esc } from './case-data.mjs';
 
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const short = s => createHash('sha256').update(s).digest('hex').slice(0, 10);
 // Accusation pages are named by hash so a URL never reveals who is right.
 const accuseSlug = name => 'accuse/' + createHash('sha256').update('night-heron:' + name).digest('hex').slice(0, 12) + '.html';
@@ -29,8 +28,7 @@ const HINTS = [
 ];
 
 export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialSizes }) {
-  const code = readFileSync(join(caseDir, 'case.js'), 'utf8').split('__PXL_SIZE__').join(pxlSize);
-  const C = vm.runInNewContext(code + '\n;({ PEOPLE, PIC, SLACK, TEXTS, INTRO, PXL, EXIF_PXL, EXIF_PXL_NOTE, EXIF_SOCIAL, EXIF_SOCIAL_NOTE, CAMERA_INFO, SEARCH_TIPS, Q1, Q2, Q3, socialFile, makeSites })');
+  const C = loadCase(caseDir, pxlSize);
   const root = join(out, 'static');
   const files = new Map();
   const put = (path, html) => files.set(path, html);
@@ -66,6 +64,7 @@ ${body}
   <div class="aside">
     <p>這是不需要 JavaScript 的靜態版，給 Tor Browser「最安全」等級或停用 JavaScript 的瀏覽器使用。內容和互動版相同，但不會記錄你的進度，建議準備紙筆，或打開「調查筆記」頁一起使用。</p>
     <p>能執行 JavaScript 的話，可以玩<a href="../">互動版</a>。</p>
+    <p>想離線或印出來玩：<a href="../night-heron.pdf" download="夜鷺事件.pdf">下載 PDF 版</a>（解答在最後幾頁，上下顛倒印刷）。</p>
   </div>
 </div>` }));
 
