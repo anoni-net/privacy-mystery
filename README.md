@@ -42,6 +42,8 @@ scripts/
   encrypt.mjs          加密解答 Encrypt a solution
   decrypt.mjs          解密解答 Decrypt a solution
   make_images.py       PNG 轉 JPEG 並寫入 EXIF
+tools/
+  deploy-m6.sh         anoni.net 主機的自動部署 Auto-deploy on the anoni.net server
 ```
 
 ## 建置與部署 Build and deploy
@@ -57,6 +59,16 @@ CASE_KEY=兇手全名 node scripts/build.mjs
 **部署時一定要設定 `CASE_KEY`。** 靜態版的結局頁是一般的 HTML，建置時必須解開解答；沒有設定的話只會產生互動版，互動版裡「前往靜態版」的連結會找不到頁面。靜態版的結局明文只會出現在部署出去的網站上，不會進 repo。
 
 The output in `dist/mystery/` is a self-contained static site with no third-party requests or web fonts. Always set `CASE_KEY` when deploying: the static version's ending is plain HTML, so without the key only the interactive page is built.
+
+CDN 的圖片最佳化（例如 Cloudflare Polish）會移除 JPEG 的 EXIF，爆料照片就查不到線索了。放在 CDN 後面時，`/mystery/` 底下的回應要帶 `Cache-Control: no-transform`。
+
+Image optimization on a CDN (such as Cloudflare Polish) strips JPEG EXIF, which removes the clues from the leaked photo. Behind a CDN, serve `/mystery/` with `Cache-Control: no-transform`.
+
+### anoni.net 的部署 Deployment on anoni.net
+
+anoni.net 的主機用 cron 每 5 分鐘執行 `tools/deploy-m6.sh`，拉取 `main`、建置並切換到新版本，合併之後最慢約 5 分鐘上線。建置或檢查失敗時線上維持原本的版本。改了這支腳本之後，要再複製到主機上。
+
+On anoni.net, a cron job runs `tools/deploy-m6.sh` every 5 minutes: it pulls `main`, builds, and switches to the new release. A failed build leaves the live site unchanged.
 
 ## 解答與防暴雷 Solutions and spoilers
 
