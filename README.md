@@ -49,6 +49,8 @@ scripts/
   encrypt.mjs          加密解答 Encrypt a solution
   decrypt.mjs          解密解答 Decrypt a solution
   make_images.py       PNG 轉 JPEG 並寫入 EXIF
+tools/
+  deploy-m6.sh         anoni.net 主機的自動部署 Auto-deploy on the anoni.net server
 ```
 
 ## 建置與部署 Build and deploy
@@ -70,6 +72,16 @@ The output in `dist/mystery/` is a self-contained static site with no third-part
 正式發布的 PDF 請在安裝了 **Noto Sans CJK TC／Noto Serif CJK TC** 的環境建置（例如 Debian／Ubuntu 的 `fonts-noto-cjk`）。這兩套字型是 SIL OFL 授權，可以隨 PDF 嵌入散布；版面會優先使用它們。macOS 內建的蘋方等系統字型，授權不一定允許隨文件散布。建置腳本也會把 PDF 的 Creator 欄位設成中性的名稱，不寫入作業系統與瀏覽器版本。
 
 The PDF needs a Chromium-based browser (found automatically, or set `CHROME_PATH`). Build release PDFs with Noto Sans/Serif CJK TC installed: they are OFL-licensed and safe to embed. The build also keeps OS and browser details out of the PDF's Creator field.
+
+CDN 的圖片最佳化（例如 Cloudflare Polish）會移除 JPEG 的 EXIF，爆料照片就查不到線索了。放在 CDN 後面時，`/mystery/` 底下的回應要帶 `Cache-Control: no-transform`。
+
+Image optimization on a CDN (such as Cloudflare Polish) strips JPEG EXIF, which removes the clues from the leaked photo. Behind a CDN, serve `/mystery/` with `Cache-Control: no-transform`.
+
+### anoni.net 的部署 Deployment on anoni.net
+
+anoni.net 的主機用 cron 每 5 分鐘執行 `tools/deploy-m6.sh`，拉取 `main`、建置並切換到新版本，合併之後最慢約 5 分鐘上線。建置或檢查失敗時線上維持原本的版本。改了這支腳本之後，要再複製到主機上。
+
+On anoni.net, a cron job runs `tools/deploy-m6.sh` every 5 minutes: it pulls `main`, builds, and switches to the new release. A failed build leaves the live site unchanged.
 
 ## 解答與防暴雷 Solutions and spoilers
 
