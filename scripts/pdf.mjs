@@ -147,11 +147,12 @@ function findChrome() {
   ].find(p => p && existsSync(p));
 }
 
-export function buildPdf({ caseDir, out, solution, pxlSize }) {
+export function buildPdf({ caseDir, out, solution, pxlSize, srcDir: printDir }) {
   const C = loadCase(caseDir, pxlSize);
   // The print page lives next to the output directory (see srcDir below), whatever --out
   // names it, so reach the images through a relative path.
-  const srcDir = join(out, '..', 'pdf-src');
+  // The print page holds the ending in plain text: keep it outside the served site.
+  const srcDir = printDir || join(out, '..', 'pdf-src');
   const A = relative(srcDir, join(out, 'assets')).split(sep).join('/') + '/';
   const color = Object.fromEntries(C.PEOPLE.map(p => [p.name, p.color]));
   const file = (no, title, lead, body) => `<section class="file"><span class="tag">FILE ${no}</span><h1>${title}</h1>${lead ? `<p class="lead">${lead}</p>` : ''}${body}</section>`;

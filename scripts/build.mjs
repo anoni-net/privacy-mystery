@@ -1,4 +1,5 @@
-// Builds the site served at anoni.net/mystery into dist/mystery/.
+// Builds the site served at anoni.net/mystery into dist/mystery/: the lobby at the top,
+// and each case under its slug (cases/*/case.json), e.g. dist/mystery/night-heron/.
 // Usage: [CASE_KEY=<culprit name>] node scripts/build.mjs [--target clearnet|onion] [--out <dir>] [--fragment <file>]
 //   --target clearnet adds anoni.net's self-hosted Umami to the interactive page
 //   (scripts/analytics.html). --target onion rewrites links to anoni.net into the onion
@@ -10,15 +11,22 @@
 // The interactive page needs no key: the encrypted solution is embedded as is.
 // The static version (static/) is built only when CASE_KEY is set, because its ending
 // page is plain HTML. Deployments should always set it.
-import { readFileSync, writeFileSync, mkdirSync, cpSync, statSync, readdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, cpSync, statSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decryptB64 } from './crypt.mjs';
 import { buildStatic } from './static.mjs';
 import { buildPdf } from './pdf.mjs';
+import { buildLobby } from './lobby.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const caseDir = join(root, 'cases', '01-night-heron');
+// Every case folder with a case.json shows up in the lobby. This script builds case 01;
+// generalise the per-case build when a second case exists.
+const cases = readdirSync(join(root, 'cases')).sort()
+  .filter(d => existsSync(join(root, 'cases', d, 'case.json')))
+  .map(d => JSON.parse(readFileSync(join(root, 'cases', d, 'case.json'), 'utf8')));
+const manifest = JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8'));
 const web = join(caseDir, 'web');
 const arg = name => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const out = arg('--out') ? resolve(arg('--out')) : join(root, 'dist', 'mystery');
@@ -64,6 +72,7 @@ const fill = (token, value) => {
 fill('__BLOB__', blob);
 fill('__PXL_SIZE__', kb(join(web, 'assets', 'PXL_20260914_144712345.jpg')));
 fill('__SOCIAL_SIZES__', JSON.stringify(social));
+fill('__CASE_SLUG__', manifest.slug);
 
 let analytics = '';
 if (target.analytics) {
@@ -87,15 +96,17 @@ ${page.slice(cut).trim()}
 </html>
 `;
 
+const caseOut = join(out, manifest.slug);
 rmSync(out, { recursive: true, force: true });
-mkdirSync(out, { recursive: true });
-writeFileSync(join(out, 'index.html'), doc);
-cpSync(join(web, 'assets'), join(out, 'assets'), { recursive: true });
+mkdirSync(caseOut, { recursive: true });
+writeFileSync(join(caseOut, 'index.html'), doc);
+cpSync(join(web, 'assets'), join(caseOut, 'assets'), { recursive: true });
+buildLobby({ out, cases, analytics });
 
 const key = (process.env.CASE_KEY || '').trim();
 if (key) {
   const pages = buildStatic({
-    caseDir, out,
+    caseDir, out: caseOut,
     sitesCss: readFileSync(join(web, 'sites.css'), 'utf8'),
     solution: decryptB64(blob, key),
     pxlSize: kb(join(web, 'assets', 'PXL_20260914_144712345.jpg')),
@@ -103,7 +114,7 @@ if (key) {
   });
   console.log(`built static version: ${pages} pages`);
   const { pdf, html } = buildPdf({
-    caseDir, out,
+    caseDir, out: caseOut, srcDir: join(out, '..', 'pdf-src'),
     solution: decryptB64(blob, key),
     pxlSize: kb(join(web, 'assets', 'PXL_20260914_144712345.jpg')),
   });
