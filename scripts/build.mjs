@@ -1,13 +1,15 @@
 // Builds the site served at anoni.net/mystery into dist/mystery/.
-// Usage: node scripts/build.mjs [--fragment <file>]
+// Usage: [CASE_KEY=<culprit name>] node scripts/build.mjs [--fragment <file>]
 //   --fragment also writes the page without the <html>/<head> wrapper (for previews
 //   that supply their own document skeleton).
-// No key is needed: the encrypted solution is embedded as is. If CASE_KEY is set,
-// the build also checks that it decrypts.
+// The interactive page needs no key: the encrypted solution is embedded as is.
+// The static version (static/) is built only when CASE_KEY is set, because its ending
+// page is plain HTML. Deployments should always set it.
 import { readFileSync, writeFileSync, mkdirSync, cpSync, statSync, readdirSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decryptB64 } from './crypt.mjs';
+import { buildStatic } from './static.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const caseDir = join(root, 'cases', '01-night-heron');
@@ -22,7 +24,9 @@ if (process.env.CASE_KEY && decryptB64(blob, process.env.CASE_KEY.trim()) == nul
 const social = Object.fromEntries(readdirSync(join(web, 'assets', 'social'))
   .filter(f => f.endsWith('.jpg')).map(f => [f.slice(0, -4), kb(join(web, 'assets', 'social', f))]));
 
-let page = readFileSync(join(web, 'index.src.html'), 'utf8');
+let page = readFileSync(join(web, 'index.src.html'), 'utf8')
+  .replace('/*__CASE__*/', () => readFileSync(join(caseDir, 'case.js'), 'utf8'))
+  .replace('/*__SITES_CSS__*/', () => readFileSync(join(web, 'sites.css'), 'utf8'));
 const fill = (token, value) => {
   if (!page.includes(token)) throw new Error('missing placeholder ' + token);
   page = page.split(token).join(value);
@@ -51,6 +55,20 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 writeFileSync(join(out, 'index.html'), doc);
 cpSync(join(web, 'assets'), join(out, 'assets'), { recursive: true });
+
+const key = (process.env.CASE_KEY || '').trim();
+if (key) {
+  const pages = buildStatic({
+    caseDir, out,
+    sitesCss: readFileSync(join(web, 'sites.css'), 'utf8'),
+    solution: decryptB64(blob, key),
+    pxlSize: kb(join(web, 'assets', 'PXL_20260914_144712345.jpg')),
+    socialSizes: social,
+  });
+  console.log(`built static version: ${pages} pages`);
+} else {
+  console.warn('CASE_KEY not set: skipped the static version (the interactive page links to static/).');
+}
 
 const i = process.argv.indexOf('--fragment');
 if (i > 0 && process.argv[i + 1]) writeFileSync(process.argv[i + 1], page);
