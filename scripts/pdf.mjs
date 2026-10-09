@@ -1,7 +1,7 @@
 // Printable edition: an A4 case file generated from the same case data, with the
 // solution at the back. Rendered to PDF with a headless Chromium-based browser.
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { loadCase, esc } from './case-data.mjs';
@@ -149,7 +149,10 @@ function findChrome() {
 
 export function buildPdf({ caseDir, out, solution, pxlSize }) {
   const C = loadCase(caseDir, pxlSize);
-  const A = '../mystery/assets/';   // print page lives in dist/pdf-src/
+  // The print page lives next to the output directory (see srcDir below), whatever --out
+  // names it, so reach the images through a relative path.
+  const srcDir = join(out, '..', 'pdf-src');
+  const A = relative(srcDir, join(out, 'assets')).split(sep).join('/') + '/';
   const color = Object.fromEntries(C.PEOPLE.map(p => [p.name, p.color]));
   const file = (no, title, lead, body) => `<section class="file"><span class="tag">FILE ${no}</span><h1>${title}</h1>${lead ? `<p class="lead">${lead}</p>` : ''}${body}</section>`;
   const csv = (text) => {
@@ -283,7 +286,6 @@ ${HINTS.map(([t, h], i) => `<div class="hint"><b>提示 ${i + 1}・${t}</b>${esc
 
 </body></html>`;
 
-  const srcDir = join(out, '..', 'pdf-src');
   mkdirSync(srcDir, { recursive: true });
   const htmlPath = join(srcDir, 'night-heron.html');
   writeFileSync(htmlPath, html);
