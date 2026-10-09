@@ -1,8 +1,8 @@
 # privacy-mystery
 
-隱私推理遊戲。從一張照片的中繼資料、背景細節與文字習慣，找出不小心暴露身分的吹哨者。由匿名網路社群 [anoni.net](https://anoni.net/) 維護，網址為 <https://anoni.net/privacy-mystery>。
+隱私推理遊戲。從一張照片的中繼資料、背景細節與文字習慣，找出不小心暴露身分的吹哨者。由匿名網路社群 [anoni.net](https://anoni.net/) 維護，網址為 <https://anoni.net/mystery>。
 
-Privacy mystery games: unmask a whistleblower from a photo's metadata, background details, and writing style. Maintained by the [anoni.net](https://anoni.net/) community and served at <https://anoni.net/privacy-mystery>.
+Privacy mystery games: unmask a whistleblower from a photo's metadata, background details, and writing style. Maintained by the [anoni.net](https://anoni.net/) community and served at <https://anoni.net/mystery>.
 
 > 這份 README 不含任何解答。This README contains no spoilers.
 
@@ -17,7 +17,7 @@ Privacy mystery games: unmask a whistleblower from a photo's metadata, backgroun
 ## 怎麼玩 How to play
 
 - **互動版**（預設）：模擬一台調查員工作站，有瀏覽器、終端機（真的要打 `exiftool`）、看圖工具和調查板。需要 JavaScript。不熟終端機的人可以打開終端機下方可選的「新手輔助」，它不影響評等。
-- **靜態版**（`/privacy-mystery/static/`）：只用 HTML 和 CSS，不需要 JavaScript、不用 SVG，給使用 Tor Browser「最安全」安全等級的人。內容和互動版相同：開場對話的每個選擇是一頁、終端機指令點開就看得到輸出、公司資料可以下載原始檔。互動版偵測到 JavaScript 無法使用時，會提示改玩靜態版。
+- **靜態版**（`/mystery/static/`）：只用 HTML 和 CSS，不需要 JavaScript、不用 SVG，給使用 Tor Browser「最安全」安全等級的人。內容和互動版相同：開場對話的每個選擇是一頁、終端機指令點開就看得到輸出、公司資料可以下載原始檔。互動版偵測到 JavaScript 無法使用時，會提示改玩靜態版。
 
 The static version uses only HTML and CSS (no JavaScript, no SVG) for Tor Browser's "Safest" level. The interactive page points players there when JavaScript is unavailable.
 
@@ -52,11 +52,11 @@ scripts/
 CASE_KEY=兇手全名 node scripts/build.mjs
 ```
 
-輸出在 `dist/privacy-mystery/`，把整個資料夾放到網站的 `/privacy-mystery/` 底下即可。頁面不會向任何第三方發出請求，也不載入網路字型。
+輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。頁面不會向任何第三方發出請求，也不載入網路字型。
 
 **部署時一定要設定 `CASE_KEY`。** 靜態版的結局頁是一般的 HTML，建置時必須解開解答；沒有設定的話只會產生互動版，互動版裡「前往靜態版」的連結會找不到頁面。靜態版的結局明文只會出現在部署出去的網站上，不會進 repo。
 
-The output in `dist/privacy-mystery/` is a self-contained static site with no third-party requests or web fonts. Always set `CASE_KEY` when deploying: the static version's ending is plain HTML, so without the key only the interactive page is built.
+The output in `dist/mystery/` is a self-contained static site with no third-party requests or web fonts. Always set `CASE_KEY` when deploying: the static version's ending is plain HTML, so without the key only the interactive page is built.
 
 ## 解答與防暴雷 Solutions and spoilers
 
