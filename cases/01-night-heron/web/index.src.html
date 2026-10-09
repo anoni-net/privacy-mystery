@@ -308,55 +308,125 @@ button { font: inherit; color: inherit; }
 .nojs-pdf a { color: var(--accent); }
 .nojs-stay { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 7px 12px; cursor: pointer; margin-left: 6px; }
 
-/* ---------- phone ---------- */
+/* ---------- phone: an app, not a desktop ----------
+   One screen at a time: a top bar with a back button and the screen's title, the screen,
+   and a tab bar. Lists open into detail screens (contacts → conversation, folder → file). */
+#backBtn { display: none; }
 @media (max-width: 760px) {
   .sticky { display: none; }
   #wallmark svg { width: 140px; height: 140px; }
   #wallmark .t { font-size: 30px; }
-  .win { position: fixed; left: 0 !important; right: 0; top: calc(30px + env(safe-area-inset-top, 0px)) !important; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); width: auto !important; height: auto !important; border-radius: 0; resize: none; min-width: 0; border-left: 0; border-right: 0; }
-  .titlebar { cursor: default; }
-  .chat, .files { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
-  .chat-list { display: flex; border-right: 0; border-bottom: 1px solid var(--line); }
-  .chat-item { border-bottom: 0; }
-  .f-side { display: flex; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
-  .f-side button { width: auto; white-space: nowrap; }
-  .viewer { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
-  .v-info { border-left: 0; border-top: 1px solid var(--line); max-height: 34%; }
-  #dock { gap: 3px; padding: 6px; }
-  .dock-btn { width: 46px; }
-  .dock-btn .lb { font-size: 10px; }
-  .v-tools { white-space: nowrap; }
-  /* phone chrome: a 44px menu bar with the app's name, no window title bars */
-  #menubar { height: calc(44px + env(safe-area-inset-top, 0px)); gap: 8px; padding-right: 4px; font-size: 14px; }
+  :root { --tabbar: calc(58px + env(safe-area-inset-bottom, 0px)); --appbar: calc(48px + env(safe-area-inset-top, 0px)); }
+
+  /* top bar: ‹ back · title · clock · ⋯ */
+  #menubar { height: var(--appbar); gap: 4px; padding-left: 4px; padding-right: 4px; font-size: 16px; background: var(--panel-2); backdrop-filter: none; }
+  #menubar .brand { width: 44px; justify-content: center; }
   #menubar .brand-t, #menubar .clock-date { display: none; }
+  #menubar.can-back .brand { display: none; }
+  #backBtn { display: none; width: 44px; height: 44px; flex: 0 0 44px; border: 0; background: none; color: var(--accent); font-size: 30px; line-height: 1; padding: 0 0 4px; cursor: pointer; border-radius: 8px; }
+  #menubar.can-back #backBtn { display: block; }
   #menubar .app-name { display: block; color: var(--fg); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #menubar .clock { font-size: 13px; color: var(--muted); }
   #moreBtn { display: block; width: 44px; height: 44px; font-size: 22px; line-height: 1; color: var(--fg); }
-  .menu-items { display: none; position: fixed; top: calc(46px + env(safe-area-inset-top, 0px)); right: 8px; flex-direction: column; align-items: stretch; gap: 2px; min-width: 180px; padding: 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 16px 40px rgba(0,0,0,.5); z-index: 9600; }
+  .menu-items { display: none; position: fixed; top: calc(var(--appbar) + 2px); right: 8px; flex-direction: column; align-items: stretch; gap: 2px; min-width: 180px; padding: 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 16px 40px rgba(0,0,0,.5); z-index: 9600; }
   #menubar.open .menu-items { display: flex; }
   #menubar .menu-items .menu-btn { min-height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; color: var(--fg); text-align: left; }
-  .win { top: calc(44px + env(safe-area-inset-top, 0px)) !important; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+
+  /* screens fill the space between the bars */
+  .win { position: fixed; left: 0 !important; right: 0; top: var(--appbar) !important; bottom: var(--tabbar); width: auto !important; height: auto !important; border: 0; border-radius: 0; box-shadow: none; resize: none; min-width: 0; min-height: 0; }
   .titlebar { display: none; }
   body.kbd #dock { display: none; }
   body.kbd .win { bottom: 0; }
-  /* notifications: one at a time, and taps pass straight through to the page */
-  #toasts { top: calc(50px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; max-width: none; pointer-events: none; z-index: 8900; }  /* under the menu bar's "⋯" sheet */
-  .toast { pointer-events: none; padding: 8px 12px; opacity: .96; }
+
+  /* tab bar */
+  #dock { left: 0; right: 0; bottom: 0; transform: none; max-width: none; justify-content: space-around; gap: 0; padding: 4px 2px env(safe-area-inset-bottom, 0px); background: var(--panel-2); backdrop-filter: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; overflow: visible; }
+  .dock-btn { flex: 1 1 0; width: auto; min-width: 0; min-height: 52px; padding: 5px 0 3px; gap: 2px; border-radius: 8px; }
+  .dock-btn:hover { background: none; }
+  .dock-btn .ic { width: 28px; height: 26px; background: none !important; color: var(--muted); }
+  .dock-btn .ic svg { width: 24px; height: 24px; }
+  .dock-btn .ic svg [stroke] { stroke: currentColor; }
+  .dock-btn .ic svg [fill]:not([fill="none"]) { fill: currentColor; }
+  .dock-btn .lb { font-size: 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .dock-btn.open::after { display: none; }
+  .dock-btn.cur .ic, .dock-btn.cur .lb { color: var(--accent); }
+  .dock-btn .badge { top: 1px; right: calc(50% - 22px); }
+
+  /* notifications: a banner over the title, tap to go there; the back and ⋯ buttons stay clear */
+  #toasts { top: calc(4px + env(safe-area-inset-top, 0px)); left: 52px; right: 52px; max-width: none; z-index: 9700; }
+  .toast { min-height: 40px; padding: 4px 10px; border-radius: 12px; background: #2b3745; opacity: 1; font-size: 13px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 8px 24px rgba(0,0,0,.55); }
+  .toast b { font-size: 11.5px; margin: 0; overflow: hidden; text-overflow: ellipsis; }
+
+  /* chat: contacts, then a conversation */
+  .chat { display: flex; flex-direction: column; }
+  .chat-list { display: block; flex: 1; border: 0; background: var(--panel); }
+  .chat-main { display: none; flex: 1; }
+  .chat.thread .chat-list { display: none; }
+  .chat.thread .chat-main { display: flex; }
+  .chat-item { min-height: 72px; padding: 10px 16px; gap: 12px; border-bottom: 1px solid var(--line); }
+  .chat-item.active { background: none; }
+  .chat-item .av { width: 46px; height: 46px; flex: 0 0 46px; font-size: 17px; }
+  .chat-item .ct { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .chat-item .nm { font-size: 15.5px; font-weight: 600; }
+  .chat-item .pv { font-size: 13.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chat-item .rt { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .chat-item .rt .badge { position: static; }
+  .chat-head { padding: 6px 14px; font-size: 12px; }
+  .bub { font-size: 15px; max-width: 86%; }
+  .chat-actions { padding: 8px 10px; }
+
+  /* files: one folder per screen; the back button goes up */
+  .files { display: flex; flex-direction: column; }
+  .f-side { display: none; }
+  .f-main { flex: 1; }
+  .f-path { padding: 6px 16px; font-size: 12px; }
+  .f-path button { display: none; }
+  .f-row { min-height: 56px; grid-template-columns: 30px 1fr auto; padding: 8px 16px; font-size: 15px; }
+  .f-row .sz { font-size: 12px; }
+  .f-act { margin-right: 12px; }
+
+  /* image viewer: the photo fills the screen, the details are a sheet you pull up */
+  .viewer { display: block; position: relative; height: 100%; }
+  .v-stage { position: absolute; inset: 0; }
+  .v-tools { bottom: 60px; padding: 2px; align-items: center; white-space: nowrap; }
+  .v-tools button { min-width: 44px; min-height: 40px; padding: 0 10px; }
+  .v-tools .zl { min-width: 44px; padding: 0 2px; }
+  .v-info { position: absolute; left: 0; right: 0; bottom: 0; max-height: 72%; padding: 0 16px 14px; border: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; background: var(--panel-2); box-shadow: 0 -12px 30px rgba(0,0,0,.45); font-size: 14px; }
+  .v-info:empty { display: none; }
+  .v-details > summary { list-style: none; position: sticky; top: 0; z-index: 1; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--panel-2); color: var(--fg); font-size: 14px; font-weight: 600; }
+  .v-details > summary::-webkit-details-marker { display: none; }
+  .v-details > summary::before { content: ""; position: absolute; top: 6px; left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: var(--line); }
+  .v-details > summary::after { content: "︿"; color: var(--muted); font-size: 12px; }
+  .v-details[open] > summary::after { content: "﹀"; }
+  .v-info dd { font-size: 13.5px; }
+
+  /* pins stay small so they don't push the text apart */
+  .pin-btn { min-height: 0; padding: 2px 9px; font-size: 12px; line-height: 1.5; vertical-align: 1px; }
+  .slk { flex-wrap: wrap; }
+  .slk .pin-btn { align-self: flex-start; }
+  .doc { padding: 14px 16px; }
+  .doc pre, .slk .txt { font-size: 15px; }
+
+  /* browser: page on top, toolbar at the bottom like a phone browser */
+  .br-view { order: 1; }
+  .br-top { order: 2; flex-direction: column-reverse; border-bottom: 0; border-top: 1px solid var(--line); }
+  .br-bm { padding: 4px 8px 0; }
+  .br-nav { padding: 6px 8px; }
+
+  /* terminal */
+  .term { font-size: 11.5px; }
+  .term-help { padding: 4px 10px; }
+
   /* touch targets */
   .chip, .reply-opt, .site-btn, .th-chip, .th-run, .th-toggle, .f-act, .submit { min-height: 44px; }
   .chip, .th-chip, .th-run, .th-toggle, .f-act { padding-inline: 14px; font-size: 14px; }
-  .pin-btn { min-height: 36px; padding: 4px 12px; font-size: 13px; }
-  .f-row { min-height: 48px; }
+  .th-toggle { min-height: 34px; font-size: 12.5px; }
   .f-side button, .br-bm button { min-height: 40px; }
   .br-nav button { width: 40px; height: 40px; }
   .br-url { height: 40px; }
   .sus .marks button { min-height: 40px; font-size: 13px; }
-  .chat-item { min-height: 52px; }
-  .v-tools button { min-width: 44px; min-height: 44px; }
   .report label { min-height: 40px; }
   /* 16px inputs keep iOS from zooming the page on focus */
   .br-url input, .term-in input, .sus textarea, .report select, .site input { font-size: 16px; }
-  .term { font-size: 11.5px; }
-  .v-info { max-height: 45%; padding: 10px 14px; }
 }
 </style>
 
@@ -404,6 +474,7 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
 </div>
 
 <div id="menubar">
+  <button type="button" id="backBtn" aria-label="{{back}}">‹</button>
   <div class="brand"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M30 78 C45 52, 62 44, 88 40 C78 48, 74 56, 72 66 C66 72, 50 78, 30 78 Z" fill="#e3a33b"/></svg><span class="brand-t">{{station}}</span></div>
   <div class="app-name" id="appName">{{appChat}}</div>
   <div class="spacer"></div>
@@ -491,8 +562,8 @@ function discover(id) {
 }
 function pushMsg(thread, text, me = false) {
   S[thread].push({ text, me, tm: gameTime() });
-  const active = W.chat && !W.chat.el.hidden && chatThread === thread;
-  if (!me && !active) { S.unread[thread]++; toast(thread === 'yelu' ? UI.yelu : UI.awu, text, () => { chatThread = thread; openApp('chat'); }); }
+  const active = W.chat && !W.chat.el.hidden && focused === 'chat' && chatThread === thread && (!isPhone() || chatShowsThread());
+  if (!me && !active) { S.unread[thread]++; toast(thread === 'yelu' ? UI.yelu : UI.awu, text, () => { chatThread = thread; chatView = 'thread'; openApp('chat'); }); }
   save();
   if (W.chat) renderChat();
   renderDock();
@@ -536,10 +607,12 @@ function renderDock() {
     const n = id === 'chat' ? S.unread.yelu + S.unread.awu : 0;
     const open = W[id] && !W[id].el.hidden;
     const locked = S.phase === 'intro' && id !== 'chat';
-    return `<button type="button" class="dock-btn${open ? ' open' : ''}${locked ? ' locked' : ''}" data-app="${id}" aria-label="${a.title}${locked ? UI.locked : ''}"><span class="ic" style="background:${a.ic}"><svg viewBox="0 0 24 24">${a.svg}</svg></span><span class="lb">${a.title}</span>${n ? `<span class="badge">${n}</span>` : ''}</button>`;
+    const cur = tabOf(focused) === id && open;
+    return `<button type="button" class="dock-btn${open ? ' open' : ''}${cur ? ' cur' : ''}${locked ? ' locked' : ''}" data-app="${id}" aria-label="${a.title}${locked ? UI.locked : ''}"><span class="ic" style="background:${a.ic}"><svg viewBox="0 0 24 24">${a.svg}</svg></span><span class="lb">${(isPhone() && UI.tabs && UI.tabs[id]) || a.title}</span>${n ? `<span class="badge">${n}</span>` : ''}</button>`;
   }).join('');
 }
-$('#dock').addEventListener('click', e => { const b = e.target.closest('.dock-btn'); if (b) openApp(b.dataset.app); });
+// On a phone the dock is a tab bar: switching tabs starts a new back stack.
+$('#dock').addEventListener('click', e => { const b = e.target.closest('.dock-btn'); if (!b) return; if (S.phase !== 'intro') navStack = []; openApp(b.dataset.app); });
 
 function makeWin(id) {
   const a = APPS[id];
@@ -568,7 +641,7 @@ function makeWin(id) {
     const up = () => { tb.removeEventListener('pointermove', mv); tb.removeEventListener('pointerup', up); };
     tb.addEventListener('pointermove', mv); tb.addEventListener('pointerup', up);
   });
-  W[id] = { el, body: $('.win-body', el), setTitle: t => { $('.wt', el).textContent = t; } };
+  W[id] = { el, body: $('.win-body', el), title: a.title, setTitle: t => { $('.wt', el).textContent = t; W[id].title = t; updateAppName(); } };
   INIT[id](W[id]);
   return W[id];
 }
@@ -581,13 +654,48 @@ function focusWin(id) {
   updateAppName();
 }
 let focused = 'chat';
-function updateAppName() { $('#appName').textContent = (W[focused] && !W[focused].el.hidden) ? APPS[focused].title : UI.station; }
+/* ---------- phone navigation ----------
+   The phone shows one screen at a time. The back button (and Android's back key) first steps
+   back inside the app (conversation → contacts, folder → parent, page → previous page), then
+   returns to the app you came from. Desktop windows ignore all of this. */
+let navStack = [];
+const tabOf = id => id === 'doc' ? 'files' : id;
+function phoneTitle(id) {
+  if (id === 'chat') return chatShowsThread() ? (chatThread === 'yelu' ? UI.yelu : UI.awu) : APPS.chat.title;
+  if (id === 'files') return filesDir === '~' ? UI.sideHome : filesDir.split('/').pop();
+  if (id === 'viewer') return vw.file || APPS.viewer.title;
+  if (id === 'browser') return APPS.browser.title;
+  return W[id].title;
+}
+function backStep(dry) {
+  const id = focused;
+  if (!W[id] || W[id].el.hidden) return false;
+  if (id === 'chat' && S.phase !== 'intro' && chatView === 'thread') { if (!dry) { chatView = 'list'; renderChat(); } return true; }
+  if (id === 'files' && filesTrail.length) { if (!dry) { filesDir = filesTrail.pop(); renderFiles(); } return true; }
+  if (id === 'files' && navStack.length <= 1 && filesDir !== '~') { if (!dry) { filesDir = filesDir.slice(0, filesDir.lastIndexOf('/')); renderFiles(); } return true; }
+  if (id === 'browser' && br.i > 0) { if (!dry) { br.i--; renderPage(); } return true; }
+  if (navStack.length > 1) { if (!dry) { navStack.pop(); openApp(navStack.pop()); } return true; }
+  return false;
+}
+function updateAppName() {
+  const on = W[focused] && !W[focused].el.hidden;
+  if (!isPhone()) { $('#appName').textContent = on ? APPS[focused].title : UI.station; return; }
+  $('#appName').textContent = on ? phoneTitle(focused) : UI.station;
+  $('#menubar').classList.toggle('can-back', backStep(true));
+}
+$('#backBtn').onclick = () => { backStep(false); };
+// Android's back key: keep one extra history entry while there is somewhere to go back to.
+let backGuard = false;
+function armBack() { if (isPhone() && !backGuard) { try { history.pushState({ mysteryBack: 1 }, ''); backGuard = true; } catch (e) {} } }
+window.addEventListener('popstate', () => { backGuard = false; if (isPhone() && backStep(false)) armBack(); });
 function openApp(id) {
   if (S.phase === 'intro' && id !== 'chat') { toast(UI.lockedToast[0], UI.lockedToast[1], () => openApp('chat')); return null; }
   const w = W[id] || makeWin(id);
   w.el.hidden = false;
+  navStack = navStack.filter(x => x !== id).concat(id);
   focusWin(id);
-  if (id === 'chat') { S.unread[chatThread] = 0; save(); renderChat(); }
+  armBack();
+  if (id === 'chat') { if (chatShowsThread() || !isPhone()) S.unread[chatThread] = 0; save(); renderChat(); }
   if (id === 'board') renderBoard();
   if (id === 'files') renderFiles();
   if (id === 'terminal') setTimeout(() => $('input', w.body).focus(), 30);
@@ -602,6 +710,8 @@ const INIT = {};
 
 /* ---------- chat ---------- */
 let chatThread = 'yelu';
+let chatView = 'thread';  // phone: 'list' shows the contacts, 'thread' the conversation
+const chatShowsThread = () => S.phase === 'intro' || chatView === 'thread';
 const SEEN_KEY = 'yelu-web-seen';
 let introBusy = false, introGen = 0, typingNow = false, typingSkip = null;
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -683,7 +793,7 @@ function seenBefore() { try { return localStorage.getItem(SEEN_KEY) === '1'; } c
 
 INIT.chat = w => {
   w.body.innerHTML = `<div class="chat"><div class="chat-list"></div><div class="chat-main"><div class="chat-head"><span class="lock">●</span><span class="who"></span></div><div class="chat-msgs" role="log"></div><div class="chat-actions"></div></div></div>`;
-  $('.chat-list', w.body).addEventListener('click', e => { const b = e.target.closest('.chat-item'); if (b) { chatThread = b.dataset.t; S.unread[chatThread] = 0; save(); renderChat(); renderDock(); } });
+  $('.chat-list', w.body).addEventListener('click', e => { const b = e.target.closest('.chat-item'); if (b) { chatThread = b.dataset.t; chatView = 'thread'; S.unread[chatThread] = 0; save(); renderChat(); renderDock(); } });
   w.body.addEventListener('click', e => {
     const b = e.target.closest('[data-act]'); if (!b) return;
     const act = b.dataset.act;
@@ -706,7 +816,16 @@ function renderChat() {
   if (intro) chatThread = 'yelu';
   const threads = [{ t: 'yelu', nm: UI.yelu, sub: typingNow ? UI.typing : UI.e2e, av: UI.yeluAvatar, bg: '#e3a33b' }];
   if (!intro) threads.push({ t: 'awu', nm: UI.awu, sub: UI.awuSub, av: UI.awuAvatar, bg: '#8fb3d9' });
-  $('.chat-list', w.body).innerHTML = threads.map(x => `<button type="button" class="chat-item${x.t === chatThread ? ' active' : ''}" data-t="${x.t}"><span class="av" style="background:${x.bg}">${x.av}</span><span><span class="nm">${x.nm}</span>${S.unread[x.t] && x.t !== chatThread ? ` <span class="badge" style="position:static;display:inline-grid">${S.unread[x.t]}</span>` : ''}<br><span class="sub">${x.sub}</span></span></button>`).join('');
+  const phone = isPhone();
+  $('.chat', w.body).classList.toggle('thread', chatShowsThread());
+  const last = t => { const m = (t === 'yelu' ? S.introLog.concat(S.yelu) : AWU_BASE.concat(S.awu)).filter(m => m.text || m.file).pop(); return m ? { text: m.file || m.text, tm: m.tm || '' } : { text: '', tm: '' }; };
+  $('.chat-list', w.body).innerHTML = threads.map(x => {
+    const unread = S.unread[x.t] && (phone ? !chatShowsThread() || x.t !== chatThread : x.t !== chatThread) ? S.unread[x.t] : 0;
+    if (!phone) return `<button type="button" class="chat-item${x.t === chatThread ? ' active' : ''}" data-t="${x.t}"><span class="av" style="background:${x.bg}">${x.av}</span><span><span class="nm">${x.nm}</span>${unread ? ` <span class="badge" style="position:static;display:inline-grid">${unread}</span>` : ''}<br><span class="sub">${x.sub}</span></span></button>`;
+    const l = last(x.t);
+    return `<button type="button" class="chat-item" data-t="${x.t}"><span class="av" style="background:${x.bg}">${x.av}</span><span class="ct"><span class="nm">${x.nm}</span><span class="pv">${esc(l.text)}</span></span><span class="rt"><span>${l.tm}</span>${unread ? `<span class="badge">${unread}</span>` : ''}</span></button>`;
+  }).join('');
+  if (W.chat && focused === 'chat') updateAppName();
   $('.who', w.body).textContent = chatThread === 'yelu' ? (typingNow ? UI.headYeluTyping : UI.headYelu) : UI.headAwu;
   const all = chatThread === 'yelu' ? [{ sys: UI.chatOpening }].concat(S.introLog, S.yelu) : AWU_BASE.concat(S.awu);
   const box = $('.chat-msgs', w.body);
@@ -772,6 +891,7 @@ function renderPage() {
   view.innerHTML = route(url);
   view.scrollTop = 0;
   if (url === 'techwiki.org/pxl') discover('fname');
+  updateAppName();
 }
 function route(url) { return SITES.route(url); }
 function uploadPeek(fn) {
@@ -795,7 +915,7 @@ function download(fn, kind, handle, postId) {
     S.downloads.push(fn);
     if (kind === 'social') S.social[fn] = { handle, postId };
     save();
-    toast(...UI.downloadToast(fn), () => { openApp('files'); filesDir = '~/Downloads'; renderFiles(); });
+    toast(...UI.downloadToast(fn), () => { openApp('files'); filesDir = '~/Downloads'; filesTrail = []; renderFiles(); });
   }
   if (kind === 'pxl') {
     discover('attach');
@@ -831,11 +951,12 @@ function sizeOf(path) {
   const b = new TextEncoder().encode(c).length; return b < 1024 ? b + ' B' : (b / 1024).toFixed(1) + ' KB';
 }
 let filesDir = EXPORT;
+let filesTrail = [];  // phone: folders opened from the list, for the back button
 INIT.files = w => {
   w.body.innerHTML = `<div class="files"><div class="f-side"></div><div class="f-main"><div class="f-path"></div><div class="f-list"></div></div></div>`;
   w.body.addEventListener('click', e => {
     const x = e.target.closest('[data-exif]'); if (x) { openTermExif(x.dataset.exif); return; }
-    const s = e.target.closest('[data-dir]'); if (s) { filesDir = s.dataset.dir; renderFiles(); return; }
+    const s = e.target.closest('[data-dir]'); if (s) { if (s.closest('.f-list')) filesTrail.push(filesDir); else filesTrail = []; filesDir = s.dataset.dir; renderFiles(); return; }
     const r = e.target.closest('[data-file]'); if (r) openFile(r.dataset.file);
   });
 };
@@ -1186,7 +1307,7 @@ function runCmd(raw) {
     open: () => {
       if (!args[0]) return out(`<span class="e">${UI.usageOpen}</span>`);
       const p = resolve(args[0]);
-      if (isDir(p)) { filesDir = p; openApp('files'); renderFiles(); return; }
+      if (isDir(p)) { filesDir = p; filesTrail = []; openApp('files'); renderFiles(); return; }
       if (!exists(p)) return out(`<span class="e">open: ${esc(args[0])}: ${UI.noSuchFile}</span>`);
       openFile(p);
     },
@@ -1363,7 +1484,7 @@ function resetGame(force) {
   S = fresh(); save();
   Object.keys(W).forEach(k => { W[k].el.remove(); delete W[k]; });
   introGen++; introBusy = false; typingNow = false; typingSkip = null;
-  br = { hist: ['mist.search'], i: 0 }; term = { cwd: '~', hist: [], hi: 0 }; filesDir = EXPORT; chatThread = 'yelu'; cascade = 0;
+  br = { hist: ['mist.search'], i: 0 }; term = { cwd: '~', hist: [], hi: 0 }; filesDir = EXPORT; chatThread = 'yelu'; chatView = 'thread'; navStack = []; filesTrail = []; cascade = 0;
   resetState.armed = false; $('#resetBtn').textContent = UI.menuReset;
   boot();
 }
@@ -1387,6 +1508,7 @@ function boot() {
 function start(data) {
   const saved = (data && data.state) || load();
   if (saved) S = Object.assign(fresh(), saved);
+  if (S.phase !== 'intro' && isPhone() && !S.unread.yelu && !S.unread.awu) chatView = 'list';
   boot();
   setInterval(tick, 15000);
 }
