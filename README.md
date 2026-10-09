@@ -1,0 +1,87 @@
+# privacy-mystery
+
+隱私推理遊戲。從一張照片的中繼資料、背景細節與文字習慣，找出不小心暴露身分的吹哨者。由匿名網路社群 [anoni.net](https://anoni.net/) 維護，網址為 <https://anoni.net/privacy-mystery>。
+
+Privacy mystery games: unmask a whistleblower from a photo's metadata, background details, and writing style. Maintained by the [anoni.net](https://anoni.net/) community and served at <https://anoni.net/privacy-mystery>.
+
+> 這份 README 不含任何解答。This README contains no spoilers.
+
+## 案件 Cases
+
+| 編號 | 案件 | 你會用到的技巧 |
+|---|---|---|
+| 01 | 夜鷺事件 Night Heron | EXIF 中繼資料、時區、檔名、照片背景、寫作風格、匿名集合 |
+
+人物、公司與事件皆為虛構。All people, companies and events are fictional.
+
+## 怎麼玩 How to play
+
+- **互動版**（預設）：模擬一台調查員工作站，有瀏覽器、終端機（真的要打 `exiftool`）、看圖工具和調查板。需要 JavaScript。
+- **靜態版**（準備中）：不需要 JavaScript，給使用 Tor Browser「最安全」安全等級的人。互動版偵測到 JavaScript 無法使用時，會提示改玩靜態版。
+
+爆料照片 `PXL_20260914_144712345.jpg` 是一張真的 JPEG，裡面的 EXIF 是刻意寫入的。你可以下載後用自己的工具檢查。
+
+The leaked photo is a real JPEG with deliberately crafted EXIF, so you can inspect it with your own tools.
+
+## 目錄 Layout
+
+```
+cases/01-night-heron/
+  web/index.src.html   互動版原始碼 Interactive version source
+  web/assets/          遊戲用的 JPEG（爆料照片帶有刻意的 EXIF）
+  art/                 圖片的 SVG 原稿 SVG sources for the images
+  solution.enc         加密的解答 Encrypted solution
+scripts/
+  build.mjs            建置網站 Build the site
+  encrypt.mjs          加密解答 Encrypt a solution
+  decrypt.mjs          解密解答 Decrypt a solution
+  make_images.py       PNG 轉 JPEG 並寫入 EXIF
+```
+
+## 建置與部署 Build and deploy
+
+需要 Node.js 18 以上，不需要安裝套件。Requires Node.js 18+, no dependencies.
+
+```sh
+node scripts/build.mjs
+```
+
+輸出在 `dist/privacy-mystery/`，把整個資料夾放到網站的 `/privacy-mystery/` 底下即可。頁面不會向任何第三方發出請求，也不載入網路字型。
+
+The output in `dist/privacy-mystery/` is a self-contained static site. It makes no third-party requests and loads no web fonts.
+
+## 解答與防暴雷 Solutions and spoilers
+
+repo 裡不放解答明文。解答以「兇手的全名」作為鑰匙加密成 `solution.enc`，遊戲頁面在玩家指認正確時才解得開。所以破了案的人自然拿得到鑰匙，可以參與修改；還沒破案的人逛 repo 也不會被暴雷。
+
+這只能防止「不小心看到」，不是真正的保密：嫌疑人只有幾位，把每個名字都試一次就能解開。
+
+No plaintext answers are committed. Each solution is encrypted with the culprit's full name as the key; the game decrypts it only when a player names the right person. This prevents accidental spoilers, not determined readers.
+
+修改解答 Editing a solution:
+
+```sh
+CASE_KEY=兇手全名 node scripts/decrypt.mjs cases/01-night-heron   # 產生 solution.html（已在 .gitignore）
+# 編輯 cases/01-night-heron/solution.html
+CASE_KEY=兇手全名 node scripts/encrypt.mjs cases/01-night-heron   # 寫回 solution.enc
+```
+
+建置時若設定 `CASE_KEY`，會順便檢查鑰匙能否解開。請不要在 issue、PR 或 commit message 裡寫出兇手的名字。
+
+Please keep the culprit's name out of issues, PRs and commit messages.
+
+## 重新產生圖片 Regenerating images
+
+`art/*.svg` 是原稿。把 `photo.svg` 輸出成 4080×3072、其他圖輸出成 1080×810 的 PNG，命名為 `art_<名稱>.png`，再執行：
+
+```sh
+pip install Pillow piexif
+python3 scripts/make_images.py <PNG 所在資料夾> cases/01-night-heron
+```
+
+腳本只會在爆料照片寫入故事需要的 EXIF（Pixel 7a、時區 +09:00、沒有 GPS），社群照片則不帶任何拍攝資訊，模擬社群平台在上傳時清除中繼資料。
+
+## 延伸閱讀 Further reading
+
+- [anoni.net 文件庫：概念篇](https://anoni.net/docs/basics/)
+- [記者情境：消息來源保護](https://anoni.net/docs/scenarios/journalist/)
