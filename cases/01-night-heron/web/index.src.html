@@ -36,6 +36,7 @@
   --wiki-bg: #fbfaf7;
   --search-accent: #2f6f6a;
   --bb-accent: #ff6b5b;
+  --ep-accent: #6d3fd6;
   --sticky: #f3d98b;
   --sticky-ink: #3a2e10;
   --font-sans: "PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
@@ -304,6 +305,28 @@ button { font: inherit; color: inherit; }
 .term-in { display: flex; gap: 0; }
 .term-in input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--term-fg); font: inherit; caret-color: var(--accent); padding: 0; }
 
+.term-help { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 10px; background: var(--term-bg); border-top: 1px solid var(--line); }
+.th-label { font-size: 11px; color: var(--term-dim); }
+.th-chip { font-family: var(--font-mono); font-size: 11.5px; background: var(--panel-2); border: 1px solid var(--line); color: var(--term-fg); border-radius: 5px; padding: 2px 8px; cursor: pointer; }
+.th-chip:hover { border-color: var(--accent); }
+.th-run { font-size: 11.5px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 5px; padding: 3px 9px; cursor: pointer; font-weight: 600; }
+.th-toggle { margin-left: auto; font-size: 11px; background: none; border: 1px solid var(--line); color: var(--term-dim); border-radius: 999px; padding: 2px 9px; cursor: pointer; }
+.th-toggle[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.f-rowwrap { display: flex; align-items: center; border-bottom: 1px solid rgba(53,67,83,.5); }
+.f-rowwrap .f-row { flex: 1; min-width: 0; border-bottom: 0; }
+.f-act { flex: 0 0 auto; margin-right: 10px; font-size: 11.5px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 5px; padding: 2px 8px; cursor: pointer; }
+.f-act:hover { border-color: var(--accent); }
+.v-h { font-size: 11.5px; color: var(--muted); letter-spacing: .08em; margin: 14px 0 4px; font-weight: 500; }
+.v-none { color: var(--muted); margin: 0 0 8px; }
+/* online EXIF viewer (in-browser site) */
+.ep-bar { background: var(--ep-accent); color: #fff; padding: 10px 20px; font-weight: 700; letter-spacing: .02em; }
+.ep-drop { border: 2px dashed var(--web-line); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+.ep-file { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 6px 0; flex-wrap: wrap; }
+.ep-table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.ep-table td { border-bottom: 1px solid var(--web-line); padding: 6px 8px; }
+.ep-table td:first-child { color: var(--web-muted); width: 40%; }
+.ep-fine { font-size: 11px; color: var(--web-muted); margin-top: 18px; }
+
 /* ---------- board ---------- */
 .board { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
 .board h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .12em; color: var(--muted); font-weight: 500; }
@@ -485,7 +508,7 @@ const REACT = {
 };
 const HINTS = [
   '先去論壇把爆料附圖的「原始檔」下載下來。瀏覽器書籤列有「無名廣場」。',
-  '照片的完整中繼資料要用終端機讀：先輸入 cd Downloads，再輸入 exiftool 加上檔名。按 Tab 可以自動補完檔名。',
+  '照片的完整中繼資料要用終端機讀：先輸入 cd Downloads，再輸入 exiftool 加上檔名。按 Tab 可以自動補完檔名。不熟指令的話，打開終端機下方的「新手輔助」。',
   '時區 +09:00 是哪裡？用霧搜查「時區」，再對照「夜鷺匯出」資料夾裡的差勤表。新加坡要小心。',
   '手機型號要對照 BYOD 登記表，但那是三月的資料。在終端機試試 grep Pixel slack/*.log（先 cd 到夜鷺匯出），或到 PicNote 看看大家最近的貼文。',
   '用看圖 App 把照片放大到 200% 以上，仔細看左下角和觸控板右側。',
@@ -617,7 +640,7 @@ function socialFile(post, handle) { return `picnote_${handle}_${post.id.slice(2)
    STATE
    ===================================================================== */
 const SKEY = 'yelu-web-v2';
-const fresh = () => ({ phase: 'intro', intro: { node: 'n1', shown: 0 }, introLog: [], fileAccepted: false, disc: {}, pins: [], marks: {}, notes: {}, downloads: [], social: {}, hints: 0, wrong: 0, solved: false, yelu: [], awu: [], unread: { yelu: 0, awu: 0 }, start: Date.now(), report: {} });
+const fresh = () => ({ phase: 'intro', intro: { node: 'n1', shown: 0 }, introLog: [], fileAccepted: false, disc: {}, pins: [], marks: {}, notes: {}, downloads: [], social: {}, hints: 0, wrong: 0, solved: false, yelu: [], awu: [], unread: { yelu: 0, awu: 0 }, start: Date.now(), report: {}, helper: false, coach: 0, mistakes: 0, uploaded: [], peekLast: '' });
 let S = fresh();
 function save() { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} }
 function load() { try { const v = JSON.parse(localStorage.getItem(SKEY) || 'null'); return v && typeof v === 'object' ? Object.assign(fresh(), v) : null; } catch (e) { return null; } }
@@ -770,6 +793,7 @@ const AWU_BASE = [
   { tm: '21:18', text: '我是阿霧，今晚值班。夜鷺的案子你接了吧？' },
   { tm: '21:18', text: '建議順序：先去論壇拿到原始照片 → 用終端機讀中繼資料 → 對照夜鷺匯出的資料 → 放大照片找細節 → 交結案報告。' },
   { tm: '21:19', text: '卡住就按下面的「給我提示」。不過看越多提示，結案評等會越低喔。' },
+  { tm: '21:19', text: '不熟終端機也沒關係：終端機下方有「新手輔助」，要不要開由你決定，開了也不影響評等。' },
 ];
 /* Opening conversation: each node shows 夜鷺's messages, then waits for the player's reply, a file transfer, or ends. */
 const INTRO = {
@@ -885,6 +909,7 @@ INIT.chat = w => {
     else if (act === 'accept') acceptFile();
     else if (act === 'ff') { if (typingSkip) typingSkip(); }
     else if (act === 'skipintro') skipIntro();
+    else if (act === 'helper') { setHelper(!S.helper); renderChat(); }
   });
 };
 function renderChat() {
@@ -905,7 +930,7 @@ function renderChat() {
   box.scrollTop = box.scrollHeight;
   requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
   const acts = $('.chat-actions', w.body);
-  if (chatThread === 'awu') { acts.innerHTML = `<button type="button" class="chip primary" data-act="hint">給我提示（已用 ${S.hints}/${HINTS.length}）</button>`; return; }
+  if (chatThread === 'awu') { acts.innerHTML = `<button type="button" class="chip primary" data-act="hint">給我提示（已用 ${S.hints}/${HINTS.length}）</button><button type="button" class="chip" data-act="helper">${S.helper ? '關閉' : '開啟'}終端機新手輔助</button>`; return; }
   if (!intro) { acts.innerHTML = `<button type="button" class="chip" data-act="open" data-app="browser">打開瀏覽器</button><button type="button" class="chip" data-act="open" data-app="files">打開夜鷺匯出的資料</button>`; return; }
   const node = INTRO[S.intro.node];
   const waiting = !typingNow && !introBusy && S.intro.shown >= node.msgs.length;
@@ -926,6 +951,7 @@ const SEARCH_INDEX = [
   { url: 'hotel-sakura.jp', title: 'Hotel Sakura Shinjuku｜櫻館 新宿', snip: '新宿站南口徒步 6 分鐘。客房備有本館專屬便條紙與原子筆。', kw: ['sakura', 'hotel', '飯店', '旅館', '新宿', 'shinjuku', '櫻', '便條紙', 'saku'] },
   { url: 'worldclock.info', title: '世界時區對照表 UTC offset｜WorldClock', snip: 'UTC+8：台北、新加坡、香港……UTC+9：東京、首爾……', kw: ['時區', 'utc', 'timezone', '+09', '+9', 'gmt', 'offset', '時差', '新加坡', '東京', '首爾'] },
   { url: 'techwiki.org/exif', title: 'EXIF - TechWiki', snip: '可交換圖檔格式（EXIF）是相機寫進照片檔的中繼資料，包含裝置、時間、時區與 GPS……', kw: ['exif', '中繼資料', 'metadata', 'exiftool', '照片', 'gps', '元數據', '詮釋資料'] },
+  { url: 'exifpeek.example', title: '免費線上 EXIF 檢視器｜ExifPeek', snip: '不用安裝任何軟體！上傳照片，立即查看相機型號、拍攝時間、位置等資訊。', kw: ['exif', '線上', 'online', '檢視', '查看', 'viewer', '中繼資料', 'metadata', '照片資訊', '拍攝資訊', '元數據'] },
   { url: 'techwiki.org/pxl', title: '手機相機的檔案命名規則 - TechWiki', snip: 'Google Pixel：PXL_年月日_時分秒毫秒.jpg（UTC 時間）。iPhone：IMG_1234.HEIC……', kw: ['pxl', 'pixel', '檔名', '命名', 'img_', 'filename'] },
   { url: 'osfest.tw/2026', title: '開源嘉年華 2026｜限量洋蔥貓貼紙', snip: '8/22–8/23 台北。今年紀念品：限量 300 張的洋蔥貓貼紙。', kw: ['洋蔥貓', '貼紙', 'sticker', '開源', '嘉年華', 'osfest', '貓'] },
   { url: 'news.example.tw/beatbird', title: '心跳鳥被爆販售健康資料 鼎岳保險：合作仍在評估｜科技新聞', snip: '心跳鳥科技發聲明表示將「嚴正追查洩密者」，並強調所有資料皆經過去識別化處理。', kw: ['心跳鳥', 'beatbird', '鼎岳', '新聞', '洩密', '保險'] },
@@ -946,6 +972,7 @@ INIT.browser = w => {
     const a = e.target.closest('[data-href]'); if (a) { e.preventDefault(); go(a.dataset.href); return; }
     const d = e.target.closest('[data-dl]'); if (d) { download(d.dataset.dl, d.dataset.kind, d.dataset.handle, d.dataset.post); d.textContent = '已下載 ✓'; return; }
     const v = e.target.closest('[data-view]'); if (v) { openImage(v.dataset.view); return; }
+    const u = e.target.closest('[data-upload]'); if (u) { uploadPeek(u.dataset.upload); return; }
   });
   view.addEventListener('submit', e => { e.preventDefault(); const f = e.target; const q = $('input', f).value.trim(); if (!q) return; go((f.dataset.base || 'mist.search/?q=') + encodeURIComponent(q)); });
   renderPage();
@@ -975,6 +1002,7 @@ function route(url) {
   if (path === 'worldclock.info') return clockPage();
   if (path === 'techwiki.org/exif') return wikiExif();
   if (path === 'techwiki.org/pxl') return wikiPxl();
+  if (path === 'exifpeek.example' || path === 'exifpeek.example/') return exifPeek();
   if (path === 'osfest.tw/2026') return osPage();
   if (path === 'beatbird.app') return bbHome();
   if (path === 'beatbird.app/privacy') return bbPrivacy();
@@ -1084,6 +1112,37 @@ function newsPage() {
   return `<div class="site"><div class="wrap"><p class="muted mono" style="font-size:12px">科技新聞 · 2026-09-15 14:20</p><h1 style="font-size:24px">心跳鳥被爆販售健康資料　鼎岳保險：合作仍在評估</h1><p>匿名論壇 14 日晚間出現一篇爆料文，指稱健康 App「心跳鳥 BeatBird」將把使用者的睡眠、心率與生理週期資料提供給鼎岳保險。</p><p>心跳鳥科技今日發出聲明，表示所有資料「皆經過去識別化處理」，並將「嚴正追查洩密者，依法究責」。據了解，公司已委託外部資安顧問進行內部調查。</p><p>多位隱私研究者指出，若資料保留生日、郵遞區號與裝置 ID，即使移除姓名，仍有很高機率能重新識別個人。</p></div></div>`;
 }
 
+function exifPeek() {
+  const imgs = S.downloads.filter(n => /\.jpg$/.test(n));
+  let result = '';
+  if (S.peekLast) {
+    const info = imageInfo(S.peekLast);
+    const rows = info.full
+      ? [['檔名', S.peekLast], ['相機製造商', 'Google'], ['相機型號', 'Pixel 7a'], ['拍攝時間', '2026:09:14 23:47:12'], ['時區', '+09:00'], ['光圈', 'f/1.9'], ['曝光時間', '1/30 秒'], ['ISO', '1250'], ['GPS 位置', '（無）']]
+      : null;
+    result = `<h2 style="font-size:18px">分析結果</h2>${rows ? `<table class="ep-table">${rows.map(([k, v]) => `<tr><td>${k}</td><td class="mono">${esc(v)}</td></tr>`).join('')}</table>` : `<p>「${esc(S.peekLast)}」沒有 EXIF 資料。照片可能在上傳到其他平台時被移除了。</p>`}`;
+  }
+  return `<div class="site"><div class="ep-bar">ExifPeek</div><div class="wrap"><h1 style="font-size:24px;margin:0 0 4px">免費線上 EXIF 檢視器</h1><p class="muted">不用安裝任何軟體！上傳照片，立即查看相機、時間、位置等拍攝資訊。</p>
+  <div class="ep-drop"><b>選擇要上傳的照片</b><p class="muted" style="margin:2px 0 6px">從你電腦的「下載項目」選擇：</p>${imgs.length ? imgs.map(n => `<div class="ep-file"><span class="mono" style="word-break:break-all">${esc(n)}</span><button type="button" class="site-btn" data-upload="${esc(n)}">${S.uploaded.includes(n) ? '已上傳' : '上傳'}</button></div>`).join('') : '<p>下載項目裡沒有照片。</p>'}</div>
+  ${result}
+  <p class="ep-fine">上傳即表示你同意本服務保存你的檔案，並可能用於改善服務或提供給合作夥伴。保存期限依本服務政策而定。</p></div></div>`;
+}
+function uploadPeek(fn) {
+  S.peekLast = fn;
+  if (!S.uploaded.includes(fn)) S.uploaded.push(fn);
+  save(); renderPage();
+  const info = imageInfo(fn);
+  if (!info.full) { discover('strip'); return; }
+  discover('nogps');
+  setTimeout(() => discover('model'), 600);
+  setTimeout(() => discover('tz'), 1200);
+  if (!S.mistakes) {
+    S.mistakes = 1; save();
+    setTimeout(() => pushMsg('awu', '等一下，你剛把夜鷺的原始照片上傳到一個不明網站？'), 2400);
+    setTimeout(() => pushMsg('awu', '那個網站現在也有這張照片了，還記下了你的 IP 和上傳時間。要是公司的調查員也找上它……\n下次請用自己電腦上的工具查，例如終端機的 exiftool。這次結案評等會降一級。'), 4600);
+  }
+}
+
 /* downloads */
 function download(fn, kind, handle, postId) {
   if (!S.downloads.includes(fn)) {
@@ -1092,7 +1151,10 @@ function download(fn, kind, handle, postId) {
     save();
     toast('下載完成', fn + ' → 下載項目', () => { openApp('files'); filesDir = '~/Downloads'; renderFiles(); });
   }
-  if (kind === 'pxl') discover('attach');
+  if (kind === 'pxl') {
+    discover('attach');
+    if (S.helper && S.coach === 1) setTimeout(() => pushMsg('awu', '下載好了。回到終端機，點「cd Downloads」再按執行。'), 900);
+  }
   if (W.files) renderFiles();
 }
 function imageInfo(fn) {
@@ -1126,6 +1188,7 @@ let filesDir = '~/夜鷺匯出';
 INIT.files = w => {
   w.body.innerHTML = `<div class="files"><div class="f-side"></div><div class="f-main"><div class="f-path"></div><div class="f-list"></div></div></div>`;
   w.body.addEventListener('click', e => {
+    const x = e.target.closest('[data-exif]'); if (x) { openTermExif(x.dataset.exif); return; }
     const s = e.target.closest('[data-dir]'); if (s) { filesDir = s.dataset.dir; renderFiles(); return; }
     const r = e.target.closest('[data-file]'); if (r) openFile(r.dataset.file);
   });
@@ -1141,7 +1204,8 @@ function renderFiles() {
     const dir = n.endsWith('/');
     const full = filesDir + '/' + n.replace(/\/$/, '');
     const icon = dir ? '📁' : /\.jpg$/.test(n) ? '🖼️' : /\.csv$/.test(n) ? '📊' : /\.log$/.test(n) ? '💬' : '📄';
-    return `<button type="button" class="f-row" ${dir ? `data-dir="${full}"` : `data-file="${full}"`}><span>${icon}</span><span class="nm">${esc(n.replace(/\/$/, ''))}</span><span class="sz">${dir ? '—' : sizeOf(full)}</span></button>`;
+    const row = `<button type="button" class="f-row" ${dir ? `data-dir="${full}"` : `data-file="${full}"`}><span>${icon}</span><span class="nm">${esc(n.replace(/\/$/, ''))}</span><span class="sz">${dir ? '—' : sizeOf(full)}</span></button>`;
+    return S.helper && /\.jpg$/.test(n) ? `<div class="f-rowwrap">${row}<button type="button" class="f-act" data-exif="${full}">終端機檢查</button></div>` : row;
   }).join('') : `<div class="f-empty">${filesDir === '~/Downloads' ? '下載項目是空的。<br>從瀏覽器下載的檔案會出現在這裡。' : '這個資料夾是空的。'}</div>`;
   w.setTitle('檔案 — ' + filesDir);
 }
@@ -1210,11 +1274,17 @@ function openImage(fn) {
   const st = $('.v-stage', w.body);
   st.innerHTML = `<div class="v-canvas"><img src="${info.src}" alt="${esc(fn)}" draggable="false"></div><div class="v-tools"><button type="button" data-z="out" aria-label="縮小">－</button><span class="zl">100%</span><button type="button" data-z="in" aria-label="放大">＋</button><button type="button" data-z="fit">符合視窗</button></div>`;
   const downloaded = S.downloads.includes(fn);
-  $('.v-info', w.body).innerHTML = `<dl><dt>檔名</dt><dd>${esc(fn)}</dd><dt>尺寸</dt><dd>${info.w} × ${info.h}</dd><dt>檔案大小</dt><dd>${info.size}</dd><dt>位置</dt><dd>${downloaded ? '~/Downloads' : '（網頁預覽，尚未下載）'}</dd></dl>
-  <div class="tip">看圖只顯示基本資訊。${downloaded ? `要讀完整的中繼資料，請打開終端機：<br><code>cd Downloads</code><br><code>exiftool ${esc(fn)}</code>` : '要讀中繼資料，請先把原始檔<b>下載</b>下來，再用終端機的 <code>exiftool</code> 讀取。'}</div>
+  // Like Windows「內容 › 詳細資料」or macOS 預覽程式的檢閱器: common fields only, no time-zone offset.
+  const cam = !downloaded ? '' : info.full
+    ? `<h4 class="v-h">相機資訊</h4><dl><dt>製造商</dt><dd>Google</dd><dt>型號</dt><dd>Pixel 7a</dd><dt>拍攝日期</dt><dd>2026/9/14 下午 11:47</dd><dt>拍攝地點</dt><dd>（沒有位置資訊）</dd></dl>`
+    : `<h4 class="v-h">相機資訊</h4><p class="v-none">這個檔案沒有相機資訊。</p>`;
+  $('.v-info', w.body).innerHTML = `<h4 class="v-h" style="margin-top:0">檔案</h4><dl><dt>檔名</dt><dd>${esc(fn)}</dd><dt>尺寸</dt><dd>${info.w} × ${info.h}</dd><dt>檔案大小</dt><dd>${info.size}</dd><dt>存放位置</dt><dd>${downloaded ? '~/Downloads' : '（網頁預覽，尚未下載）'}</dd></dl>${cam}
+  <div class="tip">${downloaded ? `這裡只列出常見欄位，有些欄位不會顯示。要讀完整的中繼資料，請用終端機：<br><code>cd Downloads</code><br><code>exiftool ${esc(fn)}</code>` : '要查看相機資訊，請先把原始檔<b>下載</b>下來。'}</div>
   <p style="font-size:12px;margin-top:10px"><a href="${info.src}" download="${esc(fn)}" style="color:var(--accent)">把這個檔案存到你的電腦</a><br><span style="color:var(--muted)">它是真的 JPEG，也可以用你自己的工具檢查。</span></p>
   <p style="color:var(--muted);font-size:12px;margin-top:12px">操作：滾輪或 ＋／－ 縮放，拖曳移動，雙擊放大。</p>`;
   requestAnimationFrame(fitView);
+  if (downloaded && info.full) { discover('nogps'); setTimeout(() => discover('model'), 700); }
+  else if (downloaded) discover('strip');
 }
 function fitView() {
   const st = $('.v-stage', W.viewer.body); const r = st.getBoundingClientRect();
@@ -1248,7 +1318,7 @@ function checkRegions() {
 /* ---------- terminal ---------- */
 let term = { cwd: '~', hist: [], hi: 0 };
 INIT.terminal = w => {
-  w.body.innerHTML = `<div class="term" role="log"><div class="out"></div><form class="term-in"><span class="prompt"></span><input aria-label="終端機指令" autocomplete="off" autocapitalize="off" spellcheck="false"></form></div>`;
+  w.body.innerHTML = `<div class="term" role="log"><div class="out"></div><form class="term-in"><span class="prompt"></span><input aria-label="終端機指令" autocomplete="off" autocapitalize="off" spellcheck="false"></form></div><div class="term-help"></div>`;
   const t = $('.term', w.body), inp = $('input', w.body);
   t.addEventListener('click', () => { if (!window.getSelection().toString()) inp.focus(); });
   $('form', w.body).addEventListener('submit', e => { e.preventDefault(); const v = inp.value; inp.value = ''; runCmd(v); });
@@ -1258,9 +1328,55 @@ INIT.terminal = w => {
     else if (e.key === 'Tab') { e.preventDefault(); inp.value = complete(inp.value); }
     else if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); $('.out', w.body).innerHTML = ''; }
   });
+  $('.term-help', w.body).addEventListener('click', e => {
+    const c = e.target.closest('[data-cmd]'); if (c) { inp.value = c.dataset.cmd; inp.focus(); return; }
+    if (e.target.closest('[data-run]')) { $('form', w.body).requestSubmit(); return; }
+    if (e.target.closest('[data-helper]')) setHelper(!S.helper);
+  });
   out(`<span class="a">霧港工作站 03</span> · bash 5.2\n輸入 <span class="k">help</span> 查看可用指令。\n`);
   updPrompt();
+  renderTermHelp();
 };
+function termSuggestions() {
+  const c = term.cwd;
+  if (c === '~') return ['ls', 'cd Downloads', 'cd 夜鷺匯出', 'help'];
+  if (c === '~/Downloads') return DIRS[c]().filter(n => /\.jpg$/.test(n)).map(n => 'exiftool ' + n).concat(['ls', 'cd ..']);
+  if (c === '~/夜鷺匯出') return ['ls', 'cat 收件名單.txt', 'cat 差勤表_0912-0916.csv', 'grep Pixel slack/*.log', 'grep 以上 slack/*.log', 'cd ..'];
+  if (c === '~/夜鷺匯出/slack') return ['ls', 'cat random.log', 'grep -i pixel *.log', 'cd ..'];
+  return ['ls', 'cd ~'];
+}
+function renderTermHelp() {
+  const w = W.terminal; if (!w) return;
+  $('.term-help', w.body).innerHTML = (S.helper
+    ? `<span class="th-label">建議指令（點一下會填入）</span>${termSuggestions().map(c => `<button type="button" class="th-chip" data-cmd="${esc(c)}">${esc(c)}</button>`).join('')}<button type="button" class="th-run" data-run>執行 ↵</button>`
+    : '') + `<button type="button" class="th-toggle" data-helper aria-pressed="${S.helper}">新手輔助：${S.helper ? '開' : '關'}</button>`;
+}
+function setHelper(on) {
+  S.helper = on; save();
+  renderTermHelp();
+  if (W.files) renderFiles();
+  if (on && !S.coach) {
+    S.coach = 1; save();
+    pushMsg('awu', S.downloads.includes(PXL)
+      ? '我帶你。終端機下方的按鈕會幫你填好指令：先點「cd Downloads」，再按「執行」或 Enter。'
+      : '我帶你。先打開瀏覽器，到書籤列的「無名廣場」，在爆料文的附件按「下載原始檔」。下載好再回來終端機。');
+  }
+}
+function coachAfter(line) {
+  if (!S.helper) return;
+  if (S.coach < 2 && term.cwd === '~/Downloads') {
+    S.coach = 2; save();
+    setTimeout(() => pushMsg('awu', S.downloads.includes(PXL) ? '很好，你現在在「下載項目」裡。點「exiftool PXL_…」那一顆，再按執行。' : '你已經在下載項目了，不過裡面還沒有照片。先去論壇把附件下載下來。'), 500);
+  } else if (S.coach < 3 && /^exiftool\s+PXL_/.test(line)) {
+    S.coach = 3; save();
+    setTimeout(() => pushMsg('awu', '這些就是藏在照片裡的資料，每一行是一個欄位。慢慢看：有哪幾行，是夜鷺沒想到會留下來的？'), 1200);
+  }
+}
+function openTermExif(path) {
+  const w = openApp('terminal'); if (!w) return;
+  term.cwd = path.slice(0, path.lastIndexOf('/')); updPrompt(); renderTermHelp();
+  const inp = $('input', w.body); inp.value = 'exiftool ' + path.split('/').pop(); inp.focus();
+}
 const promptStr = () => `<span class="p">investigator@mistport</span>:<span class="k">${esc(term.cwd)}</span>$ `;
 function updPrompt() { $('.prompt', W.terminal.body).innerHTML = promptStr(); }
 function out(html) { const o = $('.out', W.terminal.body); const d = document.createElement('div'); d.className = 'ln'; d.innerHTML = html; o.appendChild(d); const t = $('.term', W.terminal.body); t.scrollTop = t.scrollHeight; }
@@ -1385,6 +1501,8 @@ function runCmd(raw) {
   if (C[cmd]) C[cmd]();
   else if (['sudo', 'rm', 'ssh', 'curl', 'wget', 'vim', 'nano'].includes(cmd)) out(`<span class="e">${esc(cmd)}: 這台工作站停用了這個指令。專心查案吧。</span>`);
   else out(`<span class="e">${esc(cmd)}: command not found</span> <span class="d">（輸入 help 查看可用指令）</span>`);
+  renderTermHelp();
+  coachAfter(line);
 }
 function exif(p) {
   const name = p.split('/').pop();
@@ -1498,9 +1616,11 @@ async function tryDecrypt(name) {
   } catch (e) { return null; }
 }
 function rankFor() {
-  if (S.hints === 0 && S.wrong === 0) return ['洋蔥首席調查員', '沒看任何提示，一次就指認正確。公司的調查員還在喝咖啡，你已經破案了。'];
-  if (S.hints <= 3 && S.wrong <= 1) return ['資深隱私志工', `用了 ${S.hints} 個提示、誤判 ${S.wrong} 次。夜鷺得救了。`];
-  return ['見習調查員', `用了 ${S.hints} 個提示、誤判 ${S.wrong} 次。至少你知道下次發文前要先清 EXIF 了。`];
+  const R = [['洋蔥首席調查員', '公司的調查員還在喝咖啡，你已經破案了。'], ['資深隱私志工', '夜鷺得救了。'], ['見習調查員', '至少你知道下次發文前要先清 EXIF 了。']];
+  let lv = S.hints === 0 && S.wrong === 0 ? 0 : S.hints <= 3 && S.wrong <= 1 ? 1 : 2;
+  if (S.mistakes) lv = Math.min(2, lv + 1);  // uploaded the original photo to a third-party site
+  const stats = lv === 0 ? '沒看任何提示，一次就指認正確。' : `用了 ${S.hints} 個提示、誤判 ${S.wrong} 次${S.mistakes ? '，還把原始照片上傳到線上工具' : ''}。`;
+  return [R[lv][0], stats + R[lv][1]];
 }
 function showSolution(html) {
   const w = W.report || openApp('report');

@@ -16,7 +16,7 @@ Privacy mystery games: unmask a whistleblower from a photo's metadata, backgroun
 
 ## 怎麼玩 How to play
 
-- **互動版**（預設）：模擬一台調查員工作站，有瀏覽器、終端機（真的要打 `exiftool`）、看圖工具和調查板。需要 JavaScript。
+- **互動版**（預設）：模擬一台調查員工作站，有瀏覽器、終端機（真的要打 `exiftool`）、看圖工具和調查板。需要 JavaScript。不熟終端機的人可以打開終端機下方可選的「新手輔助」，它不影響評等。
 - **靜態版**（準備中）：不需要 JavaScript，給使用 Tor Browser「最安全」安全等級的人。互動版偵測到 JavaScript 無法使用時，會提示改玩靜態版。
 
 爆料照片 `PXL_20260914_144712345.jpg` 是一張真的 JPEG，裡面的 EXIF 是刻意寫入的。你可以下載後用自己的工具檢查。
