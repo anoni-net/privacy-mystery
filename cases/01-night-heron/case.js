@@ -2,14 +2,29 @@
    The build inlines this file into the interactive page and evaluates it to generate the static pages. */
 
 const PEOPLE = [
-  { name: '張家豪', role: '資料分析師｜32 歲', color: '#3d8a6b' },
-  { name: '林雅婷', role: '資深後端工程師｜35 歲', color: '#c0587e' },
-  { name: '許志明', role: '法務專員｜29 歲', color: '#7a6f5d' },
-  { name: '黃美玲', role: '產品經理｜30 歲', color: '#c98a2e' },
-  { name: '吳思妤', role: '客服主管｜41 歲', color: '#6a5a9c' },
-  { name: '陳柏翰', role: '業務經理｜38 歲', color: '#4f7cac' },
+  { name: '張家豪', key: '張家豪', role: '資料分析師｜32 歲', color: '#3d8a6b' },
+  { name: '林雅婷', key: '林雅婷', role: '資深後端工程師｜35 歲', color: '#c0587e' },
+  { name: '許志明', key: '許志明', role: '法務專員｜29 歲', color: '#7a6f5d' },
+  { name: '黃美玲', key: '黃美玲', role: '產品經理｜30 歲', color: '#c98a2e' },
+  { name: '吳思妤', key: '吳思妤', role: '客服主管｜41 歲', color: '#6a5a9c' },
+  { name: '陳柏翰', key: '陳柏翰', role: '業務經理｜38 歲', color: '#4f7cac' },
 ];
 const COLOR = Object.fromEntries(PEOPLE.map(p => [p.name, p.color]));
+const INITIAL = name => (PEOPLE.find(p => p.name === name) || {}).initial || String(name)[0];
+
+/* Names the interface needs in this language: bookmarks, the exported folder and its files,
+   and the helper's suggested commands. */
+const BOOKMARKS = [['霧搜', 'mist.search'], ['無名廣場', 'wuming.forum'], ['PicNote', 'picnote.social'], ['TechWiki', 'techwiki.org/exif']];
+const EXPORT_DIR = '夜鷺匯出';
+const FILE_KEYS = { recipients: '收件名單.txt', profiles: '人物簡介.txt', attendance: '差勤表_0912-0916.csv', byod: 'BYOD裝置登記_202603.csv' };
+const EXPORT_FILES = Object.values(FILE_KEYS);
+const STYLE_GREP = '以上';
+const SOL_PREFIX = '夜鷺是';  // the solution's title: SOL_PREFIX + the culprit's name  // the writing-style clue's word for grep
+const SUGGEST = {
+  home: ['ls', 'cd Downloads', 'cd 夜鷺匯出', 'help'],
+  export: ['ls', 'cat 收件名單.txt', 'cat 差勤表_0912-0916.csv', 'grep Pixel slack/*.log', 'grep 以上 slack/*.log', 'cd ..'],
+  slack: ['ls', 'cat random.log', 'grep -i pixel *.log', 'cd ..'],
+};
 
 const DISC = {
   attach:  { t: '取得爆料附圖原檔', d: '論壇保留了上傳的原始檔案，沒有重新壓縮，也沒有清除資料。' },
@@ -316,12 +331,12 @@ function makeSites(ctx) {
   function picSearch(q) {
     const ql = q.toLowerCase();
     const hits = Object.entries(PIC).filter(([h, p]) => h.includes(ql) || p.name.includes(q));
-    return `<div class="site">${picBar(q)}<div class="wrap"><p class="muted">「${esc(q)}」的搜尋結果</p>${hits.length ? hits.map(([h, p]) => `<a class="p-user" ${ctx.href('picnote.social/@' + h)}><span class="p-av" style="background:${p.color}">${p.name[0]}</span><span><b>${esc(p.name)}</b><br><span class="muted">@${h} · ${esc(p.bio)}</span></span></a>`).join('') : `<p>找不到符合的帳號。這個人可能沒有 PicNote，或帳號設為不公開。</p>`}</div></div>`;
+    return `<div class="site">${picBar(q)}<div class="wrap"><p class="muted">「${esc(q)}」的搜尋結果</p>${hits.length ? hits.map(([h, p]) => `<a class="p-user" ${ctx.href('picnote.social/@' + h)}><span class="p-av" style="background:${p.color}">${INITIAL(p.name)}</span><span><b>${esc(p.name)}</b><br><span class="muted">@${h} · ${esc(p.bio)}</span></span></a>`).join('') : `<p>找不到符合的帳號。這個人可能沒有 PicNote，或帳號設為不公開。</p>`}</div></div>`;
   }
   function picProfile(h) {
     const p = PIC[h];
     if (!p) return `<div class="site">${picBar()}<div class="wrap"><p>這個帳號不存在。</p></div></div>`;
-    return `<div class="site">${picBar()}<div class="wrap"><div class="p-prof"><span class="p-av" style="background:${p.color}">${p.name[0]}</span><div><h2>${esc(p.name)}</h2><div class="muted">@${h}</div><div>${esc(p.bio)}</div></div></div>
+    return `<div class="site">${picBar()}<div class="wrap"><div class="p-prof"><span class="p-av" style="background:${p.color}">${INITIAL(p.name)}</span><div><h2>${esc(p.name)}</h2><div class="muted">@${h}</div><div>${esc(p.bio)}</div></div></div>
   <div class="p-feed">${p.posts.map(po => `<article class="p-post"><div class="p-img">${img('social/' + po.img + '.jpg', po.text)}</div><div class="p-cap">${po.type ? `<span class="muted" style="font-size:11.5px">${po.type} · </span>` : ''}${esc(po.text)}<div class="when">${po.when}（台北時間）· 地點：${esc(po.loc)}</div></div><div class="p-act">${ctx.pin('PicNote @' + h + ' ' + po.when, po.text + '（地點：' + po.loc + '）')}${ctx.dl(socialFile(po, h), 'social', `data-handle="${h}" data-post="${po.id}"`, 'pin-btn', 'social/' + po.img + '.jpg')}</div></article>`).join('')}</div></div></div>`;
   }
   function hotelPage() {

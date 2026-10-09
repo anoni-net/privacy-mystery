@@ -4,10 +4,11 @@ import { join } from 'node:path';
 import vm from 'node:vm';
 
 const EXPORTS = ['PEOPLE', 'PIC', 'SLACK', 'TEXTS', 'INTRO', 'PXL', 'EXIF_PXL', 'EXIF_PXL_NOTE', 'EXIF_SOCIAL',
-  'EXIF_SOCIAL_NOTE', 'CAMERA_INFO', 'SEARCH_TIPS', 'POST_PARAS', 'FORUM_REPLIES', 'Q1', 'Q2', 'Q3', 'socialFile', 'makeSites'];
+  'EXIF_SOCIAL_NOTE', 'CAMERA_INFO', 'FILE_KEYS', 'EXPORT_DIR', 'EXPORT_FILES', 'BOOKMARKS', 'INITIAL', 'STYLE_GREP', 'SUGGEST', 'HINTS', 'SOL_PREFIX', 'SEARCH_TIPS', 'POST_PARAS', 'FORUM_REPLIES', 'Q1', 'Q2', 'Q3', 'socialFile', 'makeSites'];
 
-export function loadCase(caseDir, pxlSize) {
-  const code = readFileSync(join(caseDir, 'case.js'), 'utf8').split('__PXL_SIZE__').join(pxlSize);
+export function loadCase(caseDir, pxlSize, lang = 'zh') {
+  const file = lang === 'zh' ? 'case.js' : `case.${lang}.js`;
+  const code = readFileSync(join(caseDir, file), 'utf8').split('__PXL_SIZE__').join(pxlSize);
   return vm.runInNewContext(`${code}\n;({ ${EXPORTS.join(', ')} })`);
 }
 

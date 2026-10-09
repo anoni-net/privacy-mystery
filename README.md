@@ -29,6 +29,12 @@ The PDF edition is a printable A4 case file with the solution at the back, print
 
 The leaked photo is a real JPEG with deliberately crafted EXIF, so you can inspect it with your own tools.
 
+## 英文版 English
+
+英文版在 `/mystery/en/`（大廳）與 `/mystery/en/night-heron/`（互動版、`static/` 靜態版、`night-heron.pdf`），中英文之間都有切換連結。舞台仍在台灣，人名用拼音。寫作風格這條線索改用英文的習慣：英式或美式拼法、引號的樣式，以及固定的結尾語。
+
+The English version lives at `/mystery/en/` (lobby) and `/mystery/en/night-heron/` (interactive, `static/`, and `night-heron.pdf`), with language links both ways. The story stays in Taiwan with romanised names; the writing-style clue uses English habits: British or American spelling, quotation marks and a fixed sign-off.
+
 ## 大廳 Lobby
 
 `/mystery/` 是霧港隱私互助站的「委託板」：每個案件一份檔案夾，加上一張「準備中」的卡片。大廳只用 HTML 和 CSS，不需要 JavaScript；有 JavaScript 時會讀取瀏覽器裡的進度，在檔案夾蓋上「調查中」或「已結案」與評等（只有狀態與評等，沒有名字或答案）。新增案件時，在 `cases/<編號>-<代號>/` 放一份 `case.json`，大廳就會出現它。
@@ -40,14 +46,18 @@ The lobby at `/mystery/` is a case board with one folder per `cases/*/case.json`
 ```
 cases/01-night-heron/
   case.json            大廳卡片的資料：代號、名稱、引子、技巧標籤 Lobby card: slug, title, hook, skills
-  case.js              劇本資料與遊戲內網站，兩個版本共用 Story data and in-game sites, shared by both versions
+  case.js              劇本資料與遊戲內網站，所有版本共用 Story data and in-game sites, shared by every version
+  case.en.js           英文劇本，結構與 case.js 相同 English story data, same structure as case.js
   web/index.src.html   互動版原始碼 Interactive version source
+  web/ui.zh.js         互動版的介面文字（中文）Interface text, Chinese
+  web/ui.en.js         互動版的介面文字（英文）Interface text, English
   web/sites.css        遊戲內網站的樣式 Styles for the in-game sites
   web/assets/          遊戲用的 JPEG（爆料照片帶有刻意的 EXIF）
   static.css           靜態版樣式 Static version styles
   (PDF 版的版面在 scripts/pdf.mjs PDF layout lives in scripts/pdf.mjs)
   art/                 圖片的 SVG 原稿 SVG sources for the images
   solution.enc         加密的解答 Encrypted solution
+  solution.en.enc      加密的英文解答，鑰匙相同 Encrypted English solution, same key
 scripts/
   build.mjs            建置網站 Build the site
   static.mjs           產生靜態版 Generate the static version
@@ -133,6 +143,10 @@ CASE_KEY=兇手全名 node scripts/decrypt.mjs cases/01-night-heron   # 產生 s
 # 編輯 cases/01-night-heron/solution.html
 CASE_KEY=兇手全名 node scripts/encrypt.mjs cases/01-night-heron   # 寫回 solution.enc
 ```
+
+英文解答加上 `en`：`decrypt.mjs cases/01-night-heron en` 產生 `solution.en.html`，改完用 `encrypt.mjs cases/01-night-heron en` 寫回 `solution.en.enc`。兩種語言用同一把鑰匙（兇手的中文全名）。
+
+For the English solution add `en` to both commands. Every language uses the same key, the culprit's full Chinese name.
 
 建置時若設定 `CASE_KEY`，會順便檢查鑰匙能否解開。請不要在 issue、PR 或 commit message 裡寫出兇手的名字。
 

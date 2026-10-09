@@ -65,7 +65,8 @@ h1 { font-family: var(--font-serif); font-size: clamp(40px, 8vw, 64px); letter-s
 .play:hover { border-color: var(--paper-ink); }
 .play.primary { background: var(--paper-ink); color: var(--paper); border-color: var(--paper-ink); }
 .play.primary:hover { background: #000; }
-.stamp { position: absolute; top: 18px; right: 14px; transform: rotate(9deg); border: 3px solid var(--stamp); color: var(--stamp); padding: 2px 10px 4px; text-align: center; font-weight: 700; letter-spacing: .2em; line-height: 1.3; border-radius: 3px; opacity: .85; pointer-events: none; }
+/* stamped across the folder's top-right corner, clear of the title in any language */
+.stamp { position: absolute; top: -22px; right: -10px; z-index: 2; background: rgba(239,230,210,.92); transform: rotate(9deg); border: 3px solid var(--stamp); color: var(--stamp); padding: 2px 10px 4px; text-align: center; font-weight: 700; letter-spacing: .2em; line-height: 1.3; border-radius: 3px; opacity: .85; pointer-events: none; }
 .stamp small { display: block; font-size: 10px; letter-spacing: .05em; font-weight: 600; }
 .stamp.open { border-color: #8a6a1f; color: #8a6a1f; }
 
@@ -96,9 +97,11 @@ footer p { margin: 0 0 4px; }
 @media (prefers-reduced-motion: reduce) { .folder { transform: none !important; } }
 `;
 
-// Progress stamps: each case writes { status: 'started' | 'solved', rank } to localStorage.
-const SCRIPT = `
+// Progress stamps: each case writes { status: 'started' | 'solved', level } to localStorage;
+// the lobby names the rank in its own language.
+const SCRIPT = L => `
 (function () {
+  var W = ${JSON.stringify(L.stamp)};
   var folders = document.querySelectorAll('[data-slug]');
   for (var i = 0; i < folders.length; i++) {
     var f = folders[i], p = null;
@@ -106,20 +109,54 @@ const SCRIPT = `
     if (!p || !p.status) continue;
     var stamp = f.querySelector('.stamp'), go = f.querySelector('.play.primary');
     if (p.status === 'solved') {
-      stamp.innerHTML = '已結案' + (p.rank ? '<small></small>' : '');
-      if (p.rank) stamp.querySelector('small').textContent = p.rank;
-      go.textContent = '回到案件';
+      stamp.textContent = W.solved;
+      var r = W.ranks[p.level];
+      if (r) { var s = document.createElement('small'); s.textContent = r; stamp.appendChild(s); }
+      go.textContent = W.back;
     } else {
-      stamp.textContent = '調查中';
+      stamp.textContent = W.open;
       stamp.className = 'stamp open';
-      go.textContent = '繼續調查';
+      go.textContent = W.resume;
     }
     stamp.hidden = false;
   }
 })();
 `;
 
-export function buildLobby({ out, cases, analytics = '' }) {
+const T = {
+  zh: {
+    lang: 'zh-Hant-TW', skills: '會練到的技巧', start: '開始調查', stat: '靜態版', pdf: 'PDF 版',
+    desc: 'anoni.net 的隱私推理遊戲。每一份委託都是一個案件：從照片、檔案與文字裡找出破綻，學會保護自己和別人的隱私。',
+    title: '霧港委託板｜隱私推理遊戲', kicker: '霧港隱私互助站 · PRIVACY MYSTERY', h1: '委託板',
+    lead: '今晚有人需要你。每一份委託都是一個案件：從照片、檔案和文字裡找出破綻，在別人之前找到它們，也學會怎麼不留下它們。',
+    langLink: '<a href="en/" lang="en">English</a>', next: '下一份委託',
+    soon: '準備中。想看哪一種隱私主題？<a href="https://github.com/anoni-net/privacy-mystery/issues">到 GitHub 告訴我們</a>。',
+    modes: '三種玩法',
+    modeList: [['互動版', '模擬一台調查員的電腦：瀏覽器、終端機、看圖工具和調查板。需要 JavaScript，手機也能玩。'], ['靜態版', '只用 HTML 和 CSS，不需要 JavaScript。Tor Browser 的「最安全」等級也能完整破案。'], ['PDF 版', '離線或印出來玩，適合讀書會與課堂。解答在最後幾頁，上下顛倒印刷。']],
+    learn: '你會練到的技巧',
+    reading: '<li><a href="https://anoni.net/docs/basics/">anoni.net 文件庫：概念篇</a>（中繼資料、去匿名化）</li><li><a href="https://anoni.net/docs/scenarios/journalist/">記者情境：消息來源保護</a></li><li><a href="https://anoni.net/docs/tools/">工具篇：威脅模型與工具評估</a></li>',
+    foot: '<p>霧港隱私互助站與所有案件裡的人物、公司和事件都是虛構的。</p><p>由 <a href="https://anoni.net/">anoni.net 匿名網路社群</a>製作 · 內容 CC BY 4.0 · 程式 MIT · <a href="https://github.com/anoni-net/privacy-mystery">原始碼</a></p>',
+    stamp: { solved: '已結案', open: '調查中', back: '回到案件', resume: '繼續調查', ranks: ['洋蔥首席調查員', '資深隱私志工', '見習調查員'] },
+  },
+  en: {
+    lang: 'en', skills: 'Skills you practise', start: 'Start investigating', stat: 'Static version', pdf: 'PDF',
+    desc: 'Privacy mysteries from anoni.net. Each request is a case: find the leaks in photos, files and writing, and learn to protect your own privacy and other people’s.',
+    title: 'Mistport case board | privacy mysteries', kicker: 'MISTPORT PRIVACY AID · PRIVACY MYSTERY', h1: 'Case board',
+    lead: 'Someone needs you tonight. Each request is a case: find the leaks in photos, files and writing before anyone else does, and learn not to leave them yourself.',
+    langLink: '<a href="../" lang="zh-Hant-TW">中文</a>', next: 'The next case',
+    soon: 'In preparation. Which privacy topic would you like to see? <a href="https://github.com/anoni-net/privacy-mystery/issues">Tell us on GitHub</a>.',
+    modes: 'Three ways to play',
+    modeList: [['Interactive', 'A simulated investigator’s computer: browser, terminal, image viewer and evidence board. Needs JavaScript; works on phones.'], ['Static', 'Plain HTML and CSS, no JavaScript. The whole case works at Tor Browser’s “Safest” level.'], ['PDF', 'Offline or on paper, for reading groups and classrooms. The solution is on the last pages, printed upside down.']],
+    learn: 'Skills you practise',
+    reading: '<li><a href="https://anoni.net/docs/basics/">anoni.net docs: concepts</a> (metadata, de-anonymisation; in Chinese)</li><li><a href="https://anoni.net/docs/scenarios/journalist/">For journalists: protecting sources</a> (in Chinese)</li><li><a href="https://anoni.net/docs/tools/">Tools: threat models and choosing tools</a> (in Chinese)</li>',
+    foot: '<p>The Mistport Privacy Aid and every person, company and event in these cases are fictional.</p><p>Made by the <a href="https://anoni.net/">anoni.net community</a> · content CC BY 4.0 · code MIT · <a href="https://github.com/anoni-net/privacy-mystery">source</a></p>',
+    stamp: { solved: 'CLOSED', open: 'OPEN', back: 'Back to the case', resume: 'Keep investigating', ranks: ['Chief Onion Investigator', 'Senior Privacy Volunteer', 'Trainee Investigator'] },
+  },
+};
+
+export function buildLobby({ out, cases, analytics = '', lang = 'zh' }) {
+  const L = T[lang];
+  cases = cases.map(c => Object.assign({}, c, (c.i18n || {})[lang] || {}));
   const next = String(cases.length + 1).padStart(2, '0');
   const folder = c => `<article class="folder" data-slug="${esc(c.slug)}">
   <div class="tab">CASE ${esc(c.number)}</div>
@@ -129,32 +166,32 @@ export function buildLobby({ out, cases, analytics = '' }) {
     <h2>${esc(c.title)}</h2>
     <p class="hook">${esc(c.hook)}</p>
     <p class="summary">${esc(c.summary)}</p>
-    <ul class="skills" aria-label="會練到的技巧">${c.skills.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
+    <ul class="skills" aria-label="${L.skills}">${c.skills.map(s => `<li>${esc(s)}</li>`).join('')}</ul>
     <p class="meta">${esc(c.time)} · ${esc(c.players)}</p>
     <div class="plays">
-      <a class="play primary" href="${esc(c.slug)}/">開始調查</a>
-      <a class="play" href="${esc(c.slug)}/static/">靜態版</a>
-      <a class="play" href="${esc(c.slug)}/${esc(c.pdf)}" download="${esc(c.pdfName)}">PDF 版</a>
+      <a class="play primary" href="${esc(c.slug)}/">${L.start}</a>
+      <a class="play" href="${esc(c.slug)}/static/">${L.stat}</a>
+      <a class="play" href="${esc(c.slug)}/${esc(c.pdf)}" download="${esc(c.pdfName)}">${L.pdf}</a>
     </div>
   </div>
 </article>`;
   const skills = cases.flatMap(c => c.skills.map(s => [s, c.title]));
   const html = `<!doctype html>
-<html lang="zh-Hant-TW">
+<html lang="${L.lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<meta name="description" content="anoni.net 的隱私推理遊戲。每一份委託都是一個案件：從照片、檔案與文字裡找出破綻，學會保護自己和別人的隱私。">
-<title>霧港委託板｜隱私推理遊戲</title>
+<meta name="description" content="${L.desc}">
+<title>${L.title}</title>
 ${analytics}<style>${CSS}</style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <p class="kicker">霧港隱私互助站 · PRIVACY MYSTERY</p>
-  <h1>委託板</h1>
-  <p class="lead">今晚有人需要你。每一份委託都是一個案件：從照片、檔案和文字裡找出破綻，在別人之前找到它們，也學會怎麼不留下它們。</p>
+  <p class="kicker">${L.kicker} · ${L.langLink}</p>
+  <h1>${L.h1}</h1>
+  <p class="lead">${L.lead}</p>
 </header>
 
 <main>
@@ -163,39 +200,30 @@ ${cases.map(folder).join('\n')}
 <article class="folder soon">
   <div class="tab">CASE ${next}</div>
   <div class="paper">
-    <h2>下一份委託</h2>
+    <h2>${L.next}</h2>
     <div class="redact" aria-hidden="true"><span></span><span></span><span></span></div>
-    <p>準備中。想看哪一種隱私主題？<a href="https://github.com/anoni-net/privacy-mystery/issues">到 GitHub 告訴我們</a>。</p>
+    <p>${L.soon}</p>
   </div>
 </article>
 </div>
 
 <section class="info" aria-labelledby="h-modes">
-  <h2 id="h-modes">三種玩法</h2>
-  <div class="modes">
-    <div class="mode"><h3>互動版</h3><p>模擬一台調查員的電腦：瀏覽器、終端機、看圖工具和調查板。需要 JavaScript，手機也能玩。</p></div>
-    <div class="mode"><h3>靜態版</h3><p>只用 HTML 和 CSS，不需要 JavaScript。Tor Browser 的「最安全」等級也能完整破案。</p></div>
-    <div class="mode"><h3>PDF 版</h3><p>離線或印出來玩，適合讀書會與課堂。解答在最後幾頁，上下顛倒印刷。</p></div>
-  </div>
+  <h2 id="h-modes">${L.modes}</h2>
+  <div class="modes">${L.modeList.map(([h, p]) => `<div class="mode"><h3>${h}</h3><p>${p}</p></div>`).join('')}</div>
 </section>
 
 <section class="info" aria-labelledby="h-skills">
-  <h2 id="h-skills">你會練到的技巧</h2>
+  <h2 id="h-skills">${L.learn}</h2>
   <ul class="skillmap">${skills.map(([s, t]) => `<li>${esc(s)}<small>${esc(t)}</small></li>`).join('')}</ul>
-  <ul class="reading">
-    <li><a href="https://anoni.net/docs/basics/">anoni.net 文件庫：概念篇</a>（中繼資料、去匿名化）</li>
-    <li><a href="https://anoni.net/docs/scenarios/journalist/">記者情境：消息來源保護</a></li>
-    <li><a href="https://anoni.net/docs/tools/">工具篇：威脅模型與工具評估</a></li>
-  </ul>
+  <ul class="reading">${L.reading}</ul>
 </section>
 </main>
 
 <footer>
-  <p>霧港隱私互助站與所有案件裡的人物、公司和事件都是虛構的。</p>
-  <p>由 <a href="https://anoni.net/">anoni.net 匿名網路社群</a>製作 · 內容 CC BY 4.0 · 程式 MIT · <a href="https://github.com/anoni-net/privacy-mystery">原始碼</a></p>
+  ${L.foot}
 </footer>
 </div>
-<script>${SCRIPT}</script>
+<script>${SCRIPT(L)}</script>
 </body>
 </html>
 `;
