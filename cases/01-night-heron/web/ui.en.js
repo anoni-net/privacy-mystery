@@ -38,6 +38,8 @@ const UI = {
   moreLabel: 'More',
   dockLabel: 'Apps',
   apps: { chat: 'Secure chat', browser: 'Browser', files: 'Files', viewer: 'Images', doc: 'Document', terminal: 'Terminal', board: 'Evidence', report: 'Case report' },
+  // shorter names for the phone's tab bar, where a long name gets cut off
+  tabs: { chat: 'Chat', report: 'Report' },
   locked: ' (locked)',
   close: 'Close',
   minimize: 'Minimise',
