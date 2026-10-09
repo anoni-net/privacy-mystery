@@ -21,6 +21,10 @@ Privacy mystery games: unmask a whistleblower from a photo's metadata, backgroun
 
 The static version uses only HTML and CSS (no JavaScript, no SVG) for Tor Browser's "Safest" level. The interactive page points players there when JavaScript is unavailable.
 
+- **PDF 版**（`/mystery/night-heron.pdf`）：可以離線或印出來玩的 A4 案件檔案。解答在最後，前面有一頁黑色的「停」，解答頁上下顛倒、字小、淺灰色，避免翻書時不小心看到。互動版的選單列、靜態版首頁與「需要 JavaScript」提示都有下載連結。
+
+The PDF edition is a printable A4 case file with the solution at the back, printed small, grey and upside down behind a "stop" page.
+
 爆料照片 `PXL_20260914_144712345.jpg` 是一張真的 JPEG，裡面的 EXIF 是刻意寫入的。你可以下載後用自己的工具檢查。
 
 The leaked photo is a real JPEG with deliberately crafted EXIF, so you can inspect it with your own tools.
@@ -34,11 +38,14 @@ cases/01-night-heron/
   web/sites.css        遊戲內網站的樣式 Styles for the in-game sites
   web/assets/          遊戲用的 JPEG（爆料照片帶有刻意的 EXIF）
   static.css           靜態版樣式 Static version styles
+  (PDF 版的版面在 scripts/pdf.mjs PDF layout lives in scripts/pdf.mjs)
   art/                 圖片的 SVG 原稿 SVG sources for the images
   solution.enc         加密的解答 Encrypted solution
 scripts/
   build.mjs            建置網站 Build the site
   static.mjs           產生靜態版 Generate the static version
+  pdf.mjs              產生 PDF 版 Generate the PDF edition
+  case-data.mjs        在 Node 讀取 case.js Load case.js in Node
   encrypt.mjs          加密解答 Encrypt a solution
   decrypt.mjs          解密解答 Decrypt a solution
   make_images.py       PNG 轉 JPEG 並寫入 EXIF
@@ -59,6 +66,12 @@ CASE_KEY=兇手全名 node scripts/build.mjs
 **部署時一定要設定 `CASE_KEY`。** 靜態版的結局頁是一般的 HTML，建置時必須解開解答；沒有設定的話只會產生互動版，互動版裡「前往靜態版」的連結會找不到頁面。靜態版的結局明文只會出現在部署出去的網站上，不會進 repo。
 
 The output in `dist/mystery/` is a self-contained static site with no third-party requests or web fonts. Always set `CASE_KEY` when deploying: the static version's ending is plain HTML, so without the key only the interactive page is built.
+
+**PDF 版**需要 Chrome、Chromium 或 Brave 來輸出，建置時會自動尋找，也可以用 `CHROME_PATH` 指定。找不到瀏覽器時只會跳過 PDF，並留下可列印的 HTML 原稿。
+
+正式發布的 PDF 請在安裝了 **Noto Sans CJK TC／Noto Serif CJK TC** 的環境建置（例如 Debian／Ubuntu 的 `fonts-noto-cjk`）。這兩套字型是 SIL OFL 授權，可以隨 PDF 嵌入散布；版面會優先使用它們。macOS 內建的蘋方等系統字型，授權不一定允許隨文件散布。建置腳本也會把 PDF 的 Creator 欄位設成中性的名稱，不寫入作業系統與瀏覽器版本。
+
+The PDF needs a Chromium-based browser (found automatically, or set `CHROME_PATH`). Build release PDFs with Noto Sans/Serif CJK TC installed: they are OFL-licensed and safe to embed. The build also keeps OS and browser details out of the PDF's Creator field.
 
 CDN 的圖片最佳化（例如 Cloudflare Polish）會移除 JPEG 的 EXIF，爆料照片就查不到線索了。放在 CDN 後面時，`/mystery/` 底下的回應要帶 `Cache-Control: no-transform`。
 

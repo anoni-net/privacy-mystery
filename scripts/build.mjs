@@ -10,6 +10,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decryptB64 } from './crypt.mjs';
 import { buildStatic } from './static.mjs';
+import { buildPdf } from './pdf.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const caseDir = join(root, 'cases', '01-night-heron');
@@ -66,8 +67,15 @@ if (key) {
     socialSizes: social,
   });
   console.log(`built static version: ${pages} pages`);
+  const { pdf, html } = buildPdf({
+    caseDir, out,
+    solution: decryptB64(blob, key),
+    pxlSize: kb(join(web, 'assets', 'PXL_20260914_144712345.jpg')),
+  });
+  if (pdf) console.log('built', join('dist', 'mystery', 'night-heron.pdf'));
+  else console.warn(`No Chromium-based browser found (set CHROME_PATH): skipped the PDF. Print source: ${html}`);
 } else {
-  console.warn('CASE_KEY not set: skipped the static version (the interactive page links to static/).');
+  console.warn('CASE_KEY not set: skipped the static version and the PDF (both contain the ending).');
 }
 
 const i = process.argv.indexOf('--fragment');
