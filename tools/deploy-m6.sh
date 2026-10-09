@@ -9,7 +9,11 @@
 # 目錄結構：
 #   /srv/anoni-net-mystery/repo            anoni-net/privacy-mystery 的 clone，只拉 main
 #   /srv/anoni-net-mystery/releases/<sha>  每個 commit 建置一份，保留最近 KEEP 份
-#   /srv/anoni-net-mystery/current         symlink，nginx 的 /mystery/ 與 mystery.<onion> 都讀它
+#   /srv/anoni-net-mystery/current         symlink，nginx 的 /mystery/ 讀 current/clearnet，
+#                                          mystery.<onion> 讀 current/onion
+#
+# clearnet 與 onion 各建置一份（build.mjs 的 --target）。clearnet 的互動版載入流量統計，
+# onion 那份不載入，連到 anoni.net 的網址也改成 onion 位址。
 #
 # 靜態版的結局頁只有在設定 CASE_KEY 時才會建置，鑰匙放在 KEYFILE（權限 600，不進 repo）。
 # 沒有鑰匙時互動版連到 static/ 的連結會 404，所以讀不到鑰匙就不發布，等鑰匙放上去的
@@ -55,10 +59,12 @@ current=$(readlink "$BASE/current" 2>/dev/null || true)
 
 dest=$BASE/releases/$sha
 rm -rf "$dest.tmp"
-if ! (cd "$REPO" && CASE_KEY=$(cat "$KEYFILE") node scripts/build.mjs \
-        && test -s dist/mystery/index.html \
-        && test -s dist/mystery/static/index.html \
-        && cp -a dist/mystery "$dest.tmp") >/dev/null 2>>"$LOG"; then
+# onion 那份不能有任何指向 clearnet 的資源或連結，檢查不到才算建置成功
+if ! (cd "$REPO" && export CASE_KEY="$(cat "$KEYFILE")" \
+        && node scripts/build.mjs --target clearnet --out "$dest.tmp/clearnet" \
+        && node scripts/build.mjs --target onion --out "$dest.tmp/onion" \
+        && for t in clearnet onion; do test -s "$dest.tmp/$t/index.html" && test -s "$dest.tmp/$t/static/index.html" || exit 1; done \
+        && ! grep -rqE 'https://([a-z]+\.)?anoni\.net' "$dest.tmp/onion") >/dev/null 2>>"$LOG"; then
     echo "$(date -Iseconds) $sha 建置或檢查失敗，線上維持 ${current:-（尚未發布）}" >>"$LOG"
     echo "$attempt" >"$BASE/failed"
     rm -rf "$dest.tmp"

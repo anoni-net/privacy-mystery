@@ -1,0 +1,88 @@
+<!--
+  Analytics for the anoni.net clearnet build only (node scripts/build.mjs --target clearnet).
+  Umami is self-hosted by anoni.net at aa.anoni.net: no cookies, Do Not Track and Global
+  Privacy Control are honoured. The onion build, the static version and builds without
+  --target load nothing.
+
+  Every payload goes through anoniBeforeSend first; returning null drops it. It sends page
+  views and the events listed in EVENTS, with exactly those fields and values, and nothing else.
+  Same approach as anoni-net/news (templates/_analytics.html.j2).
+-->
+<script data-anoni="before-send">
+(function () {
+  // Allowed events and the allowed values of each field. Keep answers and names out.
+  var EVENTS = {
+    "case-start": { "case": ["01"] },
+    "case-solved": { "case": ["01"], "rank": ["0", "1", "2"] }
+  };
+
+  // Keep only these four utm_ parameters; drop the rest of the query and the fragment
+  var UTM = ["utm_source", "utm_medium", "utm_campaign", "utm_content"];
+  function scrubUrl(url) {
+    if (typeof url !== "string" || !url) return url;
+    var hash = url.indexOf("#");
+    if (hash >= 0) url = url.slice(0, hash);
+    var q = url.indexOf("?");
+    if (q < 0) return url;
+    var kept = [];
+    var parts = url.slice(q + 1).split("&");
+    for (var i = 0; i < parts.length; i++) {
+      if (UTM.indexOf(parts[i].split("=")[0]) >= 0 && parts[i].length <= 64) kept.push(parts[i]);
+    }
+    return kept.length ? url.slice(0, q) + "?" + kept.join("&") : url.slice(0, q);
+  }
+
+  // Round the screen size down to hundreds: enough for device classes, not a fingerprint
+  function coarseScreen(screen) {
+    if (typeof screen !== "string") return screen;
+    var m = screen.match(/^(\d+)x(\d+)$/);
+    if (!m) return screen;
+    var floor100 = function (n) { return Math.max(100, Math.floor(n / 100) * 100); };
+    return floor100(+m[1]) + "x" + floor100(+m[2]);
+  }
+
+  // The event data must have exactly the listed fields with listed values, or nothing is sent
+  function scrubData(name, data) {
+    var spec = EVENTS[name];
+    var out = {};
+    var count = 0;
+    if (data && typeof data === "object") {
+      for (var extra in data) {
+        if (Object.prototype.hasOwnProperty.call(data, extra) && !Object.prototype.hasOwnProperty.call(spec, extra)) return null;
+      }
+    }
+    for (var key in spec) {
+      if (!Object.prototype.hasOwnProperty.call(spec, key)) continue;
+      if (!data || spec[key].indexOf(data[key]) < 0) return null;
+      out[key] = data[key];
+      count++;
+    }
+    return count ? out : undefined;
+  }
+
+  window.anoniBeforeSend = function (type, payload) {
+    // data-do-not-track only checks the old doNotTrack; honour Global Privacy Control here
+    if (window.navigator && window.navigator.globalPrivacyControl === true) return null;
+    if (type !== "event" || !payload || typeof payload !== "object") return null;
+    var out = {};
+    for (var key in payload) {
+      if (Object.prototype.hasOwnProperty.call(payload, key)) out[key] = payload[key];
+    }
+    out.url = scrubUrl(out.url);
+    out.referrer = scrubUrl(out.referrer);
+    out.screen = coarseScreen(out.screen);
+    if (typeof out.name === "string") {
+      if (!Object.prototype.hasOwnProperty.call(EVENTS, out.name)) return null;
+      var data = scrubData(out.name, out.data);
+      if (data === null) return null;
+      if (data) out.data = data; else delete out.data;
+    } else {
+      // Page views carry no name or data
+      delete out.data;
+      delete out.name;
+    }
+    return out;
+  };
+})();
+</script>
+<script defer src="__SRC__" data-website-id="__WEBSITE_ID__" data-domains="__DOMAINS__" data-before-send="anoniBeforeSend" data-do-not-track="true"></script>

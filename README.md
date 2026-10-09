@@ -61,11 +61,13 @@ tools/
 CASE_KEY=兇手全名 node scripts/build.mjs
 ```
 
-輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。頁面不會向任何第三方發出請求，也不載入網路字型。
+輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。這樣建置出來的頁面不會向其他網站發出請求，也不載入網路字型。
+
+`--target clearnet` 與 `--target onion` 只給 anoni.net 部署用，見下方「anoni.net 的部署」。`--out <資料夾>` 可以改變輸出位置。
 
 **部署時一定要設定 `CASE_KEY`。** 靜態版的結局頁是一般的 HTML，建置時必須解開解答；沒有設定的話只會產生互動版，互動版裡「前往靜態版」的連結會找不到頁面。靜態版的結局明文只會出現在部署出去的網站上，不會進 repo。
 
-The output in `dist/mystery/` is a self-contained static site with no third-party requests or web fonts. Always set `CASE_KEY` when deploying: the static version's ending is plain HTML, so without the key only the interactive page is built.
+The output in `dist/mystery/` is a self-contained static site that makes no requests to other sites and loads no web fonts. `--target clearnet|onion` is for the anoni.net deployment only; `--out <dir>` changes the output directory. Always set `CASE_KEY` when deploying: the static version's ending is plain HTML, so without the key only the interactive page is built.
 
 **PDF 版**需要 Chrome、Chromium 或 Brave 來輸出，建置時會自動尋找，也可以用 `CHROME_PATH` 指定。找不到瀏覽器時只會跳過 PDF，並留下可列印的 HTML 原稿。
 
@@ -82,6 +84,25 @@ Image optimization on a CDN (such as Cloudflare Polish) strips JPEG EXIF, which 
 anoni.net 的主機用 cron 每 5 分鐘執行 `tools/deploy-m6.sh`，拉取 `main`、建置並切換到新版本，合併之後最慢約 5 分鐘上線。建置或檢查失敗時線上維持原本的版本。改了這支腳本之後，要再複製到主機上。
 
 On anoni.net, a cron job runs `tools/deploy-m6.sh` every 5 minutes: it pulls `main`, builds, and switches to the new release. A failed build leaves the live site unchanged.
+
+部署時建置兩份：
+
+- `--target clearnet` 給 `anoni.net/mystery/`，互動版會載入流量統計
+- `--target onion` 給 onion 站，連到 anoni.net 的網址改成對應的 onion 位址，不載入流量統計
+
+The deployment builds twice: `--target clearnet` for `anoni.net/mystery/` with analytics, and `--target onion` for the onion site, with links to anoni.net rewritten to onion addresses and no analytics.
+
+### 流量統計 Analytics
+
+clearnet 的互動版用 anoni.net 自架的 Umami 計算有多少人玩，不設 cookie，瀏覽器開啟 Do Not Track 或 Global Privacy Control 時不送出任何資料。送出之前先經過 `scripts/analytics.html` 的過濾，只送三種資料：
+
+- 頁面瀏覽。網址只保留 `utm_` 開頭的四個參數，螢幕尺寸捨去到百位
+- `case-start`：開場對話結束、開始調查
+- `case-solved`：結案，附評等（`0` 到 `2`）
+
+玩家選了誰、答了什麼、看了哪些提示都不會送出。onion 站、靜態版與不帶 `--target` 的建置都不做統計。新增事件時，要同時改 `scripts/analytics.html` 的 `EVENTS`，不在清單上的事件會被丟掉。
+
+On the clearnet interactive page, anoni.net's self-hosted Umami counts players. No cookies; nothing is sent when Do Not Track or Global Privacy Control is on. A filter in `scripts/analytics.html` only lets through page views (query reduced to four `utm_` parameters, screen size rounded down) and two events, `case-start` and `case-solved` with the rank. Choices, answers and hints are never sent. The onion site, the static version and builds without `--target` have no analytics. New events must be added to `EVENTS` in `scripts/analytics.html`, or they are dropped.
 
 ## 解答與防暴雷 Solutions and spoilers
 
