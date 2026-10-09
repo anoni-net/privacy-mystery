@@ -107,7 +107,7 @@ if (key) {
     solution: decryptB64(blob, key),
     pxlSize: kb(join(web, 'assets', 'PXL_20260914_144712345.jpg')),
   });
-  if (pdf) console.log('built', join('dist', 'mystery', 'night-heron.pdf'));
+  if (pdf) console.log('built', pdf);
   else console.warn(`No Chromium-based browser found (set CHROME_PATH): skipped the PDF. Print source: ${html}`);
 } else {
   console.warn('CASE_KEY not set: skipped the static version and the PDF (both contain the ending).');

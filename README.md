@@ -51,6 +51,8 @@ scripts/
   make_images.py       PNG 轉 JPEG 並寫入 EXIF
 tools/
   deploy-m6.sh         anoni.net 主機的自動部署 Auto-deploy on the anoni.net server
+  chrome-docker.sh     在容器裡執行 Chromium 產生 PDF Run Chromium in a container for the PDF
+  pdf/Dockerfile       上面那個容器的映像 Image for that container
 ```
 
 ## 建置與部署 Build and deploy
@@ -91,6 +93,10 @@ On anoni.net, a cron job runs `tools/deploy-m6.sh` every 5 minutes: it pulls `ma
 - `--target onion` 給 onion 站，連到 anoni.net 的網址改成對應的 onion 位址，不載入流量統計
 
 The deployment builds twice: `--target clearnet` for `anoni.net/mystery/` with analytics, and `--target onion` for the onion site, with links to anoni.net rewritten to onion addresses and no analytics.
+
+主機上沒有安裝瀏覽器，PDF 版用 docker 裡的 Chromium 產生。映像由 `tools/pdf/Dockerfile` 建立（Debian 的 `chromium` 加上 `fonts-noto-cjk`），`tools/chrome-docker.sh` 透過 `CHROME_PATH` 接上 `scripts/pdf.mjs`，容器沒有網路。Dockerfile 改了之後，下一次部署會重建映像。
+
+The server has no browser installed: the PDF is printed by Chromium in a container built from `tools/pdf/Dockerfile`, wired in through `CHROME_PATH` by `tools/chrome-docker.sh`, with no network access.
 
 ### 流量統計 Analytics
 
