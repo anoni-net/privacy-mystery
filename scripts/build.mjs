@@ -22,6 +22,7 @@ import { decryptB64 } from './crypt.mjs';
 import { buildStatic } from './static.mjs';
 import { buildPdf } from './pdf.mjs';
 import { buildLobby } from './lobby.mjs';
+import { iconTags, ogTags, SITE_NAME } from './meta.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const caseDir = join(root, 'cases', '01-night-heron');
@@ -77,6 +78,9 @@ if (target.analytics) {
 }
 
 rmSync(out, { recursive: true, force: true });
+// Icons and the lobby's preview images sit at the top of the site (made by scripts/make_og.mjs)
+mkdirSync(out, { recursive: true });
+cpSync(join(root, 'site'), out, { recursive: true });
 let fragment = '';
 
 for (const lang of LANGS) {
@@ -106,6 +110,7 @@ for (const lang of LANGS) {
   if (lang.code === 'zh') fragment = page;
 
   const cut = page.indexOf('</style>') + '</style>'.length;
+  const casePath = (lang.dir ? lang.dir + '/' : '') + manifest.slug + '/';
   const doc = `<!doctype html>
 <html lang="${UI.lang}">
 <head>
@@ -113,6 +118,8 @@ for (const lang of LANGS) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="${UI.description}">
+${iconTags(lang.dir ? '../../' : '../')}
+${ogTags({ lang: lang.code, siteName: SITE_NAME[lang.code], title: UI.caseTitle, desc: UI.description, path: casePath, image: casePath + 'og.png' })}
 ${analytics}${page.slice(0, cut).trim()}
 </head>
 <body>
@@ -126,6 +133,7 @@ ${page.slice(cut).trim()}
   mkdirSync(caseOut, { recursive: true });
   writeFileSync(join(caseOut, 'index.html'), doc);
   cpSync(join(web, 'assets'), join(caseOut, 'assets'), { recursive: true });
+  cpSync(join(caseDir, lang.code === 'zh' ? 'og.png' : `og.${lang.code}.png`), join(caseOut, 'og.png'));
   buildLobby({ out: langOut, cases, analytics, lang: lang.code });
 
   if (key) {
