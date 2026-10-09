@@ -16,7 +16,7 @@ Privacy mystery games: unmask a whistleblower from a photo's metadata, backgroun
 
 ## 怎麼玩 How to play
 
-- **互動版**（預設）：模擬一台調查員工作站，有瀏覽器、終端機（真的要打 `exiftool`）、看圖工具和調查板。需要 JavaScript。不熟終端機的人可以打開終端機下方可選的「新手輔助」，它不影響評等。
+- **互動版**（預設）：模擬一台調查員工作站，有瀏覽器、終端機（真的要打 `exiftool`）、看圖工具和調查板。需要 JavaScript。不熟終端機的人可以打開終端機下方可選的「新手輔助」，它不影響評等。手機上的終端機預設用「指令積木」：點選指令和檔案組出指令，不必打字；想打字也可以切換。
 - **靜態版**（`/mystery/static/`）：只用 HTML 和 CSS，不需要 JavaScript、不用 SVG，給使用 Tor Browser「最安全」安全等級的人。內容和互動版相同：開場對話的每個選擇是一頁、終端機指令點開就看得到輸出、公司資料可以下載原始檔。互動版偵測到 JavaScript 無法使用時，會提示改玩靜態版。
 
 The static version uses only HTML and CSS (no JavaScript, no SVG) for Tor Browser's "Safest" level. The interactive page points players there when JavaScript is unavailable.
