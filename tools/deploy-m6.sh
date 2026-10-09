@@ -71,13 +71,15 @@ fi
 
 dest=$BASE/releases/$sha
 rm -rf "$dest.tmp"
-# onion 那份不能有任何指向 clearnet 的資源或連結，檢查不到才算建置成功
+# onion 那份的頁面不能有任何指向 clearnet 的資源或連結，檢查不到才算建置成功。
+# PDF 不在檢查範圍：它是給人下載列印的文件，解答裡連到文件庫的網址會留在裡面。
 if ! (cd "$REPO" && export CASE_KEY="$(cat "$KEYFILE")" \
         CHROME_PATH="$REPO/tools/chrome-docker.sh" MYSTERY_PDF_MOUNT="$dest.tmp" MYSTERY_PDF_IMAGE="$img" \
         && node scripts/build.mjs --target clearnet --out "$dest.tmp/clearnet" \
         && node scripts/build.mjs --target onion --out "$dest.tmp/onion" \
         && for t in clearnet onion; do for f in index.html static/index.html night-heron.pdf; do test -s "$dest.tmp/$t/$f" || exit 1; done; done \
-        && ! grep -rqE 'https://([a-z]+\.)?anoni\.net' "$dest.tmp/onion") >/dev/null 2>>"$LOG"; then
+        && ! grep -rqE --include='*.html' --include='*.css' --include='*.js' \
+            'https://([a-z]+\.)?anoni\.net' "$dest.tmp/onion") >/dev/null 2>>"$LOG"; then
     echo "$(date -Iseconds) $sha 建置或檢查失敗，線上維持 ${current:-（尚未發布）}" >>"$LOG"
     echo "$attempt" >"$BASE/failed"
     rm -rf "$dest.tmp"
