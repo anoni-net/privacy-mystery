@@ -386,6 +386,11 @@ const IMAGES = {
   [PXL]: { src: 'assets/' + PXL, w: 4080, h: 3072, size: '__PXL_SIZE__', full: true },
 };
 
+/* ---------- analytics ----------
+   Only the anoni.net clearnet build loads Umami (see scripts/analytics.html). Elsewhere
+   window.umami is undefined and this does nothing. Never pass names or answers here. */
+function track(name, data) { try { if (window.umami) window.umami.track(name, data); } catch (e) {} }
+
 /* =====================================================================
    STATE
    ===================================================================== */
@@ -593,6 +598,7 @@ function acceptFile() {
 }
 function startPlay() {
   S.phase = 'play'; S.start = Date.now();
+  track('case-start', { case: '01' });
   logIntro({ sys: '— 委託成立 · 調查開始 —' });
   S.unread.awu = 1; save();
   try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
@@ -1155,7 +1161,7 @@ INIT.report = w => {
       return;
     }
     fb('fb4', true, '');
-    if (ok1 && ok2 && ok3) { S.solved = true; save(); showSolution(sol); pushMsg('yelu', '……你找到我了。謝謝你比他們早一步。我會照你的建議處理。'); }
+    if (ok1 && ok2 && ok3) { S.solved = true; save(); track('case-solved', { case: '01', rank: String(rankFor()[2]) }); showSolution(sol); pushMsg('yelu', '……你找到我了。謝謝你比他們早一步。我會照你的建議處理。'); }
     else { $('#fb4', f).textContent = '✓ 你指認的人沒錯。把上面錯的題目修正後再交一次，才能結案。'; }
   });
 };
@@ -1190,7 +1196,7 @@ function rankFor() {
   let lv = S.hints === 0 && S.wrong === 0 ? 0 : S.hints <= 3 && S.wrong <= 1 ? 1 : 2;
   if (S.mistakes) lv = Math.min(2, lv + 1);  // uploaded the original photo to a third-party site
   const stats = lv === 0 ? '沒看任何提示，一次就指認正確。' : `用了 ${S.hints} 個提示、誤判 ${S.wrong} 次${S.mistakes ? '，還把原始照片上傳到線上工具' : ''}。`;
-  return [R[lv][0], stats + R[lv][1]];
+  return [R[lv][0], stats + R[lv][1], lv];
 }
 function showSolution(html) {
   const w = W.report || openApp('report');
