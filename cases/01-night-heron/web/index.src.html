@@ -46,6 +46,8 @@ button { font: inherit; color: inherit; }
 #menubar .menu-btn { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 2px 6px; border-radius: 4px; }
 #menubar .menu-btn:hover { background: var(--raise); color: var(--fg); }
 #menubar a.menu-btn { text-decoration: none; font-size: 13px; }
+.menu-items { display: flex; gap: 16px; align-items: center; }
+#moreBtn { display: none; }
 
 /* ---------- desktop ---------- */
 #desktop { position: fixed; inset: 0; background:
@@ -219,6 +221,18 @@ button { font: inherit; color: inherit; }
 .f-act:hover { border-color: var(--accent); }
 .v-h { font-size: 11.5px; color: var(--muted); letter-spacing: .08em; margin: 14px 0 4px; font-weight: 500; }
 .v-none { color: var(--muted); margin: 0 0 8px; }
+.term-build { background: var(--term-bg); border-top: 1px solid var(--line); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; max-height: 48%; overflow-y: auto; }
+.term-build[hidden] { display: none; }
+.tb-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tb-label { font-size: 11px; color: var(--term-dim); width: 100%; }
+.tb-chip { font-family: var(--font-mono); font-size: 14px; min-height: 40px; padding: 0 12px; background: var(--panel-2); border: 1px solid var(--line); color: var(--term-fg); border-radius: 8px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-chip.on { border-color: var(--accent); color: var(--accent); }
+.tb-chip.arg { font-size: 13px; }
+.tb-chip:disabled, .tb-run:disabled { opacity: .4; cursor: default; }
+.tb-run { min-height: 44px; padding: 0 18px; margin-left: auto; background: var(--accent); color: var(--accent-ink); font-weight: 700; border: 0; border-radius: 8px; font-size: 15px; cursor: pointer; }
+.tb-pattern input { flex: 1; min-width: 0; min-height: 40px; background: var(--desk); border: 1px solid var(--line); border-radius: 8px; color: var(--fg); font-size: 16px; padding: 0 10px; }
+.v-details > summary { cursor: pointer; color: var(--muted); font-size: 12px; padding: 2px 0; }
+
 /* ---------- board ---------- */
 .board { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
 .board h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .12em; color: var(--muted); font-weight: 500; }
@@ -308,9 +322,41 @@ button { font: inherit; color: inherit; }
   .f-side button { width: auto; white-space: nowrap; }
   .viewer { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
   .v-info { border-left: 0; border-top: 1px solid var(--line); max-height: 34%; }
+  #dock { gap: 3px; padding: 6px; }
   .dock-btn { width: 46px; }
-  .dock-btn .lb { font-size: 9.5px; }
-  #menubar .app-name { display: none; }
+  .dock-btn .lb { font-size: 10px; }
+  .v-tools { white-space: nowrap; }
+  /* phone chrome: a 44px menu bar with the app's name, no window title bars */
+  #menubar { height: calc(44px + env(safe-area-inset-top, 0px)); gap: 8px; padding-right: 4px; font-size: 14px; }
+  #menubar .brand-t, #menubar .clock-date { display: none; }
+  #menubar .app-name { display: block; color: var(--fg); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #moreBtn { display: block; width: 44px; height: 44px; font-size: 22px; line-height: 1; color: var(--fg); }
+  .menu-items { display: none; position: fixed; top: calc(46px + env(safe-area-inset-top, 0px)); right: 8px; flex-direction: column; align-items: stretch; gap: 2px; min-width: 180px; padding: 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 16px 40px rgba(0,0,0,.5); z-index: 9600; }
+  #menubar.open .menu-items { display: flex; }
+  #menubar .menu-items .menu-btn { min-height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; color: var(--fg); text-align: left; }
+  .win { top: calc(44px + env(safe-area-inset-top, 0px)) !important; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+  .titlebar { display: none; }
+  body.kbd #dock { display: none; }
+  body.kbd .win { bottom: 0; }
+  /* notifications: one at a time, and taps pass straight through to the page */
+  #toasts { top: calc(50px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; max-width: none; pointer-events: none; z-index: 8900; }  /* under the menu bar's "⋯" sheet */
+  .toast { pointer-events: none; padding: 8px 12px; opacity: .96; }
+  /* touch targets */
+  .chip, .reply-opt, .site-btn, .th-chip, .th-run, .th-toggle, .f-act, .submit { min-height: 44px; }
+  .chip, .th-chip, .th-run, .th-toggle, .f-act { padding-inline: 14px; font-size: 14px; }
+  .pin-btn { min-height: 36px; padding: 4px 12px; font-size: 13px; }
+  .f-row { min-height: 48px; }
+  .f-side button, .br-bm button { min-height: 40px; }
+  .br-nav button { width: 40px; height: 40px; }
+  .br-url { height: 40px; }
+  .sus .marks button { min-height: 40px; font-size: 13px; }
+  .chat-item { min-height: 52px; }
+  .v-tools button { min-width: 44px; min-height: 44px; }
+  .report label { min-height: 40px; }
+  /* 16px inputs keep iOS from zooming the page on focus */
+  .br-url input, .term-in input, .sus textarea, .report select, .site input { font-size: 16px; }
+  .term { font-size: 11.5px; }
+  .v-info { max-height: 45%; padding: 10px 14px; }
 }
 </style>
 
@@ -358,12 +404,15 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
 </div>
 
 <div id="menubar">
-  <div class="brand"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M30 78 C45 52, 62 44, 88 40 C78 48, 74 56, 72 66 C66 72, 50 78, 30 78 Z" fill="#e3a33b"/></svg>霧港工作站</div>
+  <div class="brand"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M30 78 C45 52, 62 44, 88 40 C78 48, 74 56, 72 66 C66 72, 50 78, 30 78 Z" fill="#e3a33b"/></svg><span class="brand-t">霧港工作站</span></div>
   <div class="app-name" id="appName">加密通訊</div>
   <div class="spacer"></div>
-  <a class="menu-btn" href="night-heron.pdf" download="夜鷺事件.pdf" title="可列印的 PDF 版，解答在最後幾頁">PDF 版</a>
-  <button class="menu-btn" id="resetBtn" type="button">重新開始</button>
-  <div class="clock" id="clock">9月16日 週三 21:17</div>
+  <div class="menu-items" id="menuItems">
+    <a class="menu-btn" href="night-heron.pdf" download="夜鷺事件.pdf" title="可列印的 PDF 版，解答在最後幾頁">PDF 版</a>
+    <button class="menu-btn" id="resetBtn" type="button">重新開始</button>
+  </div>
+  <div class="clock" id="clock"><span class="clock-date">9月16日 週三 </span><span id="clockTime">21:17</span></div>
+  <button class="menu-btn" id="moreBtn" type="button" aria-label="更多選項" aria-expanded="false" aria-controls="menuItems">⋯</button>
 </div>
 
 <div id="windows"></div>
@@ -395,7 +444,7 @@ function track(name, data) { try { if (window.umami) window.umami.track(name, da
    STATE
    ===================================================================== */
 const SKEY = 'yelu-web-v2';
-const fresh = () => ({ phase: 'intro', intro: { node: 'n1', shown: 0 }, introLog: [], fileAccepted: false, disc: {}, pins: [], marks: {}, notes: {}, downloads: [], social: {}, hints: 0, wrong: 0, solved: false, yelu: [], awu: [], unread: { yelu: 0, awu: 0 }, start: Date.now(), report: {}, helper: false, coach: 0, mistakes: 0, uploaded: [], peekLast: '' });
+const fresh = () => ({ phase: 'intro', intro: { node: 'n1', shown: 0 }, introLog: [], fileAccepted: false, disc: {}, pins: [], marks: {}, notes: {}, downloads: [], social: {}, hints: 0, wrong: 0, solved: false, yelu: [], awu: [], unread: { yelu: 0, awu: 0 }, start: Date.now(), report: {}, termKeyboard: false, helper: false, coach: 0, mistakes: 0, uploaded: [], peekLast: '' });
 let S = fresh();
 function save() { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} }
 function load() { try { const v = JSON.parse(localStorage.getItem(SKEY) || 'null'); return v && typeof v === 'object' ? Object.assign(fresh(), v) : null; } catch (e) { return null; } }
@@ -419,8 +468,8 @@ function toast(title, body, onClick) {
   el.onclick = () => { el.remove(); onClick && onClick(); };
   const box = $('#toasts');
   box.appendChild(el);
-  while (box.children.length > 3) box.firstElementChild.remove();
-  setTimeout(() => el.remove(), 5200);
+  while (box.children.length > (isPhone() ? 1 : 3)) box.firstElementChild.remove();
+  setTimeout(() => el.remove(), isPhone() ? 3500 : 5200);
 }
 function discover(id) {
   if (S.disc[id]) return;
@@ -834,15 +883,47 @@ INIT.viewer = w => {
   w.body.innerHTML = `<div class="viewer"><div class="v-stage"><div class="v-empty">還沒有開啟任何圖片。<br>在「檔案」的下載項目，或論壇附件上點一下就能打開。</div></div><aside class="v-info"></aside></div>`;
   const st = $('.v-stage', w.body);
   st.addEventListener('wheel', e => { if (!vw.file) return; e.preventDefault(); const r = st.getBoundingClientRect(); zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
-  st.addEventListener('dblclick', e => { if (!vw.file) return; const r = st.getBoundingClientRect(); zoomAt(2, e.clientX - r.left, e.clientY - r.top); });
+  st.addEventListener('dblclick', e => { if (!vw.file || vw.ptype !== 'mouse') return; const r = st.getBoundingClientRect(); zoomAt(2, e.clientX - r.left, e.clientY - r.top); });
+  // One finger (or the mouse) drags, two fingers pinch, a quick double tap zooms in.
+  const pts = new Map();
+  let pinch = null, pan = null, lastTap = 0;
   st.addEventListener('pointerdown', e => {
     if (!vw.file || e.target.closest('.v-tools')) return;
-    const sx = e.clientX, sy = e.clientY, ox = vw.x, oy = vw.y;
+    vw.ptype = e.pointerType;
     st.setPointerCapture(e.pointerId);
-    const mv = ev => { vw.x = ox + ev.clientX - sx; vw.y = oy + ev.clientY - sy; applyView(); };
-    const up = () => { st.removeEventListener('pointermove', mv); st.removeEventListener('pointerup', up); checkRegions(); };
-    st.addEventListener('pointermove', mv); st.addEventListener('pointerup', up);
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) { const [p, q] = [...pts.values()]; pinch = { d: Math.hypot(p.x - q.x, p.y - q.y) || 1, s: vw.s }; pan = null; }
+    else if (pts.size === 1) pan = { sx: e.clientX, sy: e.clientY, ox: vw.x, oy: vw.y, moved: false };
   });
+  st.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pts.size === 2) {
+      const [p, q] = [...pts.values()], r = st.getBoundingClientRect();
+      zoomAt(pinch.s * Math.hypot(p.x - q.x, p.y - q.y) / pinch.d / vw.s, (p.x + q.x) / 2 - r.left, (p.y + q.y) / 2 - r.top, true);
+    } else if (pan) {
+      const dx = e.clientX - pan.sx, dy = e.clientY - pan.sy;
+      if (Math.abs(dx) + Math.abs(dy) > 6) pan.moved = true;
+      vw.x = pan.ox + dx; vw.y = pan.oy + dy; applyView();
+    }
+  });
+  const lift = e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId);
+    if (pinch) {
+      if (pts.size < 2) { pinch = null; const [p] = [...pts.values()]; pan = p ? { sx: p.x, sy: p.y, ox: vw.x, oy: vw.y, moved: true } : null; checkRegions(); }
+      return;
+    }
+    if (pts.size) return;
+    if (pan && !pan.moved && e.pointerType !== 'mouse') {
+      const now = Date.now();
+      if (now - lastTap < 320) { const r = st.getBoundingClientRect(); zoomAt(2, e.clientX - r.left, e.clientY - r.top); lastTap = 0; }
+      else lastTap = now;
+    }
+    pan = null; checkRegions();
+  };
+  st.addEventListener('pointerup', lift);
+  st.addEventListener('pointercancel', lift);
   st.addEventListener('click', e => {
     const b = e.target.closest('[data-z]'); if (!b) return;
     const r = st.getBoundingClientRect();
@@ -865,10 +946,10 @@ function openImage(fn) {
   const cam = !downloaded ? '' : info.full
     ? `<h4 class="v-h">相機資訊</h4><dl>${CAMERA_INFO.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`
     : `<h4 class="v-h">相機資訊</h4><p class="v-none">這個檔案沒有相機資訊。</p>`;
-  $('.v-info', w.body).innerHTML = `<h4 class="v-h" style="margin-top:0">檔案</h4><dl><dt>檔名</dt><dd>${esc(fn)}</dd><dt>尺寸</dt><dd>${info.w} × ${info.h}</dd><dt>檔案大小</dt><dd>${info.size}</dd><dt>存放位置</dt><dd>${downloaded ? '~/Downloads' : '（網頁預覽，尚未下載）'}</dd></dl>${cam}
-  <div class="tip">${downloaded ? `這裡只列出常見欄位，有些欄位不會顯示。要讀完整的中繼資料，請用終端機：<br><code>cd Downloads</code><br><code>exiftool ${esc(fn)}</code>` : '要查看相機資訊，請先把原始檔<b>下載</b>下來。'}</div>
+  $('.v-info', w.body).innerHTML = `<details class="v-details"${isPhone() ? '' : ' open'}><summary>檔案資訊</summary><h4 class="v-h" style="margin-top:6px">檔案</h4><dl><dt>檔名</dt><dd>${esc(fn)}</dd><dt>尺寸</dt><dd>${info.w} × ${info.h}</dd><dt>檔案大小</dt><dd>${info.size}</dd><dt>存放位置</dt><dd>${downloaded ? '~/Downloads' : '（網頁預覽，尚未下載）'}</dd></dl>${cam}
+  <div class="tip">${downloaded ? '這裡只列出常見欄位，有些欄位不會顯示。用 EXIF 工具可以讀到更完整的中繼資料。' : '要查看相機資訊，請先把原始檔<b>下載</b>下來。'}</div>
   <p style="font-size:12px;margin-top:10px"><a href="${info.src}" download="${esc(fn)}" style="color:var(--accent)">把這個檔案存到你的電腦</a><br><span style="color:var(--muted)">它是真的 JPEG，也可以用你自己的工具檢查。</span></p>
-  <p style="color:var(--muted);font-size:12px;margin-top:12px">操作：滾輪或 ＋／－ 縮放，拖曳移動，雙擊放大。</p>`;
+  <p style="color:var(--muted);font-size:12px;margin-top:12px">操作：${isPhone() ? '兩指縮放，拖曳移動，點兩下放大。' : '滾輪或 ＋／－ 縮放，拖曳移動，雙擊放大。'}</p></details>`;
   requestAnimationFrame(fitView);
   if (downloaded && info.full) { discover('nogps'); setTimeout(() => discover('model'), 700); }
   else if (downloaded) discover('strip');
@@ -880,11 +961,12 @@ function fitView() {
   vw.bw = bw; vw.bh = bh; vw.s = 1; vw.x = (r.width - bw) / 2; vw.y = (r.height - bh) / 2;
   applyView();
 }
-function zoomAt(f, cx, cy) {
+function zoomAt(f, cx, cy, live) {
   const ns = Math.min(8, Math.max(1, vw.s * f));
   const k = ns / vw.s;
   vw.x = cx - (cx - vw.x) * k; vw.y = cy - (cy - vw.y) * k; vw.s = ns;
-  applyView(); checkRegions();
+  applyView();
+  if (!live) checkRegions();  // during a pinch, check once the fingers lift
 }
 function applyView() {
   const c = $('.v-canvas', W.viewer.body); if (!c) return;
@@ -905,9 +987,9 @@ function checkRegions() {
 /* ---------- terminal ---------- */
 let term = { cwd: '~', hist: [], hi: 0 };
 INIT.terminal = w => {
-  w.body.innerHTML = `<div class="term" role="log"><div class="out"></div><form class="term-in"><span class="prompt"></span><input aria-label="終端機指令" autocomplete="off" autocapitalize="off" spellcheck="false"></form></div><div class="term-help"></div>`;
+  w.body.innerHTML = `<div class="term" role="log"><div class="out"></div><form class="term-in"><span class="prompt"></span><input aria-label="終端機指令" autocomplete="off" autocapitalize="off" spellcheck="false"></form></div><div class="term-build" hidden></div><div class="term-help"></div>`;
   const t = $('.term', w.body), inp = $('input', w.body);
-  t.addEventListener('click', () => { if (!window.getSelection().toString()) inp.focus(); });
+  t.addEventListener('click', () => { if (!useBuilder() && !window.getSelection().toString()) inp.focus(); });
   $('form', w.body).addEventListener('submit', e => { e.preventDefault(); const v = inp.value; inp.value = ''; runCmd(v); });
   inp.addEventListener('keydown', e => {
     if (e.key === 'ArrowUp') { e.preventDefault(); if (term.hi > 0) { term.hi--; inp.value = term.hist[term.hi] || ''; } }
@@ -919,11 +1001,66 @@ INIT.terminal = w => {
     const c = e.target.closest('[data-cmd]'); if (c) { inp.value = c.dataset.cmd; inp.focus(); return; }
     if (e.target.closest('[data-run]')) { $('form', w.body).requestSubmit(); return; }
     if (e.target.closest('[data-helper]')) setHelper(!S.helper);
+    if (e.target.closest('[data-tbmode]')) { S.termKeyboard = false; save(); renderBuilder(); renderTermHelp(); }
   });
+  $('.term-build', w.body).addEventListener('click', builderClick);
+  $('.term-build', w.body).addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('#tbPattern').value.trim(); if (!v) return;
+    tb.args = [/\s/.test(v) ? `"${v}"` : v]; renderBuilder();
+  });
+  window.matchMedia('(max-width: 760px)').addEventListener('change', () => { renderBuilder(); renderTermHelp(); });
   out(`<span class="a">霧港工作站 03</span> · bash 5.2\n輸入 <span class="k">help</span> 查看可用指令。\n`);
   updPrompt();
   renderTermHelp();
+  renderBuilder();
 };
+/* Phones build commands by tapping instead of typing: pick a command, then a file or
+   folder from the current directory. The composed line shows in the prompt before it runs. */
+let tb = { cmd: '', args: [] };
+const TB_CMDS = ['ls', 'cd', 'cat', 'exiftool', 'grep', 'file', 'help', 'clear'];
+const useBuilder = () => isPhone() && !S.termKeyboard;
+function tbArgs() {
+  const c = term.cwd, items = DIRS[c] ? DIRS[c]() : [];
+  const dirs = items.filter(n => n.endsWith('/')).map(n => n.slice(0, -1));
+  const files = items.filter(n => !n.endsWith('/'));
+  const nested = dirs.flatMap(d => (DIRS[c + '/' + d] ? DIRS[c + '/' + d]() : []).filter(n => !n.endsWith('/')).map(n => d + '/' + n));
+  const globs = [...new Set(files.concat(nested).map(n => n.replace(/[^/]+(\.\w+)$/, '*$1')))].filter(g => files.concat(nested).filter(n => n.replace(/[^/]+(\.\w+)$/, '*$1') === g).length > 1);
+  if (tb.cmd === 'cd') return dirs.concat(c === '~' ? [] : ['..', '~']);
+  if (tb.cmd === 'ls') return dirs;
+  if (tb.cmd === 'exiftool') return files.concat(nested).sort((x, y) => /\.jpg$/.test(y) - /\.jpg$/.test(x));
+  if (tb.cmd === 'cat' || tb.cmd === 'file') return files.concat(nested);
+  if (tb.cmd === 'grep') return tb.args.length ? globs.concat(files, nested) : [];
+  return [];
+}
+function renderBuilder() {
+  const w = W.terminal; if (!w) return;
+  const box = $('.term-build', w.body), inp = $('input', w.body), on = useBuilder();
+  box.hidden = !on;
+  inp.readOnly = on;
+  inp.setAttribute('inputmode', on ? 'none' : 'text');
+  if (!on) return;
+  const line = [tb.cmd, ...tb.args].filter(Boolean).join(' ');
+  inp.value = line;
+  const args = tb.cmd ? tbArgs() : [];
+  const needPattern = tb.cmd === 'grep' && !tb.args.length;
+  box.innerHTML = `<div class="tb-row"><span class="tb-label">指令</span>${TB_CMDS.map(c => `<button type="button" class="tb-chip${tb.cmd === c ? ' on' : ''}" data-tb-cmd="${c}">${c}</button>`).join('')}</div>`
+    + (needPattern ? `<form class="tb-row tb-pattern"><span class="tb-label">要找的字</span><input id="tbPattern" aria-label="grep 要找的字" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="submit" class="tb-chip">加入</button></form>` : '')
+    + (args.length ? `<div class="tb-row"><span class="tb-label">${tb.cmd === 'cd' || tb.cmd === 'ls' ? '資料夾' : '檔案'}</span>${args.map(x => `<button type="button" class="tb-chip arg${tb.args.includes(x) ? ' on' : ''}" data-tb-arg="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : '')
+    + `<div class="tb-row tb-actions"><button type="button" class="tb-chip" data-tb="back"${line ? '' : ' disabled'} aria-label="刪掉最後一段">⌫</button><button type="button" class="tb-chip" data-tb="hist"${term.hist.length ? '' : ' disabled'}>↑ 上一個</button><button type="button" class="tb-chip" data-tb="kbd">⌨ 自己打字</button><button type="button" class="tb-run" data-tb="run"${line ? '' : ' disabled'}>執行 ↵</button></div>`;
+}
+function builderClick(e) {
+  const c = e.target.closest('[data-tb-cmd]');
+  if (c) { tb = { cmd: c.dataset.tbCmd, args: [] }; renderBuilder(); return; }
+  const a = e.target.closest('[data-tb-arg]');
+  if (a) { const v = a.dataset.tbArg; tb.args = tb.cmd === 'grep' ? [tb.args[0], v] : [v]; renderBuilder(); return; }
+  const act = e.target.closest('[data-tb]'); if (!act || act.disabled) return;
+  const k = act.dataset.tb;
+  if (k === 'back') { if (tb.args.length) tb.args.pop(); else tb.cmd = ''; renderBuilder(); }
+  else if (k === 'hist') { const last = (term.hist[term.hist.length - 1] || '').match(/"[^"]*"|\S+/g) || []; tb = { cmd: last[0] || '', args: last.slice(1) }; renderBuilder(); }
+  else if (k === 'kbd') { S.termKeyboard = true; save(); renderBuilder(); renderTermHelp(); const inp = $('input', W.terminal.body); inp.value = ''; inp.focus(); }
+  else if (k === 'run') { const line = [tb.cmd, ...tb.args].filter(Boolean).join(' '); tb = { cmd: '', args: [] }; runCmd(line); }
+}
 function termSuggestions() {
   const c = term.cwd;
   if (c === '~') return ['ls', 'cd Downloads', 'cd 夜鷺匯出', 'help'];
@@ -936,7 +1073,7 @@ function renderTermHelp() {
   const w = W.terminal; if (!w) return;
   $('.term-help', w.body).innerHTML = (S.helper
     ? `<span class="th-label">建議指令（點一下會填入）</span>${termSuggestions().map(c => `<button type="button" class="th-chip" data-cmd="${esc(c)}">${esc(c)}</button>`).join('')}<button type="button" class="th-run" data-run>執行 ↵</button>`
-    : '') + `<button type="button" class="th-toggle" data-helper aria-pressed="${S.helper}">新手輔助：${S.helper ? '開' : '關'}</button>`;
+    : '') + (isPhone() && S.termKeyboard ? `<button type="button" class="th-toggle" data-tbmode>改用指令積木</button>` : '') + `<button type="button" class="th-toggle" data-helper aria-pressed="${S.helper}">新手輔助：${S.helper ? '開' : '關'}</button>`;
 }
 function setHelper(on) {
   S.helper = on; save();
@@ -962,6 +1099,7 @@ function coachAfter(line) {
 function openTermExif(path) {
   const w = openApp('terminal'); if (!w) return;
   term.cwd = path.slice(0, path.lastIndexOf('/')); updPrompt(); renderTermHelp();
+  if (useBuilder()) { tb = { cmd: 'exiftool', args: [path.split('/').pop()] }; renderBuilder(); return; }
   const inp = $('input', w.body); inp.value = 'exiftool ' + path.split('/').pop(); inp.focus();
 }
 const promptStr = () => `<span class="p">investigator@mistport</span>:<span class="k">${esc(term.cwd)}</span>$ `;
@@ -1089,11 +1227,12 @@ function runCmd(raw) {
   else if (['sudo', 'rm', 'ssh', 'curl', 'wget', 'vim', 'nano'].includes(cmd)) out(`<span class="e">${esc(cmd)}: 這台工作站停用了這個指令。專心查案吧。</span>`);
   else out(`<span class="e">${esc(cmd)}: command not found</span> <span class="d">（輸入 help 查看可用指令）</span>`);
   renderTermHelp();
+  renderBuilder();
   coachAfter(line);
 }
 function exif(p) {
   const name = p.split('/').pop();
-  const row = (k, v) => `<span class="k">${k.padEnd(32)}</span>: ${esc(v)}`;
+  const row = (k, v) => `<span class="k">${k.padEnd(isPhone() ? 24 : 32)}</span>: ${esc(v)}`;
   if (!/\.jpg$/.test(name)) {
     out([row('ExifTool Version Number', '12.76'), row('File Name', name), row('File Size', sizeOf(p)), row('File Type', 'TXT'), row('MIME Type', 'text/plain')].join('\n'));
     return;
@@ -1231,7 +1370,15 @@ function resetGame(force) {
   boot();
 }
 $('#resetBtn').onclick = () => resetGame(false);
-function tick() { const t = S.phase === 'intro' ? introTm() : gameTime(); $('#clock').textContent = `9月16日 週三 ${t}`; }
+// Phone menu: the menu bar's items fold into a sheet behind "⋯".
+const setMenu = open => { $('#menubar').classList.toggle('open', open); $('#moreBtn').setAttribute('aria-expanded', String(open)); };
+$('#moreBtn').onclick = e => { e.stopPropagation(); setMenu(!$('#menubar').classList.contains('open')); };
+document.addEventListener('click', e => { if (!e.target.closest('#menuItems, #moreBtn') || (e.target.closest('#menuItems a'))) setMenu(false); });
+// Phones: hide the dock while the on-screen keyboard is up, so the field stays in view.
+const typingField = el => el && el.matches && el.matches('input:not([type=checkbox]):not([type=radio]), textarea, select') && !el.readOnly;
+document.addEventListener('focusin', e => { if (isPhone() && typingField(e.target)) document.body.classList.add('kbd'); });
+document.addEventListener('focusout', () => setTimeout(() => { if (!typingField(document.activeElement)) document.body.classList.remove('kbd'); }, 60));
+function tick() { $('#clockTime').textContent = S.phase === 'intro' ? introTm() : gameTime(); }
 function boot() {
   $('#sticky').hidden = S.phase === 'intro';
   renderDock();

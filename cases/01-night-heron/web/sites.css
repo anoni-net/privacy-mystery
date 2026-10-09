@@ -113,3 +113,7 @@
 .ep-table td:first-child { color: var(--web-muted); width: 40%; }
 .ep-fine { font-size: 11px; color: var(--web-muted); margin-top: 18px; }
 
+
+/* sponsored search result (the upload trap's lure) */
+.s-ad { background: #fffbea; border: 1px solid #f2e3a6; border-radius: 6px; padding: 10px 12px; margin-top: 4px; }
+.s-ad .ad { display: inline-block; font-size: 11px; font-weight: 600; color: #7a5b00; border: 1px solid #d9b84a; border-radius: 3px; padding: 0 5px; margin-right: 6px; font-family: var(--font-sans, sans-serif); }

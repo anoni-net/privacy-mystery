@@ -234,8 +234,10 @@ const FORUM_REPLIES = [
   ['B1', '09-14 23:05', '這個去識別化根本假的吧……生日＋郵遞區號就能對回去了'],
   ['B2', '09-14 23:20', '樓主快跑，公司一定會查'],
   ['B3', '09-15 00:41', '提醒一下，這個論壇不會幫你處理照片，上傳什麼就是什麼。懂的就懂。'],
-  ['B4', '09-15 08:12', '已截圖備份'],
-  ['B5', '09-15 12:30', '心跳鳥公關說「所有資料皆經過去識別化」，笑死'],
+  // The upload trap's lure: a helpful stranger at exactly the moment players want the photo's data.
+  ['B4', '09-15 00:58', '想看照片拍攝資訊的話，丟 ExifPeek 就好，不用裝任何軟體。', 'exifpeek.example'],
+  ['B5', '09-15 08:12', '已截圖備份'],
+  ['B6', '09-15 12:30', '心跳鳥公關說「所有資料皆經過去識別化」，笑死'],
 ];
 const SEARCH_TIPS = ['心跳鳥', 'EXIF', '時區', 'PXL', '洋蔥貓', 'Hotel Sakura'];
 
@@ -282,11 +284,15 @@ function makeSites(ctx) {
     const tips = ctx.searchTips === false ? '' : `<div class="s-tips">試試：${SEARCH_TIPS.map(esc).join('、')}、人名</div>`;
     return `<div class="site"><div class="s-home"><div class="s-logo">霧搜<small>MIST SEARCH · 不追蹤你的搜尋引擎</small></div>${searchBox()}${tips}</div></div>`;
   }
+  // A sponsored result sits on top of any search about photo data, the way real ads do.
+  const AD_WORDS = ['exif', '照片', '相片', '中繼', 'metadata', '時區', 'pxl', '相機', '拍攝', 'gps', '工具'];
+  const ad = q => AD_WORDS.some(k => q.toLowerCase().includes(k))
+    ? `<div class="s-res s-ad"><div class="u"><span class="ad">廣告</span>exifpeek.example</div>${a('exifpeek.example', '免費線上 EXIF 檢視器｜上傳照片，立即看到所有拍攝資訊')}<p>不用安裝軟體、不用打指令。相機型號、拍攝時間、時區、GPS，一次看清楚。</p></div>` : '';
   function searchResults(q) {
     const hits = searchHits(q);
     const list = hits.length ? hits.map(r => `<div class="s-res"><div class="u">${esc(r.url)}</div>${r.ext ? ext(r.ext, esc(r.title)) : a(r.url, esc(r.title))}<p>${esc(r.snip)}</p></div>`).join('')
       : `<p>找不到和「${esc(q)}」相關的結果。</p><p class="muted">換個關鍵字試試，例如：心跳鳥、EXIF、時區、PXL、洋蔥貓、Hotel Sakura，或某個人的名字。</p>`;
-    return `<div class="site"><div class="wrap"><div style="margin-bottom:10px">${searchBox(q)}</div><p class="muted" style="font-size:12.5px">約 ${hits.length} 項結果</p>${list}</div></div>`;
+    return `<div class="site"><div class="wrap"><div style="margin-bottom:10px">${searchBox(q)}</div><p class="muted" style="font-size:12.5px">約 ${hits.length} 項結果</p>${ad(q)}${list}</div></div>`;
   }
   function forumHome() {
     return `<div class="site forum"><div class="f-bar"><b>無名廣場</b><span>匿名說真話 · 科技業板</span></div><div class="wrap">${FORUM_THREADS.map(([u, t, m]) => u ? `<a class="f-thread" ${ctx.href(u)}><b>${esc(t)}</b><br><small>${m}</small></a>` : `<div class="f-thread" style="opacity:.7"><b>${esc(t)}</b><br><small>${m}</small></div>`).join('')}</div></div>`;
@@ -300,7 +306,7 @@ function makeSites(ctx) {
   <p class="muted" style="font-size:12px;margin:6px 0 0">這是一張真的 JPEG。想用自己電腦上的 exiftool 驗證，可以<a href="${ctx.asset(PXL)}" download style="color:#1a3d8f">另存到你的電腦</a>。</p>
   </div>
   <h3 style="font-size:14px">回覆</h3>
-  ${FORUM_REPLIES.map(([f, t, x]) => `<div class="f-reply"><span class="mono muted" style="font-size:11.5px">${f} · ${t}</span><br>${esc(x)}</div>`).join('')}
+  ${FORUM_REPLIES.map(([f, t, x, url]) => `<div class="f-reply"><span class="mono muted" style="font-size:11.5px">${f} · ${t}</span><br>${esc(x)}${url ? ' ' + a(url, esc(url)) : ''}</div>`).join('')}
   </div></div>`;
   }
   const picBar = (v = '') => `<div class="p-bar"><a class="p-logo" ${ctx.href('picnote.social')}>PicNote</a>${ctx.form('picnote.social/search?q=', v, 'p-search', '搜尋使用者或姓名', '搜尋')}</div>`;

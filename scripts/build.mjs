@@ -76,7 +76,7 @@ const doc = `<!doctype html>
 <html lang="zh-Hant-TW">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="隱私推理遊戲：從一張照片的中繼資料、背景與文字習慣，找出不小心暴露身分的吹哨者。">
 ${analytics}${page.slice(0, cut).trim()}
