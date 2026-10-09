@@ -62,12 +62,16 @@ cases/01-night-heron/
   art/                 圖片的 SVG 原稿
   solution.enc         加密的解答
   solution.en.enc      加密的英文解答，鑰匙相同
+  og.png、og.en.png    案件的社群分享預覽圖
+site/                  複製到網站最上層：icon 與大廳的分享預覽圖
 scripts/
   build.mjs            建置網站
   static.mjs           產生靜態版
   pdf.mjs              產生 PDF 版，版面也寫在這裡
   lobby.mjs            產生大廳（委託板）
   case-data.mjs        在 Node 讀取 case.js
+  meta.mjs             每一頁共用的 icon 與分享預覽標籤
+  make_og.mjs          產生 PNG icon 與分享預覽圖
   encrypt.mjs          加密解答
   decrypt.mjs          解密解答
   make_images.py       PNG 轉 JPEG 並寫入 EXIF
@@ -75,6 +79,7 @@ tools/
   deploy-m6.sh         anoni.net 主機的自動部署
   chrome-docker.sh     在容器裡執行 Chromium 產生 PDF
   pdf/Dockerfile       上面那個容器的映像
+  og/                  分享預覽圖的版型與 anoni.net logo
 ```
 
 ## 建置
@@ -153,6 +158,16 @@ python3 scripts/make_images.py <PNG 所在資料夾> cases/01-night-heron
 
 腳本只會在爆料照片寫入故事需要的 EXIF（Pixel 7a、時區 +09:00、沒有 GPS），社群照片則不帶任何拍攝資訊，模擬社群平台在上傳時清除中繼資料。
 
+### icon 與分享預覽圖
+
+icon 的原稿是 `site/favicon.svg`，分享預覽圖照文件站的[社群分享卡](https://anoni.net/docs/community/visual-guide/)版型，版面在 `tools/og/og.html`。改了 icon、版型，或案件 `case.json` 的標題、引言、簡介之後，重新產生 PNG：
+
+```sh
+node scripts/make_og.mjs --fonts <放 Noto Sans TC 與 Public Sans 的資料夾>
+```
+
+需要 Chrome、Chromium 或 Brave。字型已經安裝在系統上的話可以省略 `--fonts`。產生的 PNG 直接進 repo，建置與部署都不需要執行這支腳本。新增案件時記得一起產生它的預覽圖。
+
 ## 延伸閱讀
 
 - [anoni.net 文件庫：概念篇](https://anoni.net/docs/basics/)
@@ -229,12 +244,16 @@ cases/01-night-heron/
   art/                 SVG sources for the images
   solution.enc         encrypted solution
   solution.en.enc      encrypted English solution, same key
+  og.png, og.en.png    the case's social preview images
+site/                  copied to the top of the site: icons and the lobby's preview images
 scripts/
   build.mjs            build the site
   static.mjs           generate the static edition
   pdf.mjs              generate the PDF edition, including its layout
   lobby.mjs            generate the lobby (case board)
   case-data.mjs        load case.js in Node
+  meta.mjs             icon and preview tags shared by every page
+  make_og.mjs          draw the PNG icons and the preview images
   encrypt.mjs          encrypt a solution
   decrypt.mjs          decrypt a solution
   make_images.py       convert PNG to JPEG and write EXIF
@@ -242,6 +261,7 @@ tools/
   deploy-m6.sh         automatic deployment on the anoni.net server
   chrome-docker.sh     run Chromium in a container to print the PDF
   pdf/Dockerfile       image for that container
+  og/                  preview image layout and the anoni.net logo
 ```
 
 ## Building
@@ -319,6 +339,16 @@ python3 scripts/make_images.py <folder with the PNGs> cases/01-night-heron
 ```
 
 The script writes the EXIF the story needs into the leaked photo only (Pixel 7a, time zone +09:00, no GPS). The social media photos carry no camera data, as social platforms strip metadata on upload.
+
+### Icons and preview images
+
+The icon's source is `site/favicon.svg`. The preview images follow the docs site's [share card](https://anoni.net/docs/en/community/visual-guide/) layout, set in `tools/og/og.html`. After changing the icon, the layout, or a case's title, hook or summary in `case.json`, regenerate the PNGs:
+
+```sh
+node scripts/make_og.mjs --fonts <folder with Noto Sans TC and Public Sans>
+```
+
+It needs Chrome, Chromium or Brave, and `--fonts` can be left out when both fonts are installed. The PNGs are committed, so neither the build nor the deployment runs this script. A new case needs its preview images generated too.
 
 ## Further reading
 
