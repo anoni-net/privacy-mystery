@@ -557,11 +557,44 @@ function discover(id) {
   S.disc[id] = Date.now();
   save();
   toast(UI.clueToast, DISC[id].t, () => openApp('board'));
-  if (REACT[id]) setTimeout(() => pushMsg('yelu', REACT[id]), 1600);
+  if (REACT[id]) setTimeout(() => pushMsg('yelu', ['react', id]), 1600);
   if (W.board) renderBoard();
 }
-function pushMsg(thread, text, me = false) {
-  S[thread].push({ text, me, tm: gameTime() });
+/* Chat messages are saved with a reference to where their text comes from (r) as well as the
+   text itself, and shown in the language of the page. Both languages share one save, so a
+   player who switches language mid-game sees the whole conversation in the new language.
+     ['intro', node, i]    the whistleblower's i-th message in the opening node
+     ['choice', node, i]   the player's i-th reply in that node
+     ['react', clue]       the whistleblower's reaction to a clue
+     ['hint', n]           Fog's n-th hint
+     ['ui', key, ...args]  interface text: a string, an array item (args[0]) or a function call */
+function refText(r) {
+  try {
+    if (r[0] === 'intro') return INTRO[r[1]].msgs[r[2]];
+    if (r[0] === 'choice') return INTRO[r[1]].choices[r[2]][0];
+    if (r[0] === 'react') return REACT[r[1]];
+    if (r[0] === 'hint') return UI.hintLine(r[1], HINTS.length, HINTS[r[1] - 1]);
+    if (r[0] === 'ui') { const v = UI[r[1]]; return typeof v === 'function' ? v(...r.slice(2)) : Array.isArray(v) ? v[r[2]] : v; }
+  } catch (e) {}
+  return null;
+}
+const msgText = m => (m.r && refText(m.r)) || m.sys || m.file || m.text || '';
+// Saves made before messages carried a reference: find one by matching the saved text against
+// this language's text, so later language switches work for them too.
+function addRefs() {
+  const known = new Map();
+  const add = (r, t) => { if (typeof t === 'string' && !known.has(t)) known.set(t, r); };
+  Object.keys(INTRO).forEach(n => { INTRO[n].msgs.forEach((t, i) => add(['intro', n, i], t)); (INTRO[n].choices || []).forEach(([t], i) => add(['choice', n, i], t)); });
+  Object.keys(REACT).forEach(k => add(['react', k], REACT[k]));
+  HINTS.forEach((h, i) => add(['hint', i + 1], refText(['hint', i + 1])));
+  ['zipName', 'zipReceived', 'caseOpen', 'hintsDone', 'hintAsk', 'coachDownloaded', 'coachAfterExif', 'yeluWrong', 'yeluSolved'].forEach(k => add(['ui', k], UI[k]));
+  [0, 1].forEach(i => add(['ui', 'trap', i], UI.trap[i]));
+  [true, false].forEach(b => { add(['ui', 'coachStart', b], UI.coachStart(b)); add(['ui', 'coachInDownloads', b], UI.coachInDownloads(b)); });
+  [S.introLog, S.yelu, S.awu].forEach(list => list.forEach(m => { if (!m.r) { const r = known.get(m.sys || m.file || m.text); if (r) m.r = r; } }));
+}
+function pushMsg(thread, r, me = false) {
+  const text = refText(r) || '';
+  S[thread].push({ text, r, me, tm: gameTime() });
   const active = W.chat && !W.chat.el.hidden && focused === 'chat' && chatThread === thread && (!isPhone() || chatShowsThread());
   if (!me && !active) { S.unread[thread]++; toast(thread === 'yelu' ? UI.yelu : UI.awu, text, () => { chatThread = thread; chatView = 'thread'; openApp('chat'); }); }
   save();
@@ -736,10 +769,10 @@ async function runIntro() {
       const text = node.msgs[S.intro.shown];
       await typing(text);
       if (gen !== introGen) { introBusy = false; return; }
-      logIntro({ text }); S.intro.shown++; save(); renderChat(); introNotify(text);
+      logIntro({ text, r: ['intro', S.intro.node, S.intro.shown] }); S.intro.shown++; save(); renderChat(); introNotify(text);
     }
     if (node.file) {
-      if (!S.intro.fileShown) { await typing('……'); if (gen !== introGen) { introBusy = false; return; } logIntro({ file: UI.zipName }); S.intro.fileShown = true; save(); renderChat(); introNotify(UI.zipSent); }
+      if (!S.intro.fileShown) { await typing('……'); if (gen !== introGen) { introBusy = false; return; } logIntro({ file: UI.zipName, r: ['ui', 'zipName'] }); S.intro.fileShown = true; save(); renderChat(); introNotify(UI.zipSent); }
       break; // wait for the player to accept
     }
     if (node.end) { startPlay(); break; }
@@ -753,7 +786,7 @@ function chooseReply(i) {
   const node = INTRO[S.intro.node];
   if (!node.choices || S.intro.shown < node.msgs.length || introBusy) return;
   const [text, next] = node.choices[i];
-  logIntro({ text, me: true });
+  logIntro({ text, me: true, r: ['choice', S.intro.node, i] });
   S.intro = { node: next, shown: 0 }; save(); renderChat();
   setTimeout(runIntro, 500);
 }
@@ -761,14 +794,14 @@ function acceptFile() {
   const node = INTRO[S.intro.node];
   if (!node.file || S.fileAccepted) return;
   S.fileAccepted = true;
-  logIntro({ sys: UI.zipReceived });
+  logIntro({ sys: UI.zipReceived, r: ['ui', 'zipReceived'] });
   S.intro = { node: node.next, shown: 0 }; save(); renderChat();
   setTimeout(runIntro, 300);
 }
 function startPlay() {
   S.phase = 'play'; S.start = Date.now();
   track('case-start', { case: '01' });
-  logIntro({ sys: UI.caseOpen });
+  logIntro({ sys: UI.caseOpen, r: ['ui', 'caseOpen'] });
   S.unread.awu = 1; save();
   try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
   $('#sticky').hidden = false;
@@ -781,10 +814,10 @@ function skipIntro() {
   let guard = 0;
   while (S.phase === 'intro' && guard++ < 100) {
     const node = INTRO[S.intro.node];
-    while (S.intro.shown < node.msgs.length) { logIntro({ text: node.msgs[S.intro.shown] }); S.intro.shown++; }
-    if (node.file) { if (!S.intro.fileShown) { logIntro({ file: UI.zipName }); S.intro.fileShown = true; } S.fileAccepted = true; logIntro({ sys: UI.zipReceived }); S.intro = { node: node.next, shown: 0 }; continue; }
+    while (S.intro.shown < node.msgs.length) { logIntro({ text: node.msgs[S.intro.shown], r: ['intro', S.intro.node, S.intro.shown] }); S.intro.shown++; }
+    if (node.file) { if (!S.intro.fileShown) { logIntro({ file: UI.zipName, r: ['ui', 'zipName'] }); S.intro.fileShown = true; } S.fileAccepted = true; logIntro({ sys: UI.zipReceived, r: ['ui', 'zipReceived'] }); S.intro = { node: node.next, shown: 0 }; continue; }
     if (node.end) { startPlay(); break; }
-    if (node.choices) { const [text, next] = node.choices[0]; logIntro({ text, me: true }); S.intro = { node: next, shown: 0 }; continue; }
+    if (node.choices) { const [text, next] = node.choices[0]; logIntro({ text, me: true, r: ['choice', S.intro.node, 0] }); S.intro = { node: next, shown: 0 }; continue; }
     S.intro = { node: node.next, shown: 0 };
   }
   save(); renderChat();
@@ -798,10 +831,11 @@ INIT.chat = w => {
     const b = e.target.closest('[data-act]'); if (!b) return;
     const act = b.dataset.act;
     if (act === 'hint') {
-      if (S.hints >= HINTS.length) { pushMsg('awu', UI.hintsDone); return; }
-      pushMsg('awu', UI.hintAsk, true);
-      const h = HINTS[S.hints]; S.hints++; save();
-      setTimeout(() => pushMsg('awu', UI.hintLine(S.hints, HINTS.length, h)), 600);
+      if (S.hints >= HINTS.length) { pushMsg('awu', ['ui', 'hintsDone']); return; }
+      pushMsg('awu', ['ui', 'hintAsk'], true);
+      S.hints++; save();
+      const n = S.hints;
+      setTimeout(() => pushMsg('awu', ['hint', n]), 600);
     } else if (act === 'open') openApp(b.dataset.app);
     else if (act === 'choice') chooseReply(+b.dataset.i);
     else if (act === 'accept') acceptFile();
@@ -818,7 +852,7 @@ function renderChat() {
   if (!intro) threads.push({ t: 'awu', nm: UI.awu, sub: UI.awuSub, av: UI.awuAvatar, bg: '#8fb3d9' });
   const phone = isPhone();
   $('.chat', w.body).classList.toggle('thread', chatShowsThread());
-  const last = t => { const m = (t === 'yelu' ? S.introLog.concat(S.yelu) : AWU_BASE.concat(S.awu)).filter(m => m.text || m.file).pop(); return m ? { text: m.file || m.text, tm: m.tm || '' } : { text: '', tm: '' }; };
+  const last = t => { const m = (t === 'yelu' ? S.introLog.concat(S.yelu) : AWU_BASE.concat(S.awu)).filter(m => m.text || m.file).pop(); return m ? { text: msgText(m), tm: m.tm || '' } : { text: '', tm: '' }; };
   $('.chat-list', w.body).innerHTML = threads.map(x => {
     const unread = S.unread[x.t] && (phone ? !chatShowsThread() || x.t !== chatThread : x.t !== chatThread) ? S.unread[x.t] : 0;
     if (!phone) return `<button type="button" class="chat-item${x.t === chatThread ? ' active' : ''}" data-t="${x.t}"><span class="av" style="background:${x.bg}">${x.av}</span><span><span class="nm">${x.nm}</span>${unread ? ` <span class="badge" style="position:static;display:inline-grid">${unread}</span>` : ''}<br><span class="sub">${x.sub}</span></span></button>`;
@@ -830,9 +864,9 @@ function renderChat() {
   const all = chatThread === 'yelu' ? [{ sys: UI.chatOpening }].concat(S.introLog, S.yelu) : AWU_BASE.concat(S.awu);
   const box = $('.chat-msgs', w.body);
   box.innerHTML = all.map(m => {
-    if (m.sys) return `<div class="chat-sys">${esc(m.sys)}</div>`;
-    if (m.file) return `<div class="filecard"><span class="fi">ZIP</span><div class="fm"><b>${esc(m.file)}</b><span>${UI.zipMeta}</span></div>${S.fileAccepted ? `<span class="got">${UI.received}</span>` : `<button type="button" class="chip primary" data-act="accept">${UI.accept}</button>`}</div>`;
-    return `<div class="bub ${m.me ? 'me' : 'them'}">${esc(m.text)}<span class="tm">${m.tm}</span></div>`;
+    if (m.sys) return `<div class="chat-sys">${esc(msgText(m))}</div>`;
+    if (m.file) return `<div class="filecard"><span class="fi">ZIP</span><div class="fm"><b>${esc(msgText(m))}</b><span>${UI.zipMeta}</span></div>${S.fileAccepted ? `<span class="got">${UI.received}</span>` : `<button type="button" class="chip primary" data-act="accept">${UI.accept}</button>`}</div>`;
+    return `<div class="bub ${m.me ? 'me' : 'them'}">${esc(msgText(m))}<span class="tm">${m.tm}</span></div>`;
   }).join('') + (typingNow && chatThread === 'yelu' ? `<div class="typing" aria-label="${UI.typingAria}"><i></i><i></i><i></i></div>` : '');
   box.scrollTop = box.scrollHeight;
   requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
@@ -904,8 +938,8 @@ function uploadPeek(fn) {
   setTimeout(() => discover('tz'), 1200);
   if (!S.mistakes) {
     S.mistakes = 1; save();
-    setTimeout(() => pushMsg('awu', UI.trap[0]), 2400);
-    setTimeout(() => pushMsg('awu', UI.trap[1]), 4600);
+    setTimeout(() => pushMsg('awu', ['ui', 'trap', 0]), 2400);
+    setTimeout(() => pushMsg('awu', ['ui', 'trap', 1]), 4600);
   }
 }
 
@@ -919,7 +953,7 @@ function download(fn, kind, handle, postId) {
   }
   if (kind === 'pxl') {
     discover('attach');
-    if (S.helper && S.coach === 1) setTimeout(() => pushMsg('awu', UI.coachDownloaded), 900);
+    if (S.helper && S.coach === 1) setTimeout(() => pushMsg('awu', ['ui', 'coachDownloaded']), 900);
   }
   if (W.files) renderFiles();
 }
@@ -1212,17 +1246,17 @@ function setHelper(on) {
   if (W.files) renderFiles();
   if (on && !S.coach) {
     S.coach = 1; save();
-    pushMsg('awu', UI.coachStart(S.downloads.includes(PXL)));
+    pushMsg('awu', ['ui', 'coachStart', S.downloads.includes(PXL)]);
   }
 }
 function coachAfter(line) {
   if (!S.helper) return;
   if (S.coach < 2 && term.cwd === '~/Downloads') {
     S.coach = 2; save();
-    setTimeout(() => pushMsg('awu', UI.coachInDownloads(S.downloads.includes(PXL))), 500);
+    setTimeout(() => pushMsg('awu', ['ui', 'coachInDownloads', S.downloads.includes(PXL)]), 500);
   } else if (S.coach < 3 && /^exiftool\s+PXL_/.test(line)) {
     S.coach = 3; save();
-    setTimeout(() => pushMsg('awu', UI.coachAfterExif), 1200);
+    setTimeout(() => pushMsg('awu', ['ui', 'coachAfterExif']), 1200);
   }
 }
 function openTermExif(path) {
@@ -1379,13 +1413,13 @@ INIT.board = w => {
 };
 function renderBoard() {
   const w = W.board; if (!w) return;
-  const left = PEOPLE.filter(p => S.marks[p.name] !== 'out').length;
+  const left = PEOPLE.filter(p => S.marks[p.key] !== 'out').length;
   const ds = Object.keys(DISC).filter(k => S.disc[k]).sort((a, b) => S.disc[a] - S.disc[b]);
   const active = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.note;
   $('.board', w.body).innerHTML = `
   <section><h3>${UI.boardSuspects(left)}</h3><div class="sus-grid">${PEOPLE.map(p => {
-    const mk = S.marks[p.name] || '';
-    return `<div class="sus ${mk === 'out' ? 'out' : mk === 'hot' ? 'hot' : ''}"><div class="top"><span class="av" style="background:${p.color}">${INITIAL(p.name)}</span><div><div class="nm">${p.name}</div><div class="rl">${p.role}</div></div></div><div class="marks"><button type="button" data-mark="hot" data-name="${p.name}" class="${mk === 'hot' ? 'on-hot' : ''}">${UI.markHot}</button><button type="button" data-mark="out" data-name="${p.name}" class="${mk === 'out' ? 'on-out' : ''}">${UI.markOut}</button></div><textarea id="note-${p.key}" data-note="${p.name}" placeholder="${UI.notePlaceholder}">${esc(S.notes[p.name] || '')}</textarea></div>`;
+    const mk = S.marks[p.key] || '';
+    return `<div class="sus ${mk === 'out' ? 'out' : mk === 'hot' ? 'hot' : ''}"><div class="top"><span class="av" style="background:${p.color}">${INITIAL(p.name)}</span><div><div class="nm">${p.name}</div><div class="rl">${p.role}</div></div></div><div class="marks"><button type="button" data-mark="hot" data-name="${p.key}" class="${mk === 'hot' ? 'on-hot' : ''}">${UI.markHot}</button><button type="button" data-mark="out" data-name="${p.key}" class="${mk === 'out' ? 'on-out' : ''}">${UI.markOut}</button></div><textarea id="note-${p.key}" data-note="${p.key}" placeholder="${UI.notePlaceholder}">${esc(S.notes[p.key] || '')}</textarea></div>`;
   }).join('')}</div></section>
   <section><h3>${UI.boardClues(ds.length, Object.keys(DISC).length)}</h3>${ds.length ? ds.map(k => `<div class="ev"><span class="dot"></span><div><div class="t">${DISC[k].t}</div><div class="d">${DISC[k].d}</div></div></div>`).join('') : `<div class="ev-empty">${UI.noClues}</div>`}</section>
   <section><h3>${UI.boardPins(S.pins.length)}</h3>${S.pins.length ? S.pins.map(p => `<div class="ev"><span class="dot" style="background:var(--term-key)"></span><div><div class="d">${esc(p.src)}</div><div>${esc(p.text)}</div></div><button type="button" class="x" data-unpin="${esc(p.id)}" aria-label="${UI.unpin}">✕</button></div>`).join('') : `<div class="ev-empty">${UI.noPins}</div>`}</section>`;
@@ -1415,11 +1449,11 @@ INIT.report = w => {
     if (!sol) {
       S.wrong++; save();
       fb('fb4', false, UI.fbWrong);
-      pushMsg('yelu', UI.yeluWrong);
+      pushMsg('yelu', ['ui', 'yeluWrong']);
       return;
     }
     fb('fb4', true, '');
-    if (ok1 && ok2 && ok3) { S.solved = true; save(); track('case-solved', { case: '01', rank: String(rankFor()[2]) }); showSolution(sol); pushMsg('yelu', UI.yeluSolved); }
+    if (ok1 && ok2 && ok3) { S.solved = true; save(); track('case-solved', { case: '01', rank: String(rankFor()[2]) }); showSolution(sol); pushMsg('yelu', ['ui', 'yeluSolved']); }
     else { $('#fb4', f).textContent = UI.fbRightFixRest; }
   });
 };
@@ -1508,6 +1542,9 @@ function boot() {
 function start(data) {
   const saved = (data && data.state) || load();
   if (saved) S = Object.assign(fresh(), saved);
+  addRefs();
+  // marks and notes used to be saved under the person's name in the page's language
+  PEOPLE.forEach(p => { if (p.name === p.key) return; ['marks', 'notes'].forEach(k => { if (S[k][p.name] != null) { if (S[k][p.key] == null) S[k][p.key] = S[k][p.name]; delete S[k][p.name]; } }); });
   if (S.phase !== 'intro' && isPhone() && !S.unread.yelu && !S.unread.awu) chatView = 'list';
   boot();
   setInterval(tick, 15000);
