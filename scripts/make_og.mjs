@@ -1,6 +1,7 @@
 // Draws the site icons and the social preview images with a Chromium-based browser.
 // The results are committed, so building the site does not need this script:
 //   site/favicon-32.png, site/apple-touch-icon.png   from site/favicon.svg
+//   site/icon-192.png, icon-512.png, icon-maskable-512.png   web app icons
 //   site/og.png, site/og-en.png                      the lobby, Chinese and English
 //   cases/<case>/og.png, cases/<case>/og.en.png      each case, Chinese and English
 // Usage: node scripts/make_og.mjs [--fonts <dir>]
@@ -48,13 +49,19 @@ const shot = (url, file, w, h, transparent) => {
 // Icons: the tile with transparent corners, and a full square for Apple's home screen,
 // which rounds the corners itself. Sizes are in pixels: headless windows have a minimum
 // width, so the viewport can be wider than the screenshot.
-const iconPage = (name, size, square) => {
+// The maskable app icon keeps the heron inside the central 80% that Android may crop to.
+const iconPage = (name, size, square, inset = 1) => {
   const p = join(work, name);
-  writeFileSync(p, `<!doctype html><html><body style="margin:0;background:transparent"><div style="width:${size}px;height:${size}px;overflow:hidden;background:${square ? '#003e57' : 'transparent'}"><img src="favicon.svg" style="display:block;width:${size}px;height:${size}px"></div></body></html>`);
+  const s = Math.round(size * inset), m = (size - s) / 2;
+  writeFileSync(p, `<!doctype html><html><body style="margin:0;background:transparent"><div style="width:${size}px;height:${size}px;overflow:hidden;background:${square ? '#003e57' : 'transparent'}"><img src="favicon.svg" style="display:block;width:${s}px;height:${s}px;margin:${m}px"></div></body></html>`);
   return pathToFileURL(p).href;
 };
 shot(iconPage('icon.html', 32, false), join(root, 'site', 'favicon-32.png'), 32, 32, true);
 shot(iconPage('touch.html', 180, true), join(root, 'site', 'apple-touch-icon.png'), 180, 180, false);
+// Web app icons (site/manifest.webmanifest)
+shot(iconPage('app192.html', 192, false), join(root, 'site', 'icon-192.png'), 192, 192, true);
+shot(iconPage('app512.html', 512, false), join(root, 'site', 'icon-512.png'), 512, 512, true);
+shot(iconPage('mask512.html', 512, true, 0.8), join(root, 'site', 'icon-maskable-512.png'), 512, 512, false);
 
 // Preview cards. The lobby's wording follows its page (scripts/lobby.mjs); each case's comes
 // from its case.json.

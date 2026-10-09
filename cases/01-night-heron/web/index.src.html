@@ -1551,4 +1551,6 @@ function start(data) {
 }
 if (!window.crypto || !crypto.subtle || !window.TextEncoder || !window.PointerEvent) showFallback(UI.fallbackFeatures);
 else { start({}); window.__yeluBooted = true; }
+// installable app and offline play (scripts/sw.js, registered by scripts/meta.mjs)
+/*__SW__*/
 </script>
