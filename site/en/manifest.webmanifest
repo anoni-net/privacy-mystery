@@ -1,0 +1,20 @@
+{
+  "id": "/mystery/en/",
+  "name": "Privacy mysteries | anoni.net",
+  "short_name": "Mysteries",
+  "description": "Privacy mysteries from anoni.net. Each request is a case: find the leaks in photos, files and writing, and learn to protect your own privacy and other people’s.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#11161d",
+  "theme_color": "#11161d",
+  "categories": ["games", "education"],
+  "icons": [
+    { "src": "../icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "../icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "../favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

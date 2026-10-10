@@ -22,7 +22,8 @@ import { decryptB64 } from './crypt.mjs';
 import { buildStatic } from './static.mjs';
 import { buildPdf } from './pdf.mjs';
 import { buildLobby } from './lobby.mjs';
-import { iconTags, ogTags, SITE_NAME } from './meta.mjs';
+import { iconTags, ogTags, swScript, SITE_NAME } from './meta.mjs';
+import { createHash } from 'node:crypto';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const caseDir = join(root, 'cases', '01-night-heron');
@@ -107,6 +108,7 @@ for (const lang of LANGS) {
   fill('__PXL_SIZE__', pxlSize);
   fill('__SOCIAL_SIZES__', JSON.stringify(social));
   fill('__CASE_SLUG__', manifest.slug);
+  fill('/*__SW__*/', swScript(lang.dir ? '../../' : '../', lang.code));
   if (lang.code === 'zh') fragment = page;
 
   const cut = page.indexOf('</style>') + '</style>'.length;
@@ -118,7 +120,7 @@ for (const lang of LANGS) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="${UI.description}">
-${iconTags(lang.dir ? '../../' : '../')}
+${iconTags(lang.dir ? '../../' : '../', lang.code, '#232d39')}
 ${ogTags({ lang: lang.code, siteName: SITE_NAME[lang.code], title: UI.caseTitle, desc: UI.description, path: casePath, image: casePath + 'og.png' })}
 ${analytics}${page.slice(0, cut).trim()}
 </head>
@@ -160,6 +162,30 @@ if (target.rewrites) {
     for (const [from, to] of target.rewrites) html = html.split(from).join(to);
     writeFileSync(file, html);
   }
+}
+
+// The service worker (scripts/sw.js): for each language, the files it keeps for offline play,
+// and a version that changes whenever one of them does
+{
+  const listFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>
+    e.isDirectory() ? listFiles(join(dir, e.name)).map(f => e.name + '/' + f) : [e.name]);
+  const shared = ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
+  const lists = Object.fromEntries(LANGS.map(l => {
+    const p = l.dir ? l.dir + '/' : '';
+    const caseAssets = listFiles(join(out, l.dir, manifest.slug, 'assets')).map(f => `${p}${manifest.slug}/assets/${f}`);
+    return [p, [p, `${p}manifest.webmanifest`, `${p}${manifest.slug}/`, ...caseAssets, ...shared]];
+  }));
+  const hash = createHash('sha256');
+  const src = readFileSync(join(root, 'scripts', 'sw.js'), 'utf8');
+  hash.update(src);
+  for (const path of [...new Set(Object.values(lists).flat())].sort()) {
+    hash.update(path);
+    hash.update(readFileSync(join(out, path.endsWith('/') || path === '' ? path + 'index.html' : path)));
+  }
+  const sw = src.replace("const VERSION = '__VERSION__';", `const VERSION = '${hash.digest('hex').slice(0, 12)}';`)
+    .replace('const LISTS = __PRECACHE__;', `const LISTS = ${JSON.stringify(lists)};`);
+  if (sw.includes("'__VERSION__'") || sw.includes('= __PRECACHE__')) throw new Error('scripts/sw.js: placeholders not filled');
+  writeFileSync(join(out, 'sw.js'), sw);
 }
 
 if (arg('--fragment')) writeFileSync(arg('--fragment'), fragment);

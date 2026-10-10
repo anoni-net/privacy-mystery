@@ -63,7 +63,7 @@ cases/01-night-heron/
   solution.enc         加密的解答
   solution.en.enc      加密的英文解答，鑰匙相同
   og.png、og.en.png    案件的社群分享預覽圖
-site/                  複製到網站最上層：icon 與大廳的分享預覽圖
+site/                  複製到網站最上層：icon、app icon、大廳的分享預覽圖與 web app manifest（英文的在 site/en/）
 scripts/
   build.mjs            建置網站
   static.mjs           產生靜態版
@@ -72,6 +72,7 @@ scripts/
   case-data.mjs        在 Node 讀取 case.js
   meta.mjs             每一頁共用的 icon 與分享預覽標籤
   make_og.mjs          產生 PNG icon 與分享預覽圖
+  sw.js                service worker 的原稿，建置時寫到網站最上層
   encrypt.mjs          加密解答
   decrypt.mjs          解密解答
   make_images.py       PNG 轉 JPEG 並寫入 EXIF
@@ -106,6 +107,14 @@ PDF 版需要 Chrome、Chromium 或 Brave 來輸出，建置時會自動尋找�
 ### 放在 CDN 後面
 
 CDN 的圖片最佳化（例如 Cloudflare Polish）會移除 JPEG 的 EXIF，爆料照片裡的線索也會跟著消失。放在 CDN 後面時，`/mystery/` 底下的回應要帶 `Cache-Control: no-transform`。
+
+### 安裝成 app 與離線遊玩
+
+網站可以安裝成 web app（Android 與電腦的 Chrome 會出現「安裝」，iPhone 用 Safari 的「加入主畫面」）。中英文各一份 manifest，在 `site/manifest.webmanifest` 與 `site/en/manifest.webmanifest`，app icon 由 `scripts/make_og.mjs` 一起產生。
+
+大廳與互動版會註冊 service worker（原稿 `scripts/sw.js`，建置時寫到網站最上層的 `sw.js`），把玩家目前語言的大廳、互動版與遊戲圖片存在裝置上，一種語言約 1 MB，沒有網路時照樣可以玩。網頁一律先問伺服器，新版本發布之後馬上看得到，離線時才用存下的副本。靜態版與 PDF 不存，前者是給不執行 JavaScript 的瀏覽器用的，後者本來就是下載檔。service worker 只在 anoni.net 與本機預覽註冊，Tor Browser 本來就關閉這個功能。
+
+`sw.js` 的版本是它存的那些檔案的雜湊，內容沒變的部署不會讓玩家重新下載。放在 CDN 後面時，`sw.js` 與頁面不要讓 CDN 長時間快取，否則玩家要等快取過期才拿得到新版。
 
 ### anoni.net 的部署
 
@@ -245,7 +254,7 @@ cases/01-night-heron/
   solution.enc         encrypted solution
   solution.en.enc      encrypted English solution, same key
   og.png, og.en.png    the case's social preview images
-site/                  copied to the top of the site: icons and the lobby's preview images
+site/                  copied to the top of the site: icons, app icons, the lobby's preview images and the web app manifest (English in site/en/)
 scripts/
   build.mjs            build the site
   static.mjs           generate the static edition
@@ -254,6 +263,7 @@ scripts/
   case-data.mjs        load case.js in Node
   meta.mjs             icon and preview tags shared by every page
   make_og.mjs          draw the PNG icons and the preview images
+  sw.js                service worker source, written to the top of the site by the build
   encrypt.mjs          encrypt a solution
   decrypt.mjs          decrypt a solution
   make_images.py       convert PNG to JPEG and write EXIF
@@ -288,6 +298,14 @@ Build release PDFs where Noto Sans CJK TC and Noto Serif CJK TC are installed (f
 ### Serving behind a CDN
 
 Image optimisation on a CDN (Cloudflare Polish, for example) strips EXIF from JPEGs, and the clues in the leaked photo go with it. Behind a CDN, serve everything under `/mystery/` with `Cache-Control: no-transform`.
+
+### Installing as an app and playing offline
+
+The site can be installed as a web app (Chrome on Android and desktop offers "Install"; on an iPhone, use "Add to Home Screen" in Safari). Each language has its own manifest, `site/manifest.webmanifest` and `site/en/manifest.webmanifest`, and `scripts/make_og.mjs` draws the app icons with the others.
+
+The lobby and the interactive edition register a service worker (source in `scripts/sw.js`, written to `sw.js` at the top of the site by the build). It keeps the lobby, the interactive edition and the game's images for the player's language on the device, about 1 MB per language, so the case can be played without a connection. Pages are always fetched from the server first, so a new release shows up straight away, and the stored copy is used only offline. The static edition and the PDFs are not stored: the first is for browsers that do not run JavaScript, and the second is a download anyway. The service worker registers only on anoni.net and local previews; Tor Browser turns service workers off in any case.
+
+The version of `sw.js` is a hash of the files it stores, so a deployment that changes none of them does not make players download anything again. Behind a CDN, do not let the CDN cache `sw.js` or the pages for long, or players only get a new release once that cache expires.
 
 ### Deployment on anoni.net
 

@@ -108,7 +108,7 @@ export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialS
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>${esc(title)} · ${L.title}</title>
-${iconTags(toRoot(up))}${og ? '\n' + ogTags({ lang, siteName: SITE_NAME[lang], title: `${L.title} · ${L.staticTag}`, desc: L.lead, path: casePath + 'static/', image: casePath + 'og.png' }) : ''}
+${iconTags(toRoot(up), lang)}${og ? '\n' + ogTags({ lang, siteName: SITE_NAME[lang], title: `${L.title} · ${L.staticTag}`, desc: L.lead, path: casePath + 'static/', image: casePath + 'og.png' }) : ''}
 <link rel="stylesheet" href="${up}static.css">
 <link rel="stylesheet" href="${up}sites.css">
 </head>
