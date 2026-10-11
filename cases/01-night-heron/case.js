@@ -1,6 +1,8 @@
 /* 夜鷺事件 — story data and in-game websites, shared by the interactive and static versions.
    The build inlines this file into the interactive page and evaluates it to generate the static pages. */
 
+// The interactive page's chat thread for the client, Night Heron (also where saves keep it)
+const CLIENT_ID = 'yelu';
 const PEOPLE = [
   { name: '張家豪', key: '張家豪', role: '資料分析師｜32 歲', color: '#3d8a6b' },
   { name: '林雅婷', key: '林雅婷', role: '資深後端工程師｜35 歲', color: '#c0587e' },

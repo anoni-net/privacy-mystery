@@ -2,6 +2,9 @@
 // and each case under its slug (cases/*/case.json), e.g. dist/mystery/night-heron/.
 // English lives under en/ (dist/mystery/en/, dist/mystery/en/night-heron/) and is built
 // when the case has its English files (case.en.js, web/ui.en.js, solution.en.enc).
+// Every case's interactive page is the shared engine (engine/index.src.html with the
+// engine's interface text) plus the case's own files: case.js (story data), web/ui.<lang>.js
+// (its interface text), web/game.js (its behaviour), web/sites.css and web/assets/.
 // Usage: [CASE_KEY=<culprit name>] node scripts/build.mjs [--target clearnet|onion] [--out <dir>] [--fragment <file>]
 //   --target clearnet adds anoni.net's self-hosted Umami to the interactive page
 //   (scripts/analytics.html). --target onion rewrites links to anoni.net into the onion
@@ -11,9 +14,11 @@
 //   --fragment also writes the Chinese page without the <html>/<head> wrapper (for previews
 //   that supply their own document skeleton).
 // The interactive page needs no key: the encrypted solution is embedded as is.
-// The static version (static/) and the PDF are built only when CASE_KEY is set, because
-// their endings are plain text. Deployments should always set it. Every language's
-// solution is encrypted with the same key (the culprit's Chinese name).
+// The static version (static/) and the PDF are built only when the case's key is set,
+// because their endings are plain text: CASE_KEY for case 01, CASE_KEY_<number> for the
+// others (CASE_KEY_02). Deployments should always set them. Every language's solution is
+// encrypted with the same key (the culprit's Chinese name). Only cases whose case.json has
+// "printEditions": true have a static version and a PDF so far.
 import { readFileSync, writeFileSync, mkdirSync, cpSync, statSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,14 +31,10 @@ import { iconTags, ogTags, swScript, SITE_NAME } from './meta.mjs';
 import { createHash } from 'node:crypto';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const caseDir = join(root, 'cases', '01-night-heron');
-// Every case folder with a case.json shows up in the lobby. This script builds case 01;
-// generalise the per-case build when a second case exists.
-const cases = readdirSync(join(root, 'cases')).sort()
-  .filter(d => existsSync(join(root, 'cases', d, 'case.json')))
-  .map(d => JSON.parse(readFileSync(join(root, 'cases', d, 'case.json'), 'utf8')));
-const manifest = JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8'));
-const web = join(caseDir, 'web');
+// Every case folder with a case.json shows up in the lobby; those with web/game.js are built
+const caseDirs = readdirSync(join(root, 'cases')).sort()
+  .filter(d => existsSync(join(root, 'cases', d, 'case.json'))).map(d => join(root, 'cases', d));
+const cases = caseDirs.map(d => JSON.parse(readFileSync(join(d, 'case.json'), 'utf8')));
 const arg = name => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const out = arg('--out') ? resolve(arg('--out')) : join(root, 'dist', 'mystery');
 
@@ -60,17 +61,16 @@ const targetName = arg('--target');
 if (targetName && !TARGETS[targetName]) { console.error('unknown --target ' + targetName); process.exit(1); }
 const target = TARGETS[targetName] || {};
 
-// Chinese at the top of the site; other languages under their code, when their files exist.
+// Chinese at the top of the site; other languages under their code, when the case has them
 const LANGS = [
   { code: 'zh', dir: '', caseFile: 'case.js', ui: 'ui.zh.js', solution: 'solution.enc' },
   { code: 'en', dir: 'en', caseFile: 'case.en.js', ui: 'ui.en.js', solution: 'solution.en.enc' },
-].filter(l => [join(caseDir, l.caseFile), join(web, l.ui), join(caseDir, l.solution)].every(existsSync));
-
-const key = (process.env.CASE_KEY || '').trim();
+];
+const langsOf = caseDir => LANGS.filter(l => [join(caseDir, l.caseFile), join(caseDir, 'web', l.ui), join(caseDir, l.solution)].every(existsSync));
+const keyOf = m => (process.env[m.number === '01' ? 'CASE_KEY' : 'CASE_KEY_' + m.number] || '').trim();
 const kb = file => Math.max(1, Math.round(statSync(file).size / 1024)) + ' KB';
-const pxlSize = kb(join(web, 'assets', 'PXL_20260914_144712345.jpg'));
-const social = Object.fromEntries(readdirSync(join(web, 'assets', 'social'))
-  .filter(f => f.endsWith('.jpg')).map(f => [f.slice(0, -4), kb(join(web, 'assets', 'social', f))]));
+const listFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>
+  e.isDirectory() ? listFiles(join(dir, e.name)).map(f => e.name + '/' + f) : [e.name]);
 
 let analytics = '';
 if (target.analytics) {
@@ -83,37 +83,52 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 cpSync(join(root, 'site'), out, { recursive: true });
 let fragment = '';
+const built = [];  // { lang, slug, assets } for the service worker
+const anyLangs = new Set();
 
-for (const lang of LANGS) {
-  const blob = readFileSync(join(caseDir, lang.solution), 'utf8').trim();
-  if (key && decryptB64(blob, key) == null) { console.error(`CASE_KEY does not decrypt ${lang.solution}`); process.exit(1); }
-  const uiCode = readFileSync(join(web, lang.ui), 'utf8');
-  const UI = vm.runInNewContext(`${uiCode}\n;UI`);
+caseDirs.forEach((caseDir, ci) => {
+  const manifest = cases[ci];
+  const web = join(caseDir, 'web');
+  if (!existsSync(join(web, 'game.js'))) return;
+  const key = keyOf(manifest);
+  const assets = existsSync(join(web, 'assets')) ? listFiles(join(web, 'assets')) : [];
+  const assetSizes = Object.fromEntries(assets.map(f => [f, kb(join(web, 'assets', f))]));
+  const caseMeta = { slug: manifest.slug, number: manifest.number, pdf: manifest.pdf,
+    saveKey: manifest.saveKey || `mystery-${manifest.slug}-v1`, seenKey: manifest.seenKey || `mystery-${manifest.slug}-seen` };
 
-  // {{key}} in the page template takes the interface text for this language (filled before
-  // the UI, case and CSS files are inlined, so their own text is never touched)
-  let page = readFileSync(join(web, 'index.src.html'), 'utf8')
-    .replace(/\{\{(\w+)\}\}/g, (_, k) => {
-      if (typeof UI[k] !== 'string') throw new Error(`${lang.ui}: missing text for {{${k}}}`);
-      return UI[k];
-    })
-    .replace('/*__UI__*/', () => uiCode)
-    .replace('/*__CASE__*/', () => readFileSync(join(caseDir, lang.caseFile), 'utf8'))
-    .replace('/*__SITES_CSS__*/', () => readFileSync(join(web, 'sites.css'), 'utf8'));
-  const fill = (token, value) => {
-    if (!page.includes(token)) throw new Error('missing placeholder ' + token);
-    page = page.split(token).join(value);
-  };
-  fill('__BLOB__', blob);
-  fill('__PXL_SIZE__', pxlSize);
-  fill('__SOCIAL_SIZES__', JSON.stringify(social));
-  fill('__CASE_SLUG__', manifest.slug);
-  fill('/*__SW__*/', swScript(lang.dir ? '../../' : '../', lang.code));
-  if (lang.code === 'zh') fragment = page;
+  for (const lang of langsOf(caseDir)) {
+    anyLangs.add(lang.code);
+    const blob = readFileSync(join(caseDir, lang.solution), 'utf8').trim();
+    if (key && decryptB64(blob, key) == null) { console.error(`${manifest.slug}: the key does not decrypt ${lang.solution}`); process.exit(1); }
+    // the engine's interface text, then the case's on top of it
+    const uiCode = readFileSync(join(root, 'engine', lang.ui), 'utf8') + '\n' + readFileSync(join(web, lang.ui), 'utf8');
+    const UI = vm.runInNewContext(`${uiCode}\n;UI`);
 
-  const cut = page.indexOf('</style>') + '</style>'.length;
-  const casePath = (lang.dir ? lang.dir + '/' : '') + manifest.slug + '/';
-  const doc = `<!doctype html>
+    // {{key}} in the page template takes the interface text for this language (filled before
+    // the UI, case and CSS files are inlined, so their own text is never touched)
+    let page = readFileSync(join(root, 'engine', 'index.src.html'), 'utf8')
+      .replace(/\{\{(\w+)\}\}/g, (_, k) => {
+        if (typeof UI[k] !== 'string') throw new Error(`${manifest.slug} ${lang.ui}: missing text for {{${k}}}`);
+        return UI[k];
+      })
+      .replace('/*__UI__*/', () => uiCode)
+      .replace('/*__CASE__*/', () => readFileSync(join(caseDir, lang.caseFile), 'utf8'))
+      .replace('/*__GAME__*/', () => readFileSync(join(web, 'game.js'), 'utf8'))
+      .replace('/*__SITES_CSS__*/', () => readFileSync(join(web, 'sites.css'), 'utf8'));
+    const fill = (token, value) => {
+      if (!page.includes(token)) throw new Error('missing placeholder ' + token);
+      page = page.split(token).join(value);
+    };
+    fill('__BLOB__', blob);
+    fill('__CASE_META__', JSON.stringify(caseMeta));
+    fill('__ASSET_SIZES__', JSON.stringify(assetSizes));
+    fill('__PDF__', manifest.pdf);
+    fill('/*__SW__*/', swScript(lang.dir ? '../../' : '../', lang.code));
+    if (lang.code === 'zh' && !fragment) fragment = page;
+
+    const cut = page.indexOf('</style>') + '</style>'.length;
+    const casePath = (lang.dir ? lang.dir + '/' : '') + manifest.slug + '/';
+    const doc = `<!doctype html>
 <html lang="${UI.lang}">
 <head>
 <meta charset="utf-8">
@@ -130,29 +145,35 @@ ${page.slice(cut).trim()}
 </html>
 `;
 
-  const langOut = join(out, lang.dir);
-  const caseOut = join(langOut, manifest.slug);
-  mkdirSync(caseOut, { recursive: true });
-  writeFileSync(join(caseOut, 'index.html'), doc);
-  cpSync(join(web, 'assets'), join(caseOut, 'assets'), { recursive: true });
-  cpSync(join(caseDir, lang.code === 'zh' ? 'og.png' : `og.${lang.code}.png`), join(caseOut, 'og.png'));
-  buildLobby({ out: langOut, cases, analytics, lang: lang.code });
+    const caseOut = join(out, lang.dir, manifest.slug);
+    mkdirSync(caseOut, { recursive: true });
+    writeFileSync(join(caseOut, 'index.html'), doc);
+    if (assets.length) cpSync(join(web, 'assets'), join(caseOut, 'assets'), { recursive: true });
+    const og = join(caseDir, lang.code === 'zh' ? 'og.png' : `og.${lang.code}.png`);
+    if (existsSync(og)) cpSync(og, join(caseOut, 'og.png'));
+    built.push({ lang, slug: manifest.slug, assets });
 
-  if (key) {
-    const solution = decryptB64(blob, key);
-    const pages = buildStatic({
-      caseDir, out: caseOut, lang: lang.code,
-      sitesCss: readFileSync(join(web, 'sites.css'), 'utf8'),
-      solution, pxlSize, socialSizes: social,
-    });
-    console.log(`built ${lang.code} static version: ${pages} pages`);
-    // The print source holds the ending in plain text: keep it outside the served site
-    const { pdf, html } = buildPdf({ caseDir, out: caseOut, lang: lang.code, srcDir: join(out, '..', 'pdf-src', lang.code), solution, pxlSize });
-    if (pdf) console.log('built', pdf);
-    else console.warn(`No Chromium-based browser found (set CHROME_PATH): skipped the ${lang.code} PDF. Print source: ${html}`);
+    if (key && manifest.printEditions) {
+      const solution = decryptB64(blob, key);
+      const pxlSize = assetSizes['PXL_20260914_144712345.jpg'];
+      const socialSizes = Object.fromEntries(Object.entries(assetSizes).filter(([f]) => f.startsWith('social/')).map(([f, v]) => [f.slice(7, -4), v]));
+      const pages = buildStatic({
+        caseDir, out: caseOut, lang: lang.code,
+        sitesCss: readFileSync(join(web, 'sites.css'), 'utf8'),
+        solution, pxlSize, socialSizes,
+      });
+      console.log(`built ${manifest.slug} ${lang.code} static version: ${pages} pages`);
+      // The print source holds the ending in plain text: keep it outside the served site
+      const { pdf, html } = buildPdf({ caseDir, out: caseOut, lang: lang.code, srcDir: join(out, '..', 'pdf-src', manifest.slug, lang.code), solution, pxlSize });
+      if (pdf) console.log('built', pdf);
+      else console.warn(`No Chromium-based browser found (set CHROME_PATH): skipped the ${manifest.slug} ${lang.code} PDF. Print source: ${html}`);
+    } else if (manifest.printEditions) {
+      console.warn(`${manifest.slug}: key not set, skipped the static version and the PDF (they contain the ending).`);
+    }
   }
-}
-if (!key) console.warn('CASE_KEY not set: skipped the static versions and the PDFs (they contain the ending).');
+});
+// One lobby per language, listing every case
+for (const lang of LANGS.filter(l => anyLangs.has(l.code))) buildLobby({ out: join(out, lang.dir), cases, analytics, lang: lang.code });
 
 if (target.rewrites) {
   const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>
@@ -167,13 +188,11 @@ if (target.rewrites) {
 // The service worker (scripts/sw.js): for each language, the files it keeps for offline play,
 // and a version that changes whenever one of them does
 {
-  const listFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>
-    e.isDirectory() ? listFiles(join(dir, e.name)).map(f => e.name + '/' + f) : [e.name]);
   const shared = ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
-  const lists = Object.fromEntries(LANGS.map(l => {
+  const lists = Object.fromEntries(LANGS.filter(l => anyLangs.has(l.code)).map(l => {
     const p = l.dir ? l.dir + '/' : '';
-    const caseAssets = listFiles(join(out, l.dir, manifest.slug, 'assets')).map(f => `${p}${manifest.slug}/assets/${f}`);
-    return [p, [p, `${p}manifest.webmanifest`, `${p}${manifest.slug}/`, ...caseAssets, ...shared]];
+    const pages = built.filter(b => b.lang.code === l.code).flatMap(b => [`${p}${b.slug}/`, ...b.assets.map(f => `${p}${b.slug}/assets/${f}`)]);
+    return [p, [p, `${p}manifest.webmanifest`, ...pages, ...shared]];
   }));
   const hash = createHash('sha256');
   const src = readFileSync(join(root, 'scripts', 'sw.js'), 'utf8');
@@ -189,4 +208,4 @@ if (target.rewrites) {
 }
 
 if (arg('--fragment')) writeFileSync(arg('--fragment'), fragment);
-console.log('built', out, LANGS.map(l => l.code).join('+'), targetName ? `(${targetName})` : '');
+console.log('built', out, built.map(b => (b.lang.dir ? b.lang.dir + '/' : '') + b.slug).join(' '), targetName ? `(${targetName})` : '');

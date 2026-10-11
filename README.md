@@ -44,18 +44,21 @@
 
 `/mystery/` 是霧港隱私互助站的「委託板」，每個案件一份檔案夾，另外有一張「準備中」的卡片。大廳只用 HTML 與 CSS，不需要 JavaScript。有 JavaScript 時會讀取瀏覽器裡的進度，在檔案夾蓋上「調查中」或「已結案」與評等（只有狀態與評等，沒有名字或答案）。
 
-新增案件時，在 `cases/<編號>-<代號>/` 放一份 `case.json`，大廳就會出現它。
+新增案件時，在 `cases/<編號>-<代號>/` 放一份 `case.json`，大廳就會出現它。案件有了 `web/game.js` 之後，建置會用共用引擎產生它的互動版。
 
 ## 目錄
 
 ```
+engine/
+  index.src.html       所有案件共用的互動版引擎：視窗、聊天、瀏覽器、檔案、看圖、終端機、調查板、結案報告
+  ui.zh.js、ui.en.js   引擎的介面文字，案件的介面文字疊在上面
 cases/01-night-heron/
   case.json            大廳卡片的資料：代號、名稱、引子、技巧標籤，英文寫在 i18n.en
   case.js              劇本資料與遊戲內網站，所有版本共用
   case.en.js           英文劇本，結構與 case.js 相同
-  web/index.src.html   互動版原始碼
-  web/ui.zh.js         互動版的介面文字（中文）
-  web/ui.en.js         互動版的介面文字（英文）
+  web/game.js          這個案件在互動版裡的行為，透過 HOOKS 接上引擎（爆料照片、EXIF、陷阱、結案報告的答案）
+  web/ui.zh.js         這個案件的介面文字（中文）
+  web/ui.en.js         這個案件的介面文字（英文）
   web/sites.css        遊戲內網站的樣式
   web/assets/          遊戲用的 JPEG（爆料照片帶有刻意的 EXIF）
   static.css           靜態版樣式
@@ -235,18 +238,21 @@ Both languages share one save, so a player who switches language halfway through
 
 `/mystery/` is the case board of the Mistport Privacy Aid, with one folder per case and a "coming soon" card. The lobby uses only HTML and CSS and works without JavaScript. With JavaScript it reads the player's progress from the browser and stamps each folder "investigating" or "closed" with the rank (status and rank only, never names or answers).
 
-To add a case, put a `case.json` in `cases/<number>-<slug>/` and it appears in the lobby.
+To add a case, put a `case.json` in `cases/<number>-<slug>/` and it appears in the lobby. Once the case has a `web/game.js`, the build makes its interactive edition from the shared engine.
 
 ## Layout
 
 ```
+engine/
+  index.src.html       the interactive engine every case shares: windows, chat, browser, files, images, terminal, evidence board, report
+  ui.zh.js, ui.en.js   the engine's interface text; each case's goes on top
 cases/01-night-heron/
   case.json            lobby card: slug, title, hook and skills; English under i18n.en
   case.js              story data and in-game sites, shared by every edition
   case.en.js           English story data, same structure as case.js
-  web/index.src.html   interactive edition source
-  web/ui.zh.js         interface text, Chinese
-  web/ui.en.js         interface text, English
+  web/game.js          how this case behaves in the interactive edition, plugged into the engine through HOOKS (leaked photo, EXIF, trap, report answers)
+  web/ui.zh.js         this case's interface text, Chinese
+  web/ui.en.js         this case's interface text, English
   web/sites.css        styles for the in-game sites
   web/assets/          JPEGs used in the game (the leaked photo carries crafted EXIF)
   static.css           static edition styles
