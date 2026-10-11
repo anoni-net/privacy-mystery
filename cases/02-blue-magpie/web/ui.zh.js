@@ -21,7 +21,7 @@ const UI = Object.assign({}, ENGINE_UI, {
   // the client: 周芷寧
   client: '周芷寧',
   clientAvatar: '芷',
-  clientColor: '#5b9bd5',
+  clientColor: '#7cc49a',
   headClient: '周芷寧 · 安全碼已驗證',
   headClientTyping: '周芷寧正在輸入…',
   typingAria: '周芷寧正在輸入',
