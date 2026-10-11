@@ -480,7 +480,7 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
   <div class="spacer"></div>
   <div class="menu-items" id="menuItems">
     <a class="menu-btn" href="{{lobbyHref}}" title="{{menuLobbyTitle}}">{{menuLobby}}</a>
-    <a class="menu-btn" href="night-heron.pdf" download="{{pdfName}}" title="{{menuPdfTitle}}">{{menuPdf}}</a>
+    <a class="menu-btn" href="__PDF__" download="{{pdfName}}" title="{{menuPdfTitle}}">{{menuPdf}}</a>
     <a class="menu-btn" href="{{langHref}}" lang="{{otherLang}}" title="{{menuLangTitle}}">{{menuLang}}</a>
     <button class="menu-btn" id="resetBtn" type="button">{{menuReset}}</button>
   </div>
@@ -498,17 +498,20 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
    DATA
    ===================================================================== */
 const BLOB = '__BLOB__';
+// The case's manifest (case.json): slug, number, PDF file name, where progress is saved
+const CASE = __CASE_META__;
+// Sizes of the files in the case's assets/ folder, e.g. { 'social/cat.jpg': '38 KB' }
+const ASSET_SIZES = __ASSET_SIZES__;
 /*__UI__*/
 /*__CASE__*/
-const EXPORT = '~/' + EXPORT_DIR;
-
-/* ---------- images (JPEG assets; sources in ../art) ---------- */
-const SOCIAL_SIZE = __SOCIAL_SIZES__;
-
-/* ---------- images on disk ---------- */
-const IMAGES = {
-  [PXL]: { src: 'assets/' + PXL, w: 4080, h: 3072, size: '__PXL_SIZE__', full: true },
-};
+/* What the case's own code (web/game.js) plugs into the engine. Every hook is optional.
+   game.js is inlined just before BOOT, so it can use everything defined here. */
+const HOOKS = {};
+// The person the player is helping (the chat thread the opening runs in) and Fog
+const CLIENT = typeof CLIENT_ID !== 'undefined' ? CLIENT_ID : 'client';
+const THREADS = [CLIENT, 'awu'];
+// Conversations that start during play (case data); none by default
+const DLG = typeof DIALOGS !== 'undefined' ? DIALOGS : {};
 
 /* ---------- analytics ----------
    Only the anoni.net clearnet build loads Umami (see scripts/analytics.html). Elsewhere
@@ -518,14 +521,15 @@ function track(name, data) { try { if (window.umami) window.umami.track(name, da
 /* =====================================================================
    STATE
    ===================================================================== */
-const SKEY = 'yelu-web-v2';
-const fresh = () => ({ phase: 'intro', intro: { node: 'n1', shown: 0 }, introLog: [], fileAccepted: false, disc: {}, pins: [], marks: {}, notes: {}, downloads: [], social: {}, hints: 0, wrong: 0, solved: false, yelu: [], awu: [], unread: { yelu: 0, awu: 0 }, start: Date.now(), report: {}, termKeyboard: false, helper: false, coach: 0, mistakes: 0, uploaded: [], peekLast: '' });
+const SKEY = CASE.saveKey;
+const fresh = () => Object.assign({ phase: 'intro', intro: { node: 'n1', shown: 0 }, introLog: [], fileAccepted: false, disc: {}, pins: [], marks: {}, notes: {}, downloads: [], social: {}, hints: 0, wrong: 0, solved: false, unread: {}, start: Date.now(), report: {}, termKeyboard: false, helper: false, coach: 0, mistakes: 0, uploaded: [], peekLast: '', dlg: null, dlgQueue: [], got: {}, flags: {} },
+  ...THREADS.map(t => ({ [t]: [] })), { unread: Object.fromEntries(THREADS.map(t => [t, 0])) });
 let S = fresh();
 function save() {
   try {
     localStorage.setItem(SKEY, JSON.stringify(S));
     // The lobby's progress stamp: status and rank only, never names or answers.
-    if (S.phase === 'play' || S.introLog.length) localStorage.setItem('mystery-progress:__CASE_SLUG__', JSON.stringify(S.solved ? { status: 'solved', level: rankFor()[2] } : { status: 'started' }));
+    if (S.phase === 'play' || S.introLog.length) localStorage.setItem('mystery-progress:' + CASE.slug, JSON.stringify(S.solved ? { status: 'solved', level: rankFor()[2] } : { status: 'started' }));
   } catch (e) {}
 }
 function load() { try { const v = JSON.parse(localStorage.getItem(SKEY) || 'null'); return v && typeof v === 'object' ? Object.assign(fresh(), v) : null; } catch (e) { return null; } }
@@ -537,9 +541,11 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const isPhone = () => window.matchMedia('(max-width: 760px)').matches;
+// The in-game clock: the opening runs from CLOCK.intro, play starts at CLOCK.play ([hour, minute])
+const CLOCK = typeof CASE_CLOCK !== 'undefined' ? CASE_CLOCK : { intro: [21, 3], play: [21, 17] };
 function gameTime(offsetMin = 0) {
-  const m = 17 + Math.floor((Date.now() - S.start) / 60000) + offsetMin;
-  const h = 21 + Math.floor(m / 60), mm = m % 60;
+  const m = CLOCK.play[1] + Math.floor((Date.now() - S.start) / 60000) + offsetMin;
+  const h = CLOCK.play[0] + Math.floor(m / 60), mm = m % 60;
   return `${String(h % 24).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
 function toast(title, body, onClick) {
@@ -557,8 +563,11 @@ function discover(id) {
   S.disc[id] = Date.now();
   save();
   toast(UI.clueToast, DISC[id].t, () => openApp('board'));
-  if (REACT[id]) setTimeout(() => pushMsg('yelu', ['react', id]), 1600);
+  if (REACT[id]) setTimeout(() => pushMsg(CLIENT, ['react', id]), 1600);
   if (W.board) renderBoard();
+  // a conversation this clue sets off (DIALOGS[node].after === clue)
+  for (const [node, d] of Object.entries(DLG)) if (d.after === id) setTimeout(() => startDialog(node), d.delay || 2200);
+  if (HOOKS.onDiscover) HOOKS.onDiscover(id);
 }
 /* Chat messages are saved with a reference to where their text comes from (r) as well as the
    text itself, and shown in the language of the page. Both languages share one save, so a
@@ -567,11 +576,16 @@ function discover(id) {
      ['choice', node, i]   the player's i-th reply in that node
      ['react', clue]       the whistleblower's reaction to a clue
      ['hint', n]           Fog's n-th hint
-     ['ui', key, ...args]  interface text: a string, an array item (args[0]) or a function call */
+     ['ui', key, ...args]  interface text: a string, an array item (args[0]) or a function call
+     ['dlg', node, i]      the i-th message of a conversation that starts during play (DIALOGS)
+     ['dchoice', node, i]  the player's i-th reply in it */
 function refText(r) {
   try {
     if (r[0] === 'intro') return INTRO[r[1]].msgs[r[2]];
     if (r[0] === 'choice') return INTRO[r[1]].choices[r[2]][0];
+    if (r[0] === 'dlg') return DLG[r[1]].msgs[r[2]];
+    if (r[0] === 'dchoice') return DLG[r[1]].choices[r[2]][0];
+    if (r[0] === 'dfile') return DLG[r[1]].file.name;
     if (r[0] === 'react') return REACT[r[1]];
     if (r[0] === 'hint') return UI.hintLine(r[1], HINTS.length, HINTS[r[1] - 1]);
     if (r[0] === 'ui') { const v = UI[r[1]]; return typeof v === 'function' ? v(...r.slice(2)) : Array.isArray(v) ? v[r[2]] : v; }
@@ -587,20 +601,21 @@ function addRefs() {
   Object.keys(INTRO).forEach(n => { INTRO[n].msgs.forEach((t, i) => add(['intro', n, i], t)); (INTRO[n].choices || []).forEach(([t], i) => add(['choice', n, i], t)); });
   Object.keys(REACT).forEach(k => add(['react', k], REACT[k]));
   HINTS.forEach((h, i) => add(['hint', i + 1], refText(['hint', i + 1])));
-  ['zipName', 'zipReceived', 'caseOpen', 'hintsDone', 'hintAsk', 'coachDownloaded', 'coachAfterExif', 'yeluWrong', 'yeluSolved'].forEach(k => add(['ui', k], UI[k]));
-  [0, 1].forEach(i => add(['ui', 'trap', i], UI.trap[i]));
-  [true, false].forEach(b => { add(['ui', 'coachStart', b], UI.coachStart(b)); add(['ui', 'coachInDownloads', b], UI.coachInDownloads(b)); });
-  [S.introLog, S.yelu, S.awu].forEach(list => list.forEach(m => { if (!m.r) { const r = known.get(m.sys || m.file || m.text); if (r) m.r = r; } }));
+  ['zipName', 'zipReceived', 'caseOpen', 'hintsDone', 'hintAsk', 'clientWrong', 'clientSolved'].forEach(k => add(['ui', k], UI[k]));
+  // the case's own interface lines that can end up in the chat: ['key'] or ['key', ...args]
+  (HOOKS.refUI || []).forEach(([k, ...a]) => add(['ui', k, ...a], refText(['ui', k, ...a])));
+  [S.introLog, ...THREADS.map(t => S[t])].forEach(list => list.forEach(m => { if (!m.r) { const r = known.get(m.sys || m.file || m.text); if (r) m.r = r; } }));
 }
 function pushMsg(thread, r, me = false) {
   const text = refText(r) || '';
   S[thread].push({ text, r, me, tm: gameTime() });
   const active = W.chat && !W.chat.el.hidden && focused === 'chat' && chatThread === thread && (!isPhone() || chatShowsThread());
-  if (!me && !active) { S.unread[thread]++; toast(thread === 'yelu' ? UI.yelu : UI.awu, text, () => { chatThread = thread; chatView = 'thread'; openApp('chat'); }); }
+  if (!me && !active) { S.unread[thread]++; toast(threadName(thread), text, () => { chatThread = thread; chatView = 'thread'; openApp('chat'); }); }
   save();
   if (W.chat) renderChat();
   renderDock();
 }
+const threadName = t => t === CLIENT ? UI.client : UI.awu;
 function pinHTML(src, text, dark) {
   const id = (src + '|' + text).slice(0, 160);
   const done = S.pins.some(p => p.id === id);
@@ -637,7 +652,7 @@ let zTop = 10, cascade = 0;
 function renderDock() {
   $('#dock').innerHTML = DOCK.map(id => {
     const a = APPS[id];
-    const n = id === 'chat' ? S.unread.yelu + S.unread.awu : 0;
+    const n = id === 'chat' ? THREADS.reduce((sum, t) => sum + (S.unread[t] || 0), 0) : 0;
     const open = W[id] && !W[id].el.hidden;
     const locked = S.phase === 'intro' && id !== 'chat';
     const cur = tabOf(focused) === id && open;
@@ -692,9 +707,9 @@ let focused = 'chat';
    back inside the app (conversation → contacts, folder → parent, page → previous page), then
    returns to the app you came from. Desktop windows ignore all of this. */
 let navStack = [];
-const tabOf = id => id === 'doc' ? 'files' : id;
+const tabOf = id => id === 'doc' ? 'files' : (APPS[id] && APPS[id].tab) || id;
 function phoneTitle(id) {
-  if (id === 'chat') return chatShowsThread() ? (chatThread === 'yelu' ? UI.yelu : UI.awu) : APPS.chat.title;
+  if (id === 'chat') return chatShowsThread() ? threadName(chatThread) : APPS.chat.title;
   if (id === 'files') return filesDir === '~' ? UI.sideHome : filesDir.split('/').pop();
   if (id === 'viewer') return vw.file || APPS.viewer.title;
   if (id === 'browser') return APPS.browser.title;
@@ -742,13 +757,13 @@ function openApp(id) {
 const INIT = {};
 
 /* ---------- chat ---------- */
-let chatThread = 'yelu';
+let chatThread = CLIENT;
 let chatView = 'thread';  // phone: 'list' shows the contacts, 'thread' the conversation
 const chatShowsThread = () => S.phase === 'intro' || chatView === 'thread';
-const SEEN_KEY = 'yelu-web-seen';
+const SEEN_KEY = CASE.seenKey;
 let introBusy = false, introGen = 0, typingNow = false, typingSkip = null;
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-function introTm() { const n = S.introLog.filter(m => !m.sys).length; return '21:' + String(3 + Math.floor(n * 0.6)).padStart(2, '0'); }
+function introTm() { const n = S.introLog.filter(m => !m.sys).length, m = CLOCK.intro[1] + Math.floor(n * 0.6); return CLOCK.intro[0] + Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0'); }
 function logIntro(m) { S.introLog.push(Object.assign({ tm: introTm() }, m)); save(); tick(); }
 function typing(text) {
   typingNow = true; renderChat();
@@ -756,8 +771,8 @@ function typing(text) {
   return new Promise(res => { const t = setTimeout(done, ms); function done() { clearTimeout(t); typingSkip = null; typingNow = false; res(); } typingSkip = done; });
 }
 function introNotify(text) {
-  const active = W.chat && !W.chat.el.hidden && chatThread === 'yelu';
-  if (!active) { S.unread.yelu++; save(); renderDock(); toast(UI.yelu, text, () => { chatThread = 'yelu'; openApp('chat'); }); }
+  const active = W.chat && !W.chat.el.hidden && chatThread === CLIENT;
+  if (!active) { S.unread[CLIENT]++; save(); renderDock(); toast(UI.client, text, () => { chatThread = CLIENT; openApp('chat'); }); }
 }
 async function runIntro() {
   if (introBusy || S.phase !== 'intro') return;
@@ -800,12 +815,13 @@ function acceptFile() {
 }
 function startPlay() {
   S.phase = 'play'; S.start = Date.now();
-  track('case-start', { case: '01' });
+  track('case-start', { case: CASE.number });
   logIntro({ sys: UI.caseOpen, r: ['ui', 'caseOpen'] });
   S.unread.awu = 1; save();
   try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
   $('#sticky').hidden = false;
   renderDock(); renderChat(); tick();
+  if (HOOKS.onPlay) HOOKS.onPlay();
   setTimeout(() => toast(UI.startToast[0], UI.startToast[1]), 600);
   setTimeout(() => toast(UI.awu, UI.awuHello, () => { chatThread = 'awu'; openApp('chat'); }), 1600);
 }
@@ -824,6 +840,68 @@ function skipIntro() {
 }
 function seenBefore() { try { return localStorage.getItem(SEEN_KEY) === '1'; } catch (e) { return false; } }
 
+/* ---------- conversations during play ----------
+   DIALOGS (case data) holds conversations that start once play is under way, in the client's
+   thread or Fog's: { thread, after: clue that starts it, msgs, choices: [[text, next, effect]],
+   next, file: { name, meta }, end }. They type like the opening, wait for the player's reply or
+   for a file to be accepted, and run one at a time. HOOKS.effect(name) carries out a choice's
+   effect and HOOKS.onFile(node) a received file. */
+let dlgBusy = false;
+function startDialog(node) {
+  if (!DLG[node] || S.phase !== 'play') return;
+  if ((S.dlgDone || []).includes(node) || (S.dlg && S.dlg.node === node) || S.dlgQueue.includes(node)) return;
+  if (S.dlg) { S.dlgQueue.push(node); save(); return; }
+  S.dlg = { node, shown: 0 }; save();
+  runDialog();
+}
+function dialogDone() {
+  S.dlgDone = (S.dlgDone || []).concat(S.dlg.node);
+  S.dlg = null;
+  const next = S.dlgQueue.shift(); save();
+  if (next) setTimeout(() => startDialog(next), 900);
+}
+async function runDialog() {
+  if (dlgBusy || !S.dlg) return;
+  dlgBusy = true;
+  while (S.dlg) {
+    const id = S.dlg.node, d = DLG[id], thread = d.thread || CLIENT;
+    while (S.dlg.shown < d.msgs.length) {
+      if (!reduceMotion()) await new Promise(r => setTimeout(r, Math.min(2200, 500 + d.msgs[S.dlg.shown].length * 30)));
+      pushMsg(thread, ['dlg', id, S.dlg.shown]); S.dlg.shown++; save();
+    }
+    if (d.file && !S.got[id]) {
+      if (!S.dlg.fileShown) { S[thread].push({ file: d.file.name, fileNode: id, r: ['dfile', id], tm: gameTime() }); S.dlg.fileShown = true; save(); renderChat(); }
+      break;  // wait for "Accept"
+    }
+    if (d.choices) break;  // wait for the player's reply
+    if (d.next) { S.dlg = { node: d.next, shown: 0 }; save(); continue; }
+    dialogDone();
+  }
+  dlgBusy = false;
+  renderChat();
+}
+function chooseDialog(i) {
+  const id = S.dlg && S.dlg.node, d = id && DLG[id];
+  if (!d || !d.choices || S.dlg.shown < d.msgs.length || dlgBusy) return;
+  const [, next, effect] = d.choices[i];
+  pushMsg(d.thread || CLIENT, ['dchoice', id, i], true);
+  if (effect && HOOKS.effect) HOOKS.effect(effect);
+  if (next) S.dlg = { node: next, shown: 0 }; else dialogDone();
+  save(); renderChat();
+  setTimeout(runDialog, 500);
+}
+function acceptDialogFile(id) {
+  if (S.got[id]) return;
+  S.got[id] = Date.now();
+  const d = DLG[id];
+  S[d.thread || CLIENT].push({ sys: UI.fileReceived(d.file.name), r: ['ui', 'fileReceived', d.file.name], tm: gameTime() });
+  if (HOOKS.onFile) HOOKS.onFile(id);
+  if (S.dlg && S.dlg.node === id) { if (d.next) S.dlg = { node: d.next, shown: 0 }; else dialogDone(); }
+  save(); renderChat();
+  if (W.files) renderFiles();
+  setTimeout(runDialog, 400);
+}
+
 INIT.chat = w => {
   w.body.innerHTML = `<div class="chat"><div class="chat-list"></div><div class="chat-main"><div class="chat-head"><span class="lock">●</span><span class="who"></span></div><div class="chat-msgs" role="log"></div><div class="chat-actions"></div></div></div>`;
   $('.chat-list', w.body).addEventListener('click', e => { const b = e.target.closest('.chat-item'); if (b) { chatThread = b.dataset.t; chatView = 'thread'; S.unread[chatThread] = 0; save(); renderChat(); renderDock(); } });
@@ -838,7 +916,9 @@ INIT.chat = w => {
       setTimeout(() => pushMsg('awu', ['hint', n]), 600);
     } else if (act === 'open') openApp(b.dataset.app);
     else if (act === 'choice') chooseReply(+b.dataset.i);
+    else if (act === 'dchoice') chooseDialog(+b.dataset.i);
     else if (act === 'accept') acceptFile();
+    else if (act === 'dfile') acceptDialogFile(b.dataset.node);
     else if (act === 'ff') { if (typingSkip) typingSkip(); }
     else if (act === 'skipintro') skipIntro();
     else if (act === 'helper') { setHelper(!S.helper); renderChat(); }
@@ -847,12 +927,12 @@ INIT.chat = w => {
 function renderChat() {
   const w = W.chat; if (!w) return;
   const intro = S.phase === 'intro';
-  if (intro) chatThread = 'yelu';
-  const threads = [{ t: 'yelu', nm: UI.yelu, sub: typingNow ? UI.typing : UI.e2e, av: UI.yeluAvatar, bg: '#e3a33b' }];
+  if (intro) chatThread = CLIENT;
+  const threads = [{ t: CLIENT, nm: UI.client, sub: typingNow ? UI.typing : UI.e2e, av: UI.clientAvatar, bg: UI.clientColor || '#e3a33b' }];
   if (!intro) threads.push({ t: 'awu', nm: UI.awu, sub: UI.awuSub, av: UI.awuAvatar, bg: '#8fb3d9' });
   const phone = isPhone();
   $('.chat', w.body).classList.toggle('thread', chatShowsThread());
-  const last = t => { const m = (t === 'yelu' ? S.introLog.concat(S.yelu) : AWU_BASE.concat(S.awu)).filter(m => m.text || m.file).pop(); return m ? { text: msgText(m), tm: m.tm || '' } : { text: '', tm: '' }; };
+  const last = t => { const m = (t === CLIENT ? S.introLog.concat(S[CLIENT]) : AWU_BASE.concat(S.awu)).filter(m => m.text || m.file).pop(); return m ? { text: msgText(m), tm: m.tm || '' } : { text: '', tm: '' }; };
   $('.chat-list', w.body).innerHTML = threads.map(x => {
     const unread = S.unread[x.t] && (phone ? !chatShowsThread() || x.t !== chatThread : x.t !== chatThread) ? S.unread[x.t] : 0;
     if (!phone) return `<button type="button" class="chat-item${x.t === chatThread ? ' active' : ''}" data-t="${x.t}"><span class="av" style="background:${x.bg}">${x.av}</span><span><span class="nm">${x.nm}</span>${unread ? ` <span class="badge" style="position:static;display:inline-grid">${unread}</span>` : ''}<br><span class="sub">${x.sub}</span></span></button>`;
@@ -860,17 +940,24 @@ function renderChat() {
     return `<button type="button" class="chat-item" data-t="${x.t}"><span class="av" style="background:${x.bg}">${x.av}</span><span class="ct"><span class="nm">${x.nm}</span><span class="pv">${esc(l.text)}</span></span><span class="rt"><span>${l.tm}</span>${unread ? `<span class="badge">${unread}</span>` : ''}</span></button>`;
   }).join('');
   if (W.chat && focused === 'chat') updateAppName();
-  $('.who', w.body).textContent = chatThread === 'yelu' ? (typingNow ? UI.headYeluTyping : UI.headYelu) : UI.headAwu;
-  const all = chatThread === 'yelu' ? [{ sys: UI.chatOpening }].concat(S.introLog, S.yelu) : AWU_BASE.concat(S.awu);
+  $('.who', w.body).textContent = chatThread === CLIENT ? (typingNow ? UI.headClientTyping : UI.headClient) : UI.headAwu;
+  const all = chatThread === CLIENT ? [{ sys: UI.chatOpening }].concat(S.introLog, S[CLIENT]) : AWU_BASE.concat(S.awu);
   const box = $('.chat-msgs', w.body);
   box.innerHTML = all.map(m => {
     if (m.sys) return `<div class="chat-sys">${esc(msgText(m))}</div>`;
+    if (m.file && m.fileNode) return `<div class="filecard"><span class="fi">ZIP</span><div class="fm"><b>${esc(msgText(m))}</b><span>${esc(DLG[m.fileNode].file.meta || '')}</span></div>${S.got[m.fileNode] ? `<span class="got">${UI.received}</span>` : `<button type="button" class="chip primary" data-act="dfile" data-node="${m.fileNode}">${UI.accept}</button>`}</div>`;
     if (m.file) return `<div class="filecard"><span class="fi">ZIP</span><div class="fm"><b>${esc(msgText(m))}</b><span>${UI.zipMeta}</span></div>${S.fileAccepted ? `<span class="got">${UI.received}</span>` : `<button type="button" class="chip primary" data-act="accept">${UI.accept}</button>`}</div>`;
     return `<div class="bub ${m.me ? 'me' : 'them'}">${esc(msgText(m))}<span class="tm">${m.tm}</span></div>`;
-  }).join('') + (typingNow && chatThread === 'yelu' ? `<div class="typing" aria-label="${UI.typingAria}"><i></i><i></i><i></i></div>` : '');
+  }).join('') + (typingNow && chatThread === CLIENT ? `<div class="typing" aria-label="${UI.typingAria}"><i></i><i></i><i></i></div>` : '');
   box.scrollTop = box.scrollHeight;
   requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
   const acts = $('.chat-actions', w.body);
+  // a conversation during play waiting for the player's reply in this thread
+  const dl = S.dlg && DLG[S.dlg.node];
+  if (!intro && dl && dl.choices && (dl.thread || CLIENT) === chatThread && S.dlg.shown >= dl.msgs.length && !dlgBusy) {
+    acts.innerHTML = `<div class="replies"><span class="reply-label">${UI.chooseReply}</span>${dl.choices.map(([t], i) => `<button type="button" class="reply-opt" data-act="dchoice" data-i="${i}">${esc(t)}</button>`).join('')}</div>`;
+    return;
+  }
   if (chatThread === 'awu') { acts.innerHTML = `<button type="button" class="chip primary" data-act="hint">${UI.hintButton(S.hints, HINTS.length)}</button><button type="button" class="chip" data-act="helper">${UI.helperButton(S.helper)}</button>`; return; }
   if (!intro) { acts.innerHTML = `<button type="button" class="chip" data-act="open" data-app="browser">${UI.openBrowser}</button><button type="button" class="chip" data-act="open" data-app="files">${UI.openFiles}</button>`; return; }
   const node = INTRO[S.intro.node];
@@ -885,18 +972,19 @@ function renderChat() {
 
 /* ---------- browser ---------- */
 const BM = BOOKMARKS;
-const SITES = makeSites({
+// Built at boot, once the case's game.js has added its own helpers (HOOKS.siteCtx)
+let SITES = null;
+const makeSiteCtx = () => Object.assign({
   esc,
   href: url => `data-href="${url}"`,
   pin: (src, text) => pinHTML(src, text),
   asset: path => 'assets/' + path,
   form: (base, v, cls, placeholder, button) => `<form class="${cls}" data-base="${base}"><input value="${esc(v)}" aria-label="${placeholder}" placeholder="${placeholder}"><button type="submit">${button}</button></form>`,
   thumb: (fn, inner) => `<button type="button" class="thumb" data-view="${fn}" style="border:0;padding:0;cursor:zoom-in" aria-label="${UI.previewAttachment}">${inner}</button>`,
-  dl: (fn, kind, attrs, cls) => `<button type="button" class="${cls}" data-dl="${fn}" data-kind="${kind}" ${attrs}>${S.downloads.includes(fn) ? UI.downloaded : kind === 'pxl' ? UI.downloadOriginal : UI.saveImage}</button>`,
-  upload: fn => `<button type="button" class="site-btn" data-upload="${esc(fn)}">${S.uploaded.includes(fn) ? UI.uploaded : UI.upload}</button>`,
+  dl: (fn, kind, attrs, cls) => `<button type="button" class="${cls}" data-dl="${fn}" data-kind="${kind}" ${attrs}>${S.downloads.includes(fn) ? UI.downloaded : kind === 'original' || kind === 'pxl' ? UI.downloadOriginal : UI.saveImage}</button>`,
   state: () => S,
-  pxlSize: '__PXL_SIZE__',
-});
+  size: path => ASSET_SIZES[path] || '',
+}, HOOKS.siteCtx ? HOOKS.siteCtx() : {});
 let br = { hist: ['mist.search'], i: 0 };
 INIT.browser = w => {
   w.body.innerHTML = `<div class="br-top"><form class="br-nav"><button type="button" data-nav="back" aria-label="${UI.back}">←</button><button type="button" data-nav="fwd" aria-label="${UI.forward}">→</button><button type="button" data-nav="reload" aria-label="${UI.reload}">↻</button><label class="br-url"><span>🔒</span><input id="brUrl" aria-label="${UI.address}" autocomplete="off" spellcheck="false"></label></form><div class="br-bm">${BM.map(([n, u]) => `<button type="button" data-go="${u}">${n}</button>`).join('')}</div></div><div class="br-view"></div>`;
@@ -909,9 +997,14 @@ INIT.browser = w => {
     const a = e.target.closest('[data-href]'); if (a) { e.preventDefault(); go(a.dataset.href); return; }
     const d = e.target.closest('[data-dl]'); if (d) { download(d.dataset.dl, d.dataset.kind, d.dataset.handle, d.dataset.post); d.textContent = UI.downloaded; return; }
     const v = e.target.closest('[data-view]'); if (v) { openImage(v.dataset.view); return; }
-    const u = e.target.closest('[data-upload]'); if (u) { uploadPeek(u.dataset.upload); return; }
+    if (HOOKS.siteClick) HOOKS.siteClick(e);
   });
-  view.addEventListener('submit', e => { e.preventDefault(); const f = e.target; const q = $('input', f).value.trim(); if (!q) return; go((f.dataset.base || 'mist.search/?q=') + encodeURIComponent(q)); });
+  view.addEventListener('submit', e => {
+    e.preventDefault(); const f = e.target;
+    // forms the case handles itself (data-action), e.g. a scam site's form
+    if (f.dataset.action) { if (HOOKS.siteSubmit) HOOKS.siteSubmit(f); return; }
+    const q = $('input', f).value.trim(); if (!q) return; go((f.dataset.base || 'mist.search/?q=') + encodeURIComponent(q));
+  });
   renderPage();
 };
 function go(url) { br.hist = br.hist.slice(0, br.i + 1); br.hist.push(url); br.i++; renderPage(); }
@@ -924,24 +1017,10 @@ function renderPage() {
   const view = $('.br-view', w.body);
   view.innerHTML = route(url);
   view.scrollTop = 0;
-  if (url === 'techwiki.org/pxl') discover('fname');
+  if (HOOKS.onPage) HOOKS.onPage(url);
   updateAppName();
 }
 function route(url) { return SITES.route(url); }
-function uploadPeek(fn) {
-  S.peekLast = fn;
-  if (!S.uploaded.includes(fn)) S.uploaded.push(fn);
-  save(); renderPage();
-  if (fn !== PXL) { discover('strip'); return; }
-  discover('nogps');
-  setTimeout(() => discover('model'), 600);
-  setTimeout(() => discover('tz'), 1200);
-  if (!S.mistakes) {
-    S.mistakes = 1; save();
-    setTimeout(() => pushMsg('awu', ['ui', 'trap', 0]), 2400);
-    setTimeout(() => pushMsg('awu', ['ui', 'trap', 1]), 4600);
-  }
-}
 
 /* downloads */
 function download(fn, kind, handle, postId) {
@@ -951,52 +1030,37 @@ function download(fn, kind, handle, postId) {
     save();
     toast(...UI.downloadToast(fn), () => { openApp('files'); filesDir = '~/Downloads'; filesTrail = []; renderFiles(); });
   }
-  if (kind === 'pxl') {
-    discover('attach');
-    if (S.helper && S.coach === 1) setTimeout(() => pushMsg('awu', ['ui', 'coachDownloaded']), 900);
-  }
+  if (HOOKS.afterDownload) HOOKS.afterDownload(fn, kind);
   if (W.files) renderFiles();
 }
-function imageInfo(fn) {
-  if (IMAGES[fn]) return IMAGES[fn];
-  const s = S.social[fn];
-  if (!s) return null;
-  const post = PIC[s.handle].posts.find(p => p.id === s.postId);
-  return { src: `assets/social/${post.img}.jpg`, w: 1080, h: 810, size: SOCIAL_SIZE[post.img], full: false };
-}
+// { src, w, h, size, full, where } for an image the player can open, from the case
+const imageInfo = fn => HOOKS.imageInfo ? HOOKS.imageInfo(fn) : null;
 
 /* ---------- files ---------- */
-const DIRS = {
-  '~': () => ['README.txt', 'Downloads/', EXPORT_DIR + '/'],
-  '~/Downloads': () => S.downloads.slice(),
-  [EXPORT]: () => EXPORT_FILES.concat('slack/'),
-  [EXPORT + '/slack']: () => Object.keys(SLACK),
-};
-function fileContent(path) {
-  const name = path.split('/').pop();
-  if (path.startsWith(EXPORT + '/slack/') && SLACK[name] != null) return SLACK[name];
-  if ((path.startsWith(EXPORT + '/') || path === '~/README.txt') && TEXTS[name] != null) return TEXTS[name];
-  return null;
-}
+// Folders: Downloads, plus the case's own (HOOKS.dirs), each a function listing its entries
+// ("name/" for a folder). Built at boot.
+let DIRS = {};
+const fileContent = path => HOOKS.fileContent ? HOOKS.fileContent(path) : null;
+const isImage = name => /\.(jpe?g|png)$/i.test(name);
 function sizeOf(path) {
   const name = path.split('/').pop();
-  if (path.startsWith('~/Downloads/')) { const i = imageInfo(name); return i ? i.size : ''; }
+  if (isImage(name)) { const i = imageInfo(name); return i ? i.size : ''; }
   const c = fileContent(path); if (c == null) return '';
   const b = new TextEncoder().encode(c).length; return b < 1024 ? b + ' B' : (b / 1024).toFixed(1) + ' KB';
 }
-let filesDir = EXPORT;
+let filesDir = '~';
 let filesTrail = [];  // phone: folders opened from the list, for the back button
 INIT.files = w => {
   w.body.innerHTML = `<div class="files"><div class="f-side"></div><div class="f-main"><div class="f-path"></div><div class="f-list"></div></div></div>`;
   w.body.addEventListener('click', e => {
-    const x = e.target.closest('[data-exif]'); if (x) { openTermExif(x.dataset.exif); return; }
+    const x = e.target.closest('[data-term]'); if (x) { openTermCmd(x.dataset.term, x.dataset.path); return; }
     const s = e.target.closest('[data-dir]'); if (s) { if (s.closest('.f-list')) filesTrail.push(filesDir); else filesTrail = []; filesDir = s.dataset.dir; renderFiles(); return; }
     const r = e.target.closest('[data-file]'); if (r) openFile(r.dataset.file);
   });
 };
 function renderFiles() {
   const w = W.files; if (!w) return;
-  const side = [['~', UI.sideHome], ['~/Downloads', UI.sideDownloads], [EXPORT, EXPORT_DIR], [EXPORT + '/slack', UI.sideSlack]];
+  const side = [['~', UI.sideHome], ['~/Downloads', UI.sideDownloads]].concat(HOOKS.filesSide ? HOOKS.filesSide() : []);
   $('.f-side', w.body).innerHTML = side.map(([d, n]) => `<button type="button" data-dir="${d}" class="${d === filesDir ? 'active' : ''}">${n}</button>`).join('');
   const parent = filesDir.includes('/') ? filesDir.slice(0, filesDir.lastIndexOf('/')) : null;
   $('.f-path', w.body).innerHTML = `${parent ? `<button type="button" data-dir="${parent}" aria-label="${UI.upOne}">↑</button>` : ''}<span>${esc(filesDir)}</span>`;
@@ -1004,15 +1068,18 @@ function renderFiles() {
   $('.f-list', w.body).innerHTML = items.length ? items.map(n => {
     const dir = n.endsWith('/');
     const full = filesDir + '/' + n.replace(/\/$/, '');
-    const icon = dir ? '📁' : /\.jpg$/.test(n) ? '🖼️' : /\.csv$/.test(n) ? '📊' : /\.log$/.test(n) ? '💬' : '📄';
+    const icon = dir ? '📁' : isImage(n) ? '🖼️' : /\.csv$/.test(n) ? '📊' : /\.log$/.test(n) ? '💬' : /\.eml$/.test(n) ? '✉️' : '📄';
     const row = `<button type="button" class="f-row" ${dir ? `data-dir="${full}"` : `data-file="${full}"`}><span>${icon}</span><span class="nm">${esc(n.replace(/\/$/, ''))}</span><span class="sz">${dir ? '—' : sizeOf(full)}</span></button>`;
-    return S.helper && /\.jpg$/.test(n) ? `<div class="f-rowwrap">${row}<button type="button" class="f-act" data-exif="${full}">${UI.checkInTerminal}</button></div>` : row;
+    // a button next to the file, from the case (e.g. "check in terminal")
+    const act = !dir && HOOKS.fileAction ? HOOKS.fileAction(full, n) : '';
+    return act ? `<div class="f-rowwrap">${row}${act}</div>` : row;
   }).join('') : `<div class="f-empty">${filesDir === '~/Downloads' ? UI.downloadsEmpty : UI.folderEmpty}</div>`;
   w.setTitle(UI.filesTitle(filesDir));
 }
 function openFile(path) {
   const name = path.split('/').pop();
-  if (/\.jpg$/.test(name)) return openImage(name);
+  if (HOOKS.openFile && HOOKS.openFile(path)) return;
+  if (isImage(name)) return openImage(name);
   openDoc(path);
 }
 
@@ -1107,17 +1174,11 @@ function openImage(fn) {
   const st = $('.v-stage', w.body);
   st.innerHTML = `<div class="v-canvas"><img src="${info.src}" alt="${esc(fn)}" draggable="false"></div><div class="v-tools"><button type="button" data-z="out" aria-label="${UI.zoomOut}">－</button><span class="zl">100%</span><button type="button" data-z="in" aria-label="${UI.zoomIn}">＋</button><button type="button" data-z="fit">${UI.fit}</button></div>`;
   const downloaded = S.downloads.includes(fn);
-  // Like Windows「內容 › 詳細資料」or macOS 預覽程式的檢閱器: common fields only, no time-zone offset.
-  const cam = !downloaded ? '' : info.full
-    ? `<h4 class="v-h">${UI.cameraInfo}</h4><dl>${CAMERA_INFO.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`
-    : `<h4 class="v-h">${UI.cameraInfo}</h4><p class="v-none">${UI.noCamera}</p>`;
-  $('.v-info', w.body).innerHTML = `<details class="v-details"${isPhone() ? '' : ' open'}><summary>${UI.fileInfo}</summary><h4 class="v-h" style="margin-top:6px">${UI.infoFile}</h4><dl><dt>${UI.infoName}</dt><dd>${esc(fn)}</dd><dt>${UI.infoSize}</dt><dd>${info.w} × ${info.h}</dd><dt>${UI.infoBytes}</dt><dd>${info.size}</dd><dt>${UI.infoWhere}</dt><dd>${downloaded ? '~/Downloads' : UI.infoPreview}</dd></dl>${cam}
-  <div class="tip">${downloaded ? UI.tipDownloaded : UI.tipNotDownloaded}</div>
-  <p style="font-size:12px;margin-top:10px"><a href="${info.src}" download="${esc(fn)}" style="color:var(--accent)">${UI.saveFile}</a><br><span style="color:var(--muted)">${UI.realJpeg}</span></p>
+  const where = info.where || (downloaded ? '~/Downloads' : UI.infoPreview);
+  $('.v-info', w.body).innerHTML = `<details class="v-details"${isPhone() ? '' : ' open'}><summary>${UI.fileInfo}</summary><h4 class="v-h" style="margin-top:6px">${UI.infoFile}</h4><dl><dt>${UI.infoName}</dt><dd>${esc(fn)}</dd><dt>${UI.infoSize}</dt><dd>${info.w} × ${info.h}</dd><dt>${UI.infoBytes}</dt><dd>${info.size}</dd><dt>${UI.infoWhere}</dt><dd>${esc(where)}</dd></dl>${HOOKS.viewerInfo ? HOOKS.viewerInfo(fn, info, downloaded) : ''}
   <p style="color:var(--muted);font-size:12px;margin-top:12px">${UI.controls(isPhone())}</p></details>`;
   requestAnimationFrame(fitView);
-  if (downloaded && info.full) { discover('nogps'); setTimeout(() => discover('model'), 700); }
-  else if (downloaded) discover('strip');
+  if (HOOKS.onViewImage) HOOKS.onViewImage(fn, info, downloaded);
 }
 function fitView() {
   const st = $('.v-stage', W.viewer.body); const r = st.getBoundingClientRect();
@@ -1138,15 +1199,12 @@ function applyView() {
   Object.assign(c.style, { width: vw.bw + 'px', height: vw.bh + 'px', transform: `translate(${vw.x}px, ${vw.y}px) scale(${vw.s})` });
   $('.zl', W.viewer.body).textContent = Math.round(vw.s * 100) + '%';
 }
+// After a zoom or pan: the case can look at what is on screen (HOOKS.onViewport)
 function checkRegions() {
-  if (vw.file !== PXL || vw.s < 2) return;
+  if (!HOOKS.onViewport || !vw.file) return;
   const r = $('.v-stage', W.viewer.body).getBoundingClientRect();
-  // visible area in the art's coordinates (viewBox 0 -21 800 602)
-  const fx = 800 / vw.bw, fy = 602 / vw.bh;
-  const L = (-vw.x / vw.s) * fx, R = ((r.width - vw.x) / vw.s) * fx, T = (-vw.y / vw.s) * fy - 21, B = ((r.height - vw.y) / vw.s) * fy - 21;
-  const inView = (px, py) => px > L && px < R && py > T && py < B;
-  if (inView(540, 478)) discover('sticker');
-  if (inView(45, 470)) discover('note');
+  // the visible part of the image, as fractions of its width and height
+  HOOKS.onViewport(vw.file, vw.s, { left: -vw.x / vw.s / vw.bw, right: (r.width - vw.x) / vw.s / vw.bw, top: -vw.y / vw.s / vw.bh, bottom: (r.height - vw.y) / vw.s / vw.bh });
 }
 
 /* ---------- terminal ---------- */
@@ -1183,7 +1241,7 @@ INIT.terminal = w => {
 /* Phones build commands by tapping instead of typing: pick a command, then a file or
    folder from the current directory. The composed line shows in the prompt before it runs. */
 let tb = { cmd: '', args: [] };
-const TB_CMDS = ['ls', 'cd', 'cat', 'exiftool', 'grep', 'file', 'help', 'clear'];
+const tbCmds = () => (HOOKS.termBuilder || ['ls', 'cd', 'cat', 'grep', 'file', 'help', 'clear']);
 const useBuilder = () => isPhone() && !S.termKeyboard;
 function tbArgs() {
   const c = term.cwd, items = DIRS[c] ? DIRS[c]() : [];
@@ -1193,7 +1251,9 @@ function tbArgs() {
   const globs = [...new Set(files.concat(nested).map(n => n.replace(/[^/]+(\.\w+)$/, '*$1')))].filter(g => files.concat(nested).filter(n => n.replace(/[^/]+(\.\w+)$/, '*$1') === g).length > 1);
   if (tb.cmd === 'cd') return dirs.concat(c === '~' ? [] : ['..', '~']);
   if (tb.cmd === 'ls') return dirs;
-  if (tb.cmd === 'exiftool') return files.concat(nested).sort((x, y) => /\.jpg$/.test(y) - /\.jpg$/.test(x));
+  // the case's own commands pick their arguments (HOOKS.termArgs)
+  const own = HOOKS.termArgs ? HOOKS.termArgs(tb.cmd, files.concat(nested), dirs) : null;
+  if (own) return own;
   if (tb.cmd === 'cat' || tb.cmd === 'file') return files.concat(nested);
   if (tb.cmd === 'grep') return tb.args.length ? globs.concat(files, nested) : [];
   return [];
@@ -1209,7 +1269,7 @@ function renderBuilder() {
   inp.value = line;
   const args = tb.cmd ? tbArgs() : [];
   const needPattern = tb.cmd === 'grep' && !tb.args.length;
-  box.innerHTML = `<div class="tb-row"><span class="tb-label">${UI.tbCommand}</span>${TB_CMDS.map(c => `<button type="button" class="tb-chip${tb.cmd === c ? ' on' : ''}" data-tb-cmd="${c}">${c}</button>`).join('')}</div>`
+  box.innerHTML = `<div class="tb-row"><span class="tb-label">${UI.tbCommand}</span>${tbCmds().map(c => `<button type="button" class="tb-chip${tb.cmd === c ? ' on' : ''}" data-tb-cmd="${c}">${c}</button>`).join('')}</div>`
     + (needPattern ? `<form class="tb-row tb-pattern"><span class="tb-label">${UI.tbPattern}</span><input id="tbPattern" aria-label="${UI.tbPatternAria}" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="submit" class="tb-chip">${UI.tbAdd}</button></form>` : '')
     + (args.length ? `<div class="tb-row"><span class="tb-label">${tb.cmd === 'cd' || tb.cmd === 'ls' ? UI.tbFolders : UI.tbFiles}</span>${args.map(x => `<button type="button" class="tb-chip arg${tb.args.includes(x) ? ' on' : ''}" data-tb-arg="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : '')
     + `<div class="tb-row tb-actions"><button type="button" class="tb-chip" data-tb="back"${line ? '' : ' disabled'} aria-label="${UI.tbBack}">⌫</button><button type="button" class="tb-chip" data-tb="hist"${term.hist.length ? '' : ' disabled'}>${UI.tbHistory}</button><button type="button" class="tb-chip" data-tb="kbd">${UI.tbKeyboard}</button><button type="button" class="tb-run" data-tb="run"${line ? '' : ' disabled'}>${UI.run}</button></div>`;
@@ -1227,12 +1287,7 @@ function builderClick(e) {
   else if (k === 'run') { const line = [tb.cmd, ...tb.args].filter(Boolean).join(' '); tb = { cmd: '', args: [] }; runCmd(line); }
 }
 function termSuggestions() {
-  const c = term.cwd;
-  if (c === '~') return SUGGEST.home;
-  if (c === '~/Downloads') return DIRS[c]().filter(n => /\.jpg$/.test(n)).map(n => 'exiftool ' + n).concat(['ls', 'cd ..']);
-  if (c === EXPORT) return SUGGEST.export;
-  if (c === EXPORT + '/slack') return SUGGEST.slack;
-  return ['ls', 'cd ~'];
+  return (HOOKS.termSuggest && HOOKS.termSuggest(term.cwd)) || ['ls', 'cd ~'];
 }
 function renderTermHelp() {
   const w = W.terminal; if (!w) return;
@@ -1244,26 +1299,14 @@ function setHelper(on) {
   S.helper = on; save();
   renderTermHelp();
   if (W.files) renderFiles();
-  if (on && !S.coach) {
-    S.coach = 1; save();
-    pushMsg('awu', ['ui', 'coachStart', S.downloads.includes(PXL)]);
-  }
+  if (HOOKS.onHelper) HOOKS.onHelper(on);
 }
-function coachAfter(line) {
-  if (!S.helper) return;
-  if (S.coach < 2 && term.cwd === '~/Downloads') {
-    S.coach = 2; save();
-    setTimeout(() => pushMsg('awu', ['ui', 'coachInDownloads', S.downloads.includes(PXL)]), 500);
-  } else if (S.coach < 3 && /^exiftool\s+PXL_/.test(line)) {
-    S.coach = 3; save();
-    setTimeout(() => pushMsg('awu', ['ui', 'coachAfterExif']), 1200);
-  }
-}
-function openTermExif(path) {
+// Opens the terminal in the file's folder with "<cmd> <file>" filled in
+function openTermCmd(cmd, path) {
   const w = openApp('terminal'); if (!w) return;
   term.cwd = path.slice(0, path.lastIndexOf('/')); updPrompt(); renderTermHelp();
-  if (useBuilder()) { tb = { cmd: 'exiftool', args: [path.split('/').pop()] }; renderBuilder(); return; }
-  const inp = $('input', w.body); inp.value = 'exiftool ' + path.split('/').pop(); inp.focus();
+  if (useBuilder()) { tb = { cmd, args: [path.split('/').pop()] }; renderBuilder(); return; }
+  const inp = $('input', w.body); inp.value = cmd + ' ' + path.split('/').pop(); inp.focus();
 }
 const promptStr = () => `<span class="p">investigator@mistport</span>:<span class="k">${esc(term.cwd)}</span>$ `;
 function updPrompt() { $('.prompt', W.terminal.body).innerHTML = promptStr(); }
@@ -1289,7 +1332,7 @@ function glob(arg) {
 function complete(v) {
   const parts = v.split(' ');
   const last = parts.pop();
-  if (parts.length === 0) { const cmds = ['help', 'ls', 'cd', 'pwd', 'cat', 'exiftool', 'grep', 'file', 'open', 'clear', 'whoami', 'date']; const m = cmds.filter(c => c.startsWith(last)); return m.length === 1 ? m[0] + ' ' : v; }
+  if (parts.length === 0) { const cmds = ['help', 'ls', 'cd', 'pwd', 'cat', 'grep', 'file', 'open', 'clear', 'whoami', 'date'].concat(Object.keys(HOOKS.cmds || {})); const m = cmds.filter(c => c.startsWith(last)); return m.length === 1 ? m[0] + ' ' : v; }
   const base = last.includes('/') ? last.slice(0, last.lastIndexOf('/') + 1) : '';
   const frag = last.slice(base.length);
   const dir = resolve(base || '.');
@@ -1309,7 +1352,7 @@ function runCmd(raw) {
     help: () => out(UI.help),
     pwd: () => out('/home/investigator' + term.cwd.slice(1)),
     whoami: () => out('investigator'),
-    date: () => out(`Wed Sep 16 ${gameTime()}:00 CST 2026`),
+    date: () => out(`${UI.termDate} ${gameTime()}:00 CST ${UI.termYear || 2026}`),
     clear: () => { $('.out', W.terminal.body).innerHTML = ''; },
     ls: () => {
       const target = resolve(args.filter(a => !a.startsWith('-'))[0] || '.');
@@ -1325,7 +1368,7 @@ function runCmd(raw) {
         const p = resolve(a);
         if (isDir(p)) { out(`<span class="e">cat: ${esc(a)}: ${UI.isDir}</span>`); continue; }
         if (!exists(p)) { out(`<span class="e">cat: ${esc(a)}: ${UI.noSuchFile}</span>`); continue; }
-        if (/\.jpg$/.test(p)) { out(`<span class="d">${UI.binary}</span>\n` + 'ÿØÿà\u0000JFIF\u0000\u0001\u0001\u0000H\u0000H\u0000\u0000ÿÿ\u0000\u0016Exif\u0000\u0000MM\u0000*'); continue; }
+        if (isImage(p)) { out(`<span class="d">${UI.binary}</span>\n` + 'ÿØÿà\u0000JFIF\u0000\u0001\u0001\u0000H\u0000H\u0000\u0000ÿÿ\u0000\u0016Exif\u0000\u0000MM\u0000*'); continue; }
         out(esc(fileContent(p)));
       }
     },
@@ -1334,8 +1377,7 @@ function runCmd(raw) {
         const p = resolve(a);
         if (!exists(p)) { out(`<span class="e">${esc(a)}: ${UI.cannotOpen}</span>`); continue; }
         if (isDir(p)) out(`${esc(a)}: directory`);
-        else if (/\.jpg$/.test(p)) out(`${esc(a)}: JPEG image data, ${imageInfo(p.split('/').pop()).full ? 'Exif standard: [TIFF image data, big-endian]' : 'JFIF standard 1.01'}`);
-        else out(`${esc(a)}: Unicode text, UTF-8 text`);
+        else out(`${esc(a)}: ${(HOOKS.fileType && HOOKS.fileType(p)) || (/\.png$/i.test(p) ? 'PNG image data' : isImage(p) ? 'JPEG image data, JFIF standard 1.01' : /\.eml$/.test(p) ? 'RFC 822 mail, Unicode text, UTF-8 text' : 'Unicode text, UTF-8 text')}`);
       }
     },
     open: () => {
@@ -1344,15 +1386,6 @@ function runCmd(raw) {
       if (isDir(p)) { filesDir = p; filesTrail = []; openApp('files'); renderFiles(); return; }
       if (!exists(p)) return out(`<span class="e">open: ${esc(args[0])}: ${UI.noSuchFile}</span>`);
       openFile(p);
-    },
-    exiftool: () => {
-      const files = args.filter(a => !a.startsWith('-')).flatMap(glob);
-      if (!files.length) return out(`<span class="e">${UI.usageExif}</span>`);
-      for (const a of files) {
-        const p = resolve(a);
-        if (!exists(p) || isDir(p)) { out(`<span class="e">Error: File not found - ${esc(a)}</span>`); continue; }
-        exif(p);
-      }
     },
     grep: () => {
       const flags = args.filter(a => a.startsWith('-'));
@@ -1365,8 +1398,8 @@ function runCmd(raw) {
       for (const a of files) {
         const p = resolve(a);
         if (!exists(p) || isDir(p)) { out(`<span class="e">grep: ${esc(a)}: ${UI.noSuchFile}</span>`); continue; }
-        if (/\.jpg$/.test(p)) continue;
-        fileContent(p).split('\n').forEach(l => {
+        if (isImage(p)) continue;
+        (fileContent(p) || '').split('\n').forEach(l => {
           const hit = ci ? l.toLowerCase().includes(pat.toLowerCase()) : l.includes(pat);
           if (!hit) return; n++;
           const re = new RegExp(pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ci ? 'gi' : 'g');
@@ -1377,29 +1410,12 @@ function runCmd(raw) {
     },
   };
   if (C[cmd]) C[cmd]();
+  else if (HOOKS.cmds && HOOKS.cmds[cmd]) HOOKS.cmds[cmd](args);
   else if (['sudo', 'rm', 'ssh', 'curl', 'wget', 'vim', 'nano'].includes(cmd)) out(`<span class="e">${esc(cmd)}: ${UI.disabledCmd}</span>`);
   else out(`<span class="e">${esc(cmd)}: command not found</span> <span class="d">${UI.notFoundHint}</span>`);
   renderTermHelp();
   renderBuilder();
-  coachAfter(line);
-}
-function exif(p) {
-  const name = p.split('/').pop();
-  const row = (k, v) => `<span class="k">${k.padEnd(isPhone() ? 24 : 32)}</span>: ${esc(v)}`;
-  if (!/\.jpg$/.test(name)) {
-    out([row('ExifTool Version Number', '12.76'), row('File Name', name), row('File Size', sizeOf(p)), row('File Type', 'TXT'), row('MIME Type', 'text/plain')].join('\n'));
-    return;
-  }
-  const info = imageInfo(name);
-  if (info.full) {
-    out(EXIF_PXL.map(([k, v]) => row(k, v)).concat(`<span class="d">${EXIF_PXL_NOTE}</span>`).join('\n'));
-    discover('nogps');
-    setTimeout(() => discover('model'), 900);
-    setTimeout(() => discover('tz'), 1800);
-  } else {
-    out(EXIF_SOCIAL(name, info.size).map(([k, v]) => row(k, v)).concat(`<span class="d">${EXIF_SOCIAL_NOTE}</span>`).join('\n'));
-    discover('strip');
-  }
+  if (HOOKS.afterCmd) HOOKS.afterCmd(line);
 }
 
 /* ---------- board ---------- */
@@ -1433,40 +1449,49 @@ INIT.report = w => {
     e.preventDefault();
     const f = e.target;
     const pick = n => $$(`input[name="${n}"]:checked`, f).map(i => i.value);
-    const a1 = pick('q1'), a2 = pick('q2'), a3 = pick('q3')[0], who = $('#q4', f).value;
-    S.report = { a1, a2, a3, who }; save();
-    const ok1 = a1.includes('model') && a1.includes('tz') && !a1.includes('gps') && !a1.includes('name');
-    const ok2 = a2.length === 2 && a2.includes('note') && a2.includes('sticker');
-    const ok3 = a3 === 'style';
+    const Q = reportQuestions(), last = Q.length + 1;
+    const answers = Q.map((q, i) => q.type === 'radio' ? pick('q' + (i + 1))[0] : pick('q' + (i + 1)));
+    const who = $('#q' + last, f).value;
+    // saved as a1, a2, …, who
+    S.report = Object.assign(Object.fromEntries(answers.map((a, i) => ['a' + (i + 1), a])), { who }); save();
     const fb = (id, ok, msg) => { const el = $('#' + id, f); el.className = 'fb ' + (ok ? 'ok' : 'no'); el.textContent = ok ? UI.correct : msg; };
-    fb('fb1', ok1, UI.fb1);
-    fb('fb2', ok2, UI.fb2);
-    fb('fb3', ok3, UI.fb3);
-    if (!who) { fb('fb4', false, UI.fbNone); return; }
+    const oks = Q.map((q, i) => { const ok = checkAnswer(q, answers[i]); fb('fb' + (i + 1), ok, UI['fb' + (i + 1)]); return ok; });
+    const fbWho = 'fb' + last;
+    if (!who) { fb(fbWho, false, UI.fbNone); return; }
     $('.submit', f).disabled = true;
     const sol = await tryDecrypt(who);
     $('.submit', f).disabled = false;
     if (!sol) {
       S.wrong++; save();
-      fb('fb4', false, UI.fbWrong);
-      pushMsg('yelu', ['ui', 'yeluWrong']);
+      fb(fbWho, false, UI.fbWrong);
+      pushMsg(CLIENT, ['ui', 'clientWrong']);
       return;
     }
-    fb('fb4', true, '');
-    if (ok1 && ok2 && ok3) { S.solved = true; save(); track('case-solved', { case: '01', rank: String(rankFor()[2]) }); showSolution(sol); pushMsg('yelu', ['ui', 'yeluSolved']); }
-    else { $('#fb4', f).textContent = UI.fbRightFixRest; }
+    fb(fbWho, true, '');
+    if (oks.every(Boolean)) { S.solved = true; save(); track('case-solved', { case: CASE.number, rank: String(rankFor()[2]) }); showSolution(sol); pushMsg(CLIENT, ['ui', 'clientSolved']); }
+    else { $('#' + fbWho, f).textContent = UI.fbRightFixRest; }
   });
 };
+/* The report's questions before "who is it", from the case (HOOKS.report):
+   { opts: [[value, label]], type: 'checkbox' | 'radio', need: [...], deny: [...], exact: [...], answer }
+   A checkbox answer is right when it has everything in need and nothing in deny, or exactly the
+   values in exact; a radio answer when it equals answer. Labels are UI.q1…, feedback UI.fb1…; the
+   last question (choose the person) is UI.q<n+1>. */
+const reportQuestions = () => HOOKS.report || [];
+function checkAnswer(q, a) {
+  if (q.type === 'radio') return a === q.answer;
+  if (q.exact) return a.length === q.exact.length && q.exact.every(v => a.includes(v));
+  return (q.need || []).every(v => a.includes(v)) && !(q.deny || []).some(v => a.includes(v));
+}
 function renderReport() {
   const w = W.report; if (!w) return;
   const r = S.report || {};
-  const box = (name, opts, type) => opts.map(([v, l]) => `<label><input type="${type}" name="${name}" value="${v}" id="${name}-${v}" ${(type === 'radio' ? r.a3 === v : (r[name === 'q1' ? 'a1' : 'a2'] || []).includes(v)) ? 'checked' : ''}> ${l}</label>`).join('');
+  const Q = reportQuestions(), last = Q.length + 1;
+  const box = (i, q) => q.opts.map(([v, l]) => { const a = r['a' + (i + 1)]; const on = q.type === 'radio' ? a === v : (a || []).includes(v); return `<label><input type="${q.type}" name="q${i + 1}" value="${v}" id="q${i + 1}-${v}" ${on ? 'checked' : ''}> ${l}</label>`; }).join('');
   $('.report', w.body).innerHTML = `<h2>${UI.reportTitle}</h2><p class="rep-note">${UI.reportNote}</p>
   <form>
-  <fieldset><legend>${UI.q1}</legend>${box('q1', Q1, 'checkbox')}<div class="fb" id="fb1"></div></fieldset>
-  <fieldset><legend>${UI.q2}</legend>${box('q2', Q2, 'checkbox')}<div class="fb" id="fb2"></div></fieldset>
-  <fieldset><legend>${UI.q3}</legend>${box('q3', Q3, 'radio')}<div class="fb" id="fb3"></div></fieldset>
-  <fieldset><legend>${UI.q4}</legend><select id="q4" aria-label="${UI.chooseSuspect}"><option value="">${UI.chooseOne}</option>${PEOPLE.map(p => `<option value="${p.key}" ${r.who === p.key ? 'selected' : ''}>${p.name}</option>`).join('')}</select><div class="fb" id="fb4"></div></fieldset>
+  ${Q.map((q, i) => `<fieldset><legend>${UI['q' + (i + 1)]}</legend>${box(i, q)}<div class="fb" id="fb${i + 1}"></div></fieldset>`).join('\n  ')}
+  <fieldset><legend>${UI['q' + last]}</legend><select id="q${last}" aria-label="${UI.chooseSuspect}"><option value="">${UI.chooseOne}</option>${PEOPLE.map(p => `<option value="${p.key}" ${r.who === p.key ? 'selected' : ''}>${p.name}</option>`).join('')}</select><div class="fb" id="fb${last}"></div></fieldset>
   <button type="submit" class="submit">${UI.submit}</button>
   </form>`;
 }
@@ -1509,6 +1534,11 @@ openApp = function (id) {
 };
 
 /* =====================================================================
+   THE CASE'S OWN CODE (cases/<case>/web/game.js)
+   ===================================================================== */
+/*__GAME__*/
+
+/* =====================================================================
    BOOT
    ===================================================================== */
 const resetState = { armed: false, t: 0 };
@@ -1517,8 +1547,8 @@ function resetGame(force) {
   try { localStorage.removeItem(SKEY); } catch (e) {}
   S = fresh(); save();
   Object.keys(W).forEach(k => { W[k].el.remove(); delete W[k]; });
-  introGen++; introBusy = false; typingNow = false; typingSkip = null;
-  br = { hist: ['mist.search'], i: 0 }; term = { cwd: '~', hist: [], hi: 0 }; filesDir = EXPORT; chatThread = 'yelu'; chatView = 'thread'; navStack = []; filesTrail = []; cascade = 0;
+  introGen++; introBusy = false; typingNow = false; typingSkip = null; dlgBusy = false;
+  br = { hist: ['mist.search'], i: 0 }; term = { cwd: '~', hist: [], hi: 0 }; filesDir = HOOKS.filesHome || '~'; chatThread = CLIENT; chatView = 'thread'; navStack = []; filesTrail = []; cascade = 0;
   resetState.armed = false; $('#resetBtn').textContent = UI.menuReset;
   boot();
 }
@@ -1538,14 +1568,19 @@ function boot() {
   openApp('chat');
   tick();
   if (S.phase === 'intro') setTimeout(runIntro, 700);
+  else if (S.dlg) setTimeout(runDialog, 700);  // a conversation left halfway
 }
 function start(data) {
+  // what the case's game.js set up: its folders, in-game sites and first folder
+  DIRS = Object.assign({ '~/Downloads': () => S.downloads.slice() }, HOOKS.dirs ? HOOKS.dirs() : {});
+  SITES = makeSites(makeSiteCtx());
+  filesDir = HOOKS.filesHome || '~';
   const saved = (data && data.state) || load();
   if (saved) S = Object.assign(fresh(), saved);
   addRefs();
   // marks and notes used to be saved under the person's name in the page's language
   PEOPLE.forEach(p => { if (p.name === p.key) return; ['marks', 'notes'].forEach(k => { if (S[k][p.name] != null) { if (S[k][p.key] == null) S[k][p.key] = S[k][p.name]; delete S[k][p.name]; } }); });
-  if (S.phase !== 'intro' && isPhone() && !S.unread.yelu && !S.unread.awu) chatView = 'list';
+  if (S.phase !== 'intro' && isPhone() && !THREADS.some(t => S.unread[t])) chatView = 'list';
   boot();
   setInterval(tick, 15000);
 }

@@ -16,6 +16,9 @@
   "players": "單人或 2–4 人合作",
   "pdf": "night-heron.pdf",
   "pdfName": "夜鷺事件.pdf",
+  "printEditions": true,
+  "saveKey": "yelu-web-v2",
+  "seenKey": "yelu-web-seen",
   "i18n": {
     "en": {
       "title": "Night Heron",

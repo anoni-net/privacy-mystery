@@ -3,6 +3,8 @@
    British spelling, single quotation marks and the sign-off "That's all." stand in for 臺,
    half-width spacing and 以上。 */
 
+// The interactive page's chat thread for the client, Night Heron (also where saves keep it)
+const CLIENT_ID = 'yelu';
 const PEOPLE = [
   { name: 'Chang Chia-hao', key: '張家豪', initial: 'CC', role: 'Data analyst · 32', color: '#3d8a6b' },
   { name: 'Lin Ya-ting', key: '林雅婷', initial: 'LY', role: 'Senior backend engineer · 35', color: '#c0587e' },
