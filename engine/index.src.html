@@ -304,6 +304,11 @@ button { font: inherit; color: inherit; }
 #toasts { position: fixed; top: calc(40px + env(safe-area-inset-top, 0px)); right: 14px; display: flex; flex-direction: column; gap: 8px; z-index: 9500; max-width: min(340px, calc(100vw - 28px)); }
 .toast { background: rgba(35,45,57,.96); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; padding: 10px 12px; font-size: 13px; box-shadow: 0 10px 28px rgba(0,0,0,.4); cursor: pointer; animation: tin .25s ease-out; }
 .toast b { display: block; font-size: 12px; color: var(--accent); margin-bottom: 2px; }
+.toast.has-av { display: flex; gap: 10px; align-items: flex-start; }
+.t-av { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--accent-ink); }
+.t-av svg { width: 18px; height: 18px; }
+.t-tx { min-width: 0; }
+.t-body { display: block; }
 @keyframes tin { from { transform: translateY(-6px); opacity: .3; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 
@@ -364,6 +369,11 @@ button { font: inherit; color: inherit; }
   #toasts { top: calc(4px + env(safe-area-inset-top, 0px)); left: 52px; right: 52px; max-width: none; z-index: 9700; }
   .toast { min-height: 40px; padding: 4px 10px; border-radius: 12px; background: #2b3745; opacity: 1; font-size: 13px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 8px 24px rgba(0,0,0,.55); }
   .toast b { font-size: 11.5px; margin: 0; overflow: hidden; text-overflow: ellipsis; }
+  .toast.has-av { align-items: center; gap: 8px; }
+  .t-av { width: 26px; height: 26px; flex-basis: 26px; font-size: 12px; }
+  .t-av svg { width: 15px; height: 15px; }
+  .t-tx { overflow: hidden; }
+  .t-tx b, .t-body { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* chat: contacts, then a conversation */
   .chat { display: flex; flex-direction: column; }
@@ -563,21 +573,35 @@ function gameTime(offsetMin = 0) {
   const h = CLOCK.play[0] + Math.floor(m / 60), mm = m % 60;
   return `${String(h % 24).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
-function toast(title, body, onClick) {
+/* A notification at the top right (a banner on phones). who says what it is about, so the
+   player can tell at a glance: a chat thread (CLIENT or 'awu') shows that person's avatar,
+   'clue' the evidence board's icon. It stays 9 seconds (6.5 on a phone), and while the pointer
+   rests on it, it stays until 3 seconds after the pointer leaves. */
+function toastFace(who) {
+  if (who === 'clue') return { bg: APPS.board.ic, html: `<svg viewBox="0 0 24 24">${APPS.board.svg}</svg>` };
+  if (who === 'awu') return { bg: '#8fb3d9', html: esc(UI.awuAvatar) };
+  if (who === CLIENT) return { bg: UI.clientColor || '#e3a33b', html: esc(UI.clientAvatar) };
+  return null;
+}
+function toast(title, body, onClick, who) {
   const el = document.createElement('div');
-  el.className = 'toast';
-  el.innerHTML = `<b>${esc(title)}</b>${esc(body)}`;
+  const face = toastFace(who);
+  el.className = 'toast' + (face ? ' has-av' : '');
+  if (face) el.style.borderLeftColor = face.bg;
+  el.innerHTML = (face ? `<span class="t-av" style="background:${face.bg}" aria-hidden="true">${face.html}</span>` : '') + `<span class="t-tx"><b>${esc(title)}</b><span class="t-body">${esc(body)}</span></span>`;
   el.onclick = () => { el.remove(); onClick && onClick(); };
   const box = $('#toasts');
   box.appendChild(el);
   while (box.children.length > (isPhone() ? 1 : 3)) box.firstElementChild.remove();
-  setTimeout(() => el.remove(), isPhone() ? 3500 : 5200);
+  let t = setTimeout(() => el.remove(), isPhone() ? 6500 : 9000);
+  el.addEventListener('mouseenter', () => clearTimeout(t));
+  el.addEventListener('mouseleave', () => { clearTimeout(t); t = setTimeout(() => el.remove(), 3000); });
 }
 function discover(id) {
   if (S.disc[id]) return;
   S.disc[id] = Date.now();
   save();
-  toast(UI.clueToast, DISC[id].t, () => openApp('board'));
+  toast(UI.clueToast, DISC[id].t, () => openApp('board'), 'clue');
   if (REACT[id]) setTimeout(() => pushMsg(CLIENT, ['react', id]), 1600);
   if (W.board) renderBoard();
   // a conversation this clue sets off (DIALOGS[node].after === clue)
@@ -625,7 +649,7 @@ function pushMsg(thread, r, me = false) {
   const text = refText(r) || '';
   S[thread].push({ text, r, me, tm: gameTime() });
   const active = W.chat && !W.chat.el.hidden && focused === 'chat' && chatThread === thread && (!isPhone() || chatShowsThread());
-  if (!me && !active) { S.unread[thread]++; toast(threadName(thread), text, () => { chatThread = thread; chatView = 'thread'; openApp('chat'); }); }
+  if (!me && !active) { S.unread[thread]++; toast(threadName(thread), text, () => { chatThread = thread; chatView = 'thread'; openApp('chat'); }, thread); }
   save();
   if (W.chat) renderChat();
   renderDock();
@@ -787,7 +811,7 @@ function typing(text) {
 }
 function introNotify(text) {
   const active = W.chat && !W.chat.el.hidden && chatThread === CLIENT;
-  if (!active) { S.unread[CLIENT]++; save(); renderDock(); toast(UI.client, text, () => { chatThread = CLIENT; openApp('chat'); }); }
+  if (!active) { S.unread[CLIENT]++; save(); renderDock(); toast(UI.client, text, () => { chatThread = CLIENT; openApp('chat'); }, CLIENT); }
 }
 async function runIntro() {
   if (introBusy || S.phase !== 'intro') return;
@@ -838,7 +862,7 @@ function startPlay() {
   renderDock(); renderChat(); tick();
   if (HOOKS.onPlay) HOOKS.onPlay();
   setTimeout(() => toast(UI.startToast[0], UI.startToast[1]), 600);
-  setTimeout(() => toast(UI.awu, UI.awuHello, () => { chatThread = 'awu'; openApp('chat'); }), 1600);
+  setTimeout(() => toast(UI.awu, UI.awuHello, () => { chatThread = 'awu'; openApp('chat'); }, 'awu'), 1600);
 }
 function skipIntro() {
   introGen++; introBusy = false; typingNow = false; typingSkip = null;
