@@ -179,6 +179,15 @@ button { font: inherit; color: inherit; }
 .slk .txt { font-size: 13.5px; }
 .slk .body { flex: 1; min-width: 0; }
 .slk-chan { font-family: var(--font-mono); color: var(--accent); font-weight: 600; margin-bottom: 4px; }
+.mail-subj { font-size: 17px; margin: 0 0 8px; line-height: 1.4; }
+.mail-head { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0 0 10px; font-size: 13px; }
+.mail-head dt { color: var(--muted); }
+.mail-head dd { margin: 0; word-break: break-all; }
+.mail-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.mail-html { background: #fff; color: #1d2b31; border-radius: 8px; padding: 14px 16px; }
+.mail .mail-plain, .mail .mail-raw { white-space: pre-wrap; font-size: 13px; background: var(--desk); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 0; }
+.mail .mail-raw { font-family: var(--font-mono); font-size: 12px; word-break: break-all; }
+.mail .mail-raw b { color: var(--accent); }
 
 /* ---------- viewer ---------- */
 .viewer { display: grid; grid-template-columns: 1fr 230px; grid-template-rows: minmax(0, 1fr); height: 100%; min-height: 0; }
@@ -1084,7 +1093,10 @@ function openFile(path) {
 }
 
 /* ---------- doc viewer ---------- */
-INIT.doc = w => { w.body.innerHTML = `<div class="doc dark-pin"></div>`; };
+INIT.doc = w => {
+  w.body.innerHTML = `<div class="doc dark-pin"></div>`;
+  w.body.addEventListener('click', e => { const b = e.target.closest('[data-mail]'); if (b && mailOpen) { renderMail($('.doc', w.body), mailOpen, b.dataset.mail); } });
+};
 function openDoc(path) {
   const w = openApp('doc');
   const name = path.split('/').pop();
@@ -1103,10 +1115,52 @@ function openDoc(path) {
       const nm = m[2];
       return `<div class="slk"><span class="av" style="background:${COLOR[nm] || '#555'}">${INITIAL(nm)}</span><div class="body"><div class="who">${esc(nm)}<span class="when">${m[1]}</span></div><div class="txt">${esc(m[3])}</div></div>${pinHTML('Slack ' + lines[0] + ' ' + m[1].slice(5), nm + UI.colon + m[3])}</div>`;
     }).join('') + `<p class="cmt">${UI.verbatim}</p>`;
+  } else if (/\.eml$/.test(name)) {
+    renderMail(box, { name, raw: c }, 'mail');
   } else {
     box.innerHTML = `<pre>${esc(c)}</pre>`;
   }
   box.scrollTop = 0;
+  if (HOOKS.onOpenDoc) HOOKS.onOpenDoc(path);
+}
+
+/* ---------- mail (.eml) ----------
+   A message as a mail app shows it, with a switch between its plain-text and HTML parts when it
+   has both, and "show original": the raw message with every header. The case's HOOKS.onMail(name,
+   view) hears which view was opened. HTML parts come from the case's own files. */
+let mailOpen = null;
+function parseMail(raw) {
+  const split = t => { const i = t.indexOf('\n\n'); return i < 0 ? [t, ''] : [t.slice(0, i), t.slice(i + 2)]; };
+  const headers = h => { const o = {}; h.replace(/\n[ \t]+/g, ' ').split('\n').forEach(l => { const i = l.indexOf(':'); if (i > 0) o[l.slice(0, i).toLowerCase()] = l.slice(i + 1).trim(); }); return o; };
+  const [h, body] = split(raw);
+  const H = headers(h);
+  const parts = {};
+  const b = (H['content-type'] || '').match(/boundary="?([^";]+)"?/);
+  if (b) {
+    body.split('--' + b[1]).slice(1).forEach(p => {
+      if (p.startsWith('--')) return;
+      const [ph, pb] = split(p.replace(/^\n/, ''));
+      const type = (headers(ph)['content-type'] || '').split(';')[0];
+      if (type) parts[type] = pb.trim();
+    });
+  } else parts[(H['content-type'] || 'text/plain').split(';')[0]] = body.trim();
+  return { H, parts };
+}
+function renderMail(box, mail, view) {
+  mailOpen = mail;
+  const { H, parts } = parseMail(mail.raw);
+  const both = parts['text/plain'] && parts['text/html'];
+  if (view === 'mail') view = parts['text/html'] ? 'html' : 'plain';
+  const tab = (v, label) => `<button type="button" class="chip${view === v ? ' primary' : ''}" data-mail="${v}">${label}</button>`;
+  const head = [['From', UI.mailFrom], ['Reply-To', UI.mailReplyTo], ['To', UI.mailTo], ['Date', UI.mailDate]]
+    .filter(([k]) => H[k.toLowerCase()]).map(([k, l]) => `<dt>${l}</dt><dd>${esc(H[k.toLowerCase()])}</dd>`).join('');
+  let body;
+  if (view === 'raw') body = `<pre class="mail-raw">${esc(mail.raw).replace(/^(From|Reply-To|To|Return-Path|Authentication-Results|Received|X-[\w-]+):/gm, '<b>$1</b>:')}</pre>`;
+  else if (view === 'html' && parts['text/html']) body = `<div class="mail-html">${parts['text/html']}</div>`;
+  else body = `<pre class="mail-plain">${esc(parts['text/plain'] || '')}</pre>`;
+  box.innerHTML = `<div class="mail"><h2 class="mail-subj">${esc(H.subject || mail.name)}</h2><dl class="mail-head">${head}</dl><div class="mail-tabs">${both ? tab('html', UI.mailHtml) + tab('plain', UI.mailPlain) : tab(parts['text/html'] ? 'html' : 'plain', UI.mailView)}${tab('raw', UI.mailRaw)}</div>${body}<p>${pinHTML(mail.name, (H.subject || '') + '｜' + (H.from || ''))}</p></div>`;
+  box.scrollTop = 0;
+  if (HOOKS.onMail) HOOKS.onMail(mail.name, view);
 }
 
 /* ---------- image viewer ---------- */

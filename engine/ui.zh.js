@@ -77,6 +77,15 @@ const ENGINE_UI = {
   filesTitle: dir => '檔案 — ' + dir,
   verbatim: '原文照錄，未修改任何標點與空格。',
   colon: '：',
+  // mail
+  mailFrom: '寄件者',
+  mailReplyTo: '回覆給',
+  mailTo: '收件者',
+  mailDate: '日期',
+  mailView: '信件',
+  mailHtml: 'HTML 版',
+  mailPlain: '純文字版',
+  mailRaw: '顯示原始郵件',
   // viewer
   viewerEmpty: '還沒有開啟任何圖片。<br>在「檔案」裡點一下圖片就能打開。',
   viewerTitle: fn => '看圖 — ' + fn,

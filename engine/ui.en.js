@@ -79,6 +79,15 @@ const ENGINE_UI = {
   filesTitle: dir => 'Files — ' + dir,
   verbatim: 'Quoted as written; punctuation and spacing are untouched.',
   colon: ': ',
+  // mail
+  mailFrom: 'From',
+  mailReplyTo: 'Reply to',
+  mailTo: 'To',
+  mailDate: 'Date',
+  mailView: 'Message',
+  mailHtml: 'HTML version',
+  mailPlain: 'Plain-text version',
+  mailRaw: 'Show original',
   // viewer
   viewerEmpty: 'No image open yet.<br>Tap an image in Files to open it.',
   viewerTitle: fn => 'Images — ' + fn,
