@@ -61,7 +61,8 @@ h1 { font-family: var(--font-serif); font-size: clamp(40px, 8vw, 64px); letter-s
 .skills { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
 .skills li { font-size: 12px; padding: 1px 9px; border: 1px solid #c9bb9b; border-radius: 999px; color: var(--paper-muted); }
 .meta { margin: 0; font-size: 13px; color: var(--paper-muted); }
-.plays { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 6px; }
+.plays { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: auto; padding-top: 6px; }
+.play-soon { font-size: 12.5px; color: #7a6a4f; }
 .play { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #b9ab8b; color: var(--paper-ink); text-decoration: none; font-weight: 600; font-size: 14px; }
 .play:hover { border-color: var(--paper-ink); }
 .play.primary { background: var(--paper-ink); color: var(--paper); border-color: var(--paper-ink); }
@@ -131,6 +132,7 @@ const T = {
     title: '霧港委託板｜隱私推理遊戲', kicker: '霧港隱私互助站 · PRIVACY MYSTERY', h1: '委託板',
     lead: '今晚有人需要你。每一份委託都是一個案件：從照片、檔案和文字裡找出破綻，在別人之前找到它們，也學會怎麼不留下它們。',
     langLink: '<a href="en/" lang="en">English</a>', next: '下一份委託',
+    printSoon: '靜態版與 PDF 版準備中',
     soon: '準備中。想看哪一種隱私主題？<a href="https://github.com/anoni-net/privacy-mystery/issues">到 GitHub 告訴我們</a>。',
     modes: '三種玩法',
     modeList: [['互動版', '模擬一台調查員的電腦：瀏覽器、終端機、看圖工具和調查板。需要 JavaScript，手機也能玩。'], ['靜態版', '只用 HTML 和 CSS，不需要 JavaScript。Tor Browser 的「最安全」等級也能完整破案。'], ['PDF 版', '離線或印出來玩，適合讀書會與課堂。解答在最後幾頁，上下顛倒印刷。']],
@@ -145,6 +147,7 @@ const T = {
     title: 'Mistport case board | privacy mysteries', kicker: 'MISTPORT PRIVACY AID · PRIVACY MYSTERY', h1: 'Case board',
     lead: 'Someone needs you tonight. Each request is a case: find the leaks in photos, files and writing before anyone else does, and learn not to leave them yourself.',
     langLink: '<a href="../" lang="zh-Hant-TW">中文</a>', next: 'The next case',
+    printSoon: 'Static and PDF editions coming soon',
     soon: 'In preparation. Which privacy topic would you like to see? <a href="https://github.com/anoni-net/privacy-mystery/issues">Tell us on GitHub</a>.',
     modes: 'Three ways to play',
     modeList: [['Interactive', 'A simulated investigator’s computer: browser, terminal, image viewer and evidence board. Needs JavaScript; works on phones.'], ['Static', 'Plain HTML and CSS, no JavaScript. The whole case works at Tor Browser’s “Safest” level.'], ['PDF', 'Offline or on paper, for reading groups and classrooms. The solution is on the last pages, printed upside down.']],
@@ -157,7 +160,8 @@ const T = {
 
 export function buildLobby({ out, cases, analytics = '', lang = 'zh' }) {
   const L = T[lang];
-  cases = cases.map(c => Object.assign({}, c, (c.i18n || {})[lang] || {}));
+  // a language's lobby lists the cases written in it (Chinese is every case's first language)
+  cases = cases.filter(c => lang === 'zh' || (c.i18n || {})[lang]).map(c => Object.assign({}, c, (c.i18n || {})[lang] || {}));
   const next = String(cases.length + 1).padStart(2, '0');
   const folder = c => `<article class="folder" data-slug="${esc(c.slug)}">
   <div class="tab">CASE ${esc(c.number)}</div>
@@ -171,8 +175,8 @@ export function buildLobby({ out, cases, analytics = '', lang = 'zh' }) {
     <p class="meta">${esc(c.time)} · ${esc(c.players)}</p>
     <div class="plays">
       <a class="play primary" href="${esc(c.slug)}/">${L.start}</a>
-      <a class="play" href="${esc(c.slug)}/static/">${L.stat}</a>
-      <a class="play" href="${esc(c.slug)}/${esc(c.pdf)}" download="${esc(c.pdfName)}">${L.pdf}</a>
+      ${c.printEditions ? `<a class="play" href="${esc(c.slug)}/static/">${L.stat}</a>
+      <a class="play" href="${esc(c.slug)}/${esc(c.pdf)}" download="${esc(c.pdfName)}">${L.pdf}</a>` : `<span class="play-soon">${L.printSoon}</span>`}
     </div>
   </div>
 </article>`;

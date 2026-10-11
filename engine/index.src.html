@@ -439,21 +439,27 @@ button { font: inherit; color: inherit; }
 }
 </style>
 
+<!-- Blocks marked if:static / if:nostatic / if:lang (with a matching end: marker) are kept
+     only when the case has that edition: static is the static version and the PDF, lang is
+     the other language. scripts/build.mjs removes the rest before filling in the text. -->
 <noscript>
   <div class="nojs" role="alert"><div class="nojs-card">
     <h1>{{nojsTitle}}</h1>
     <p>{{nojsBody}}</p>
-    <p>{{nojsStatic}}</p>
+    <!--if:static--><p>{{nojsStatic}}</p>
     <p><a class="nojs-go" href="static/">{{nojsGo}}</a></p>
-    <p class="nojs-pdf">{{nojsPdf}}</p>
+    <p class="nojs-pdf">{{nojsPdf}}</p><!--end:static-->
+    <!--if:nostatic--><p class="nojs-pdf">{{nojsSoon}}</p><!--end:nostatic-->
   </div></div>
 </noscript>
 <div class="nojs" id="fallback" role="alert" hidden><div class="nojs-card">
   <h1>{{fallbackTitle}}</h1>
   <p id="fallbackWhy">{{fallbackLoad}}</p>
-  <p>{{nojsStatic}}</p>
+  <!--if:static--><p>{{nojsStatic}}</p>
   <p><a class="nojs-go" href="static/">{{nojsGo}}</a> <button type="button" class="nojs-stay" id="fallbackStay">{{fallbackStay}}</button></p>
-  <p class="nojs-pdf">{{nojsPdf}}</p>
+  <p class="nojs-pdf">{{nojsPdf}}</p><!--end:static-->
+  <!--if:nostatic--><p class="nojs-pdf">{{nojsSoon}}</p>
+  <p><button type="button" class="nojs-stay" id="fallbackStay">{{fallbackStay}}</button></p><!--end:nostatic-->
 </div></div>
 <script>
 window.__yeluBooted = false;
@@ -489,8 +495,8 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
   <div class="spacer"></div>
   <div class="menu-items" id="menuItems">
     <a class="menu-btn" href="{{lobbyHref}}" title="{{menuLobbyTitle}}">{{menuLobby}}</a>
-    <a class="menu-btn" href="__PDF__" download="{{pdfName}}" title="{{menuPdfTitle}}">{{menuPdf}}</a>
-    <a class="menu-btn" href="{{langHref}}" lang="{{otherLang}}" title="{{menuLangTitle}}">{{menuLang}}</a>
+    <!--if:static--><a class="menu-btn" href="__PDF__" download="{{pdfName}}" title="{{menuPdfTitle}}">{{menuPdf}}</a><!--end:static-->
+    <!--if:lang--><a class="menu-btn" href="{{langHref}}" lang="{{otherLang}}" title="{{menuLangTitle}}">{{menuLang}}</a><!--end:lang-->
     <button class="menu-btn" id="resetBtn" type="button">{{menuReset}}</button>
   </div>
   <div class="clock" id="clock"><span class="clock-date">{{clockDate}}</span><span id="clockTime">21:17</span></div>

@@ -6,6 +6,7 @@ const ENGINE_UI = {
   nojsTitle: '這個版本需要 JavaScript',
   nojsStatic: '不需要 JavaScript 的靜態版，一樣可以完整破案：',
   nojsGo: '前往靜態版',
+  nojsSoon: '這個案件的靜態版與 PDF 版還在準備中，目前只能用互動版玩。',
   fallbackTitle: '互動版無法在這個瀏覽器上運作',
   fallbackLoad: '載入時發生錯誤。',
   fallbackStay: '繼續嘗試互動版',

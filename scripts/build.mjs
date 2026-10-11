@@ -107,9 +107,12 @@ caseDirs.forEach((caseDir, ci) => {
     const uiCode = readFileSync(join(root, 'engine', lang.ui), 'utf8') + '\n' + readFileSync(join(web, lang.ui), 'utf8');
     const UI = vm.runInNewContext(`${uiCode}\n;UI`);
 
+    // Editions this case has: links to the others are left out of the page
+    const has = { static: !!manifest.printEditions, nostatic: !manifest.printEditions, lang: langsOf(caseDir).length > 1 };
     // {{key}} in the page template takes the interface text for this language (filled before
     // the UI, case and CSS files are inlined, so their own text is never touched)
     let page = readFileSync(join(root, 'engine', 'index.src.html'), 'utf8')
+      .replace(/<!--if:(\w+)-->([\s\S]*?)<!--end:\1-->/g, (_, k, inner) => has[k] ? inner : '')
       .replace(/\{\{(\w+)\}\}/g, (_, k) => {
         if (typeof UI[k] !== 'string') throw new Error(`${manifest.slug} ${lang.ui}: missing text for {{${k}}}`);
         return UI[k];
@@ -125,7 +128,7 @@ caseDirs.forEach((caseDir, ci) => {
     fill('__BLOB__', blob);
     fill('__CASE_META__', JSON.stringify(caseMeta));
     fill('__ASSET_SIZES__', JSON.stringify(assetSizes));
-    fill('__PDF__', manifest.pdf);
+    if (page.includes('__PDF__')) fill('__PDF__', manifest.pdf);  // only cases with a PDF link it
     fill('/*__SW__*/', swScript(lang.dir ? '../../' : '../', lang.code));
     if (lang.code === 'zh' && !fragment) fragment = page;
 

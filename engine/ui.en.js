@@ -6,6 +6,7 @@ const ENGINE_UI = {
   nojsTitle: 'This version needs JavaScript',
   nojsStatic: 'The static version needs no JavaScript and has the whole case:',
   nojsGo: 'Play the static version',
+  nojsSoon: 'The static and PDF editions of this case are on their way; for now it is interactive only.',
   fallbackTitle: 'The interactive version can’t run in this browser',
   fallbackLoad: 'Something went wrong while loading.',
   fallbackStay: 'Keep trying the interactive version',
