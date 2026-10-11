@@ -6,6 +6,7 @@ const ENGINE_UI = {
   nojsTitle: '這個版本需要 JavaScript',
   nojsStatic: '不需要 JavaScript 的靜態版，一樣可以完整破案：',
   nojsGo: '前往靜態版',
+  nojsSoon: '這個案件的靜態版與 PDF 版還在準備中，目前只能用互動版玩。',
   fallbackTitle: '互動版無法在這個瀏覽器上運作',
   fallbackLoad: '載入時發生錯誤。',
   fallbackStay: '繼續嘗試互動版',
@@ -77,6 +78,15 @@ const ENGINE_UI = {
   filesTitle: dir => '檔案 — ' + dir,
   verbatim: '原文照錄，未修改任何標點與空格。',
   colon: '：',
+  // mail
+  mailFrom: '寄件者',
+  mailReplyTo: '回覆給',
+  mailTo: '收件者',
+  mailDate: '日期',
+  mailView: '信件',
+  mailHtml: 'HTML 版',
+  mailPlain: '純文字版',
+  mailRaw: '顯示原始郵件',
   // viewer
   viewerEmpty: '還沒有開啟任何圖片。<br>在「檔案」裡點一下圖片就能打開。',
   viewerTitle: fn => '看圖 — ' + fn,

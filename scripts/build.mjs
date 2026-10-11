@@ -5,7 +5,7 @@
 // Every case's interactive page is the shared engine (engine/index.src.html with the
 // engine's interface text) plus the case's own files: case.js (story data), web/ui.<lang>.js
 // (its interface text), web/game.js (its behaviour), web/sites.css and web/assets/.
-// Usage: [CASE_KEY=<culprit name>] node scripts/build.mjs [--target clearnet|onion] [--out <dir>] [--fragment <file>]
+// Usage: [CASE_KEY=<culprit name>] node scripts/build.mjs [--target clearnet|onion] [--out <dir>] [--fragment <file>] [--drafts]
 //   --target clearnet adds anoni.net's self-hosted Umami to the interactive page
 //   (scripts/analytics.html). --target onion rewrites links to anoni.net into the onion
 //   addresses and loads no analytics. Without --target the build has neither, which is
@@ -31,9 +31,12 @@ import { iconTags, ogTags, swScript, SITE_NAME } from './meta.mjs';
 import { createHash } from 'node:crypto';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-// Every case folder with a case.json shows up in the lobby; those with web/game.js are built
+// Every case folder with a case.json shows up in the lobby; those with web/game.js are built.
+// A case marked "draft" in its case.json is left out unless --drafts is given (local previews).
+const drafts = process.argv.includes('--drafts');
 const caseDirs = readdirSync(join(root, 'cases')).sort()
-  .filter(d => existsSync(join(root, 'cases', d, 'case.json'))).map(d => join(root, 'cases', d));
+  .filter(d => existsSync(join(root, 'cases', d, 'case.json'))).map(d => join(root, 'cases', d))
+  .filter(d => drafts || !JSON.parse(readFileSync(join(d, 'case.json'), 'utf8')).draft);
 const cases = caseDirs.map(d => JSON.parse(readFileSync(join(d, 'case.json'), 'utf8')));
 const arg = name => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const out = arg('--out') ? resolve(arg('--out')) : join(root, 'dist', 'mystery');
@@ -104,9 +107,12 @@ caseDirs.forEach((caseDir, ci) => {
     const uiCode = readFileSync(join(root, 'engine', lang.ui), 'utf8') + '\n' + readFileSync(join(web, lang.ui), 'utf8');
     const UI = vm.runInNewContext(`${uiCode}\n;UI`);
 
+    // Editions this case has: links to the others are left out of the page
+    const has = { static: !!manifest.printEditions, nostatic: !manifest.printEditions, lang: langsOf(caseDir).length > 1 };
     // {{key}} in the page template takes the interface text for this language (filled before
     // the UI, case and CSS files are inlined, so their own text is never touched)
     let page = readFileSync(join(root, 'engine', 'index.src.html'), 'utf8')
+      .replace(/<!--if:(\w+)-->([\s\S]*?)<!--end:\1-->/g, (_, k, inner) => has[k] ? inner : '')
       .replace(/\{\{(\w+)\}\}/g, (_, k) => {
         if (typeof UI[k] !== 'string') throw new Error(`${manifest.slug} ${lang.ui}: missing text for {{${k}}}`);
         return UI[k];
@@ -122,7 +128,7 @@ caseDirs.forEach((caseDir, ci) => {
     fill('__BLOB__', blob);
     fill('__CASE_META__', JSON.stringify(caseMeta));
     fill('__ASSET_SIZES__', JSON.stringify(assetSizes));
-    fill('__PDF__', manifest.pdf);
+    if (page.includes('__PDF__')) fill('__PDF__', manifest.pdf);  // only cases with a PDF link it
     fill('/*__SW__*/', swScript(lang.dir ? '../../' : '../', lang.code));
     if (lang.code === 'zh' && !fragment) fragment = page;
 
