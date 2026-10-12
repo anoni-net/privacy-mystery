@@ -67,6 +67,7 @@ cases/01-night-heron/
   solution.en.enc      加密的英文解答，鑰匙相同
   og.png、og.en.png    案件的社群分享預覽圖
 site/                  複製到網站最上層：icon、app icon、大廳的分享預覽圖與 web app manifest（英文的在 site/en/）
+world/README.md        世界觀設定集：人物、公司、遊戲內網站、年表與寫作規則，不含解答
 scripts/
   build.mjs            建置網站
   static.mjs           產生靜態版
@@ -261,6 +262,7 @@ cases/01-night-heron/
   solution.en.enc      encrypted English solution, same key
   og.png, og.en.png    the case's social preview images
 site/                  copied to the top of the site: icons, app icons, the lobby's preview images and the web app manifest (English in site/en/)
+world/README.md        the setting: people, companies, in-game sites, timeline and writing rules, with no solutions (in Chinese)
 scripts/
   build.mjs            build the site
   static.mjs           generate the static edition
