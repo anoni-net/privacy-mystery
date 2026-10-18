@@ -26,6 +26,8 @@ const BB_DIR = 'BeatBird提供資料';
 const FILES_CLIENT = { scam: '扣款通知.eml', real: 'BeatBird電子報_1130.eml', devices: '漣漪_已連結裝置.jpg', chat: '漣漪_與阿哲的對話.txt', aliases: '面具信箱_別名清單.csv' };
 const FILES_BB = { readme: '唐啟文的說明.txt', provided: '資料提供紀錄.csv', downloads: '下載紀錄.csv', canaries: '陷阱名單.csv', inbox: '陷阱信箱收件紀錄.txt' };
 const QR_FILE = 'beatbird_驗證碼.png';
+// The screenshot of 芷寧's linked devices, in this language (art/devices.svg)
+const DEVICES_IMG = 'devices.jpg';
 const SUGGEST = {
   home: ['ls', 'cd ' + CLIENT_DIR, 'cd Downloads', 'help'],
   client: ['ls', 'cat 扣款通知.eml', 'grep -i authentication *.eml', 'cat 面具信箱_別名清單.csv', 'cd ..'],

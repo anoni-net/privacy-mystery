@@ -15,5 +15,23 @@
   "time": "約 60–90 分鐘",
   "players": "單人或 2–4 人合作",
   "pdf": "blue-magpie.pdf",
-  "pdfName": "藍鵲事件.pdf"
+  "pdfName": "藍鵲事件.pdf",
+  "i18n": {
+    "en": {
+      "title": "Blue Magpie",
+      "hook": "“No link, so I thought it was real.”",
+      "summary": "A “3,480 a month” billing notice with no link, only a line telling you to search for support. People who searched lost their accounts, and the list had their hours of sleep. Find out who sold the member data.",
+      "skills": [
+        "Email headers",
+        "Lookalike domains",
+        "Search ads",
+        "QR codes",
+        "Linked devices",
+        "Canary records"
+      ],
+      "time": "About 60–90 minutes",
+      "players": "Solo or 2–4 together",
+      "pdfName": "blue-magpie.pdf"
+    }
+  }
 }
