@@ -1,11 +1,11 @@
 // Static version: plain HTML and CSS, no JavaScript and no SVG, for Tor Browser's
 // "Safest" security level. Generated from the same case data as the interactive page,
-// in each language the case has (lang: 'zh' or 'en').
+// in each language the case has (lang: 'zh', 'zh-cn' or 'en').
 import { writeFileSync, mkdirSync, cpSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { loadCase, esc } from './case-data.mjs';
-import { iconTags, ogTags, SITE_NAME } from './meta.mjs';
+import { iconTags, ogTags, SITE_NAME, LANG_INFO, langLinks } from './meta.mjs';
 
 const short = s => createHash('sha256').update(s).digest('hex').slice(0, 10);
 // Accusation pages are named by hash of each suspect's key, so a URL never reveals who is right.
@@ -20,8 +20,7 @@ const T = {
     start: '開始', lead: '一張「已經關掉定位」的照片，能說出多少祕密？', intro: '你是霧港隱私互助站的志工。今晚，一位吹哨者傳來了訊息。', open: '打開加密訊息',
     aside: ['這是不需要 JavaScript 的靜態版，給 Tor Browser「最安全」等級或停用 JavaScript 的瀏覽器使用。內容和互動版相同，但不會記錄你的進度，建議準備紙筆，或打開「調查筆記」頁一起使用。',
       '能執行 JavaScript 的話，可以玩<a href="../">互動版</a>。', '<a href="../../">回到委託板</a>，看看其他案件。',
-      '想離線或印出來玩：<a href="../night-heron.pdf" download="夜鷺事件.pdf">下載 PDF 版</a>（解答在最後幾頁，上下顛倒印刷）。',
-      '<a href="../../en/night-heron/static/" lang="en">English</a>'],
+      '想離線或印出來玩：<a href="../night-heron.pdf" download="夜鷺事件.pdf">下載 PDF 版</a>（解答在最後幾頁，上下顛倒印刷）。'],
     chat: '加密通訊', yelu: '夜鷺', e2e: '端對端加密 · 安全碼已驗證', opening: '— 安全碼已驗證 · 訊息 24 小時後自動銷毀 —',
     zip: '夜鷺匯出.zip', zipMeta: '48 KB · 加密傳送', acceptHint: '按「接收」收下資料', accept: '接收檔案', received: '已接收 夜鷺匯出.zip · 解壓縮到 ~/夜鷺匯出',
     caseOpen: '— 委託成立 · 調查開始 —', begin: '開始調查', choose: '選擇你的回覆',
@@ -50,14 +49,48 @@ const T = {
     selfRank: '<div class="rank"><b>自評</b><ul><li>沒看提示、一次就指認正確：<b>洋蔥首席調查員</b></li><li>看了 3 條以內的提示、誤判 1 次以內：<b>資深隱私志工</b></li><li>其他：<b>見習調查員</b></li></ul><p>如果把原始照片上傳到線上 EXIF 工具，再降一級。</p></div>',
     solved: '……你找到我了。謝謝你比他們早一步。我會照你的建議處理。', wrong: '我讀了你的報告……不是那個人。但公司的調查員也可能這樣誤判，冤枉一個無辜的同事。可以再查一次嗎？', backToReport: '回到結案報告',
   },
+  'zh-cn': {
+    lang: 'zh-Hans', title: '夜鹭事件', station: '雾港工作站', staticTag: '静态版', navLabel: '工作站',
+    nav: ['工作站', '通信', '浏览器', '文件', '照片', '终端记录', '调查笔记', '提示', '结案报告'],
+    start: '开始', lead: '一张「已经关掉定位」的照片，能说出多少秘密？', intro: '你是雾港隐私互助站的志愿者。今晚，一位吹哨者传来了消息。', open: '打开加密消息',
+    aside: ['这是不需要 JavaScript 的静态版，给 Tor Browser「最安全」等级或停用 JavaScript 的浏览器使用。内容和交互版相同，但不会记录你的进度，建议准备纸笔，或打开「调查笔记」页一起使用。',
+      '能运行 JavaScript 的话，可以玩<a href="../">交互版</a>。', '<a href="../../">回到委托板</a>，看看其他案件。',
+      '想离线或打印出来玩：<a href="../night-heron.pdf" download="夜鹭事件.pdf">下载 PDF 版</a>（解答在最后几页，上下颠倒印刷）。'],
+    chat: '加密通信', yelu: '夜鹭', e2e: '端对端加密 · 安全码已验证', opening: '— 安全码已验证 · 消息 24 小时后自动销毁 —',
+    zip: '夜鹭导出.zip', zipMeta: '48 KB · 加密发送', acceptHint: '按「接收」收下资料', accept: '接收文件', received: '已接收 夜鹭导出.zip · 解压缩到 ~/夜鹭导出',
+    caseOpen: '— 委托成立 · 调查开始 —', begin: '开始调查', choose: '选择你的回复',
+    tiles: [['通信', '重读夜鹭的委托，以及阿雾的建议。'], ['浏览器', '雾搜、无名广场、PicNote 和其他网站。'], ['文件', '夜鹭导出的收件名单、差勤表、设备登记与 Slack 记录。'], ['照片', '爆料附图的原图，可以放大和下载。'], ['终端记录', '调查员跑过的 exiftool 与 grep 命令和输出。'], ['调查笔记', '可以打印出来的排除表，用纸笔记录。'], ['提示', '卡住的时候，一次打开一条。'], ['结案报告', '对答案，然后指认夜鹭。']],
+    mission: '今晚的任务', missionItems: ['读夜鹭的消息', '找出照片泄露了什么', '把 6 人缩到 1 人', '交出结案报告'],
+    chatLog: '通信记录', awu: '阿雾 · 互助站', internal: '内部频道', awuSys: '— 互助站内部频道 —',
+    awuMsgs: ['我是阿雾，今晚值班。夜鹭的案子你接了吧？', '建议顺序：先去论坛拿到原始照片 → 看照片的元数据 → 对照夜鹭导出的数据 → 放大照片找细节 → 交结案报告。', '卡住就去看「提示」页。看越多提示，结案的自评就越低喔。'],
+    facts: '夜鹭说过的重点', factItems: ['发文用全新 Email 注册的账号，没有用公司网络。', '拍备忘录前，关掉了相机的「保存位置信息」，照片里没有 GPS。', '备忘录 9/11 只寄给 6 个人，夜鹭是其中之一。', '导出的公司数据在「文件」；大家的 PicNote 是公开的；论坛那篇文还在。'],
+    replay: '重看一次开场对话',
+    staticTips: '静态版不能输入文本，可以从这些关键字选：', extraQuery: 'EXIF 在线', viewAttachment: '查看附图', dlOriginal: '下载源文件', saveImage: '保存图片', upload: '上传', bookmarks: '书签',
+    trapTitle: '阿雾（互助站）传来消息', trap: ['等一下，你刚把夜鹭的原始照片上传到一个不明网站？', '那个网站现在也有这张照片了，还记下了你的 IP 和上传时间。要是公司的调查员也找上它……下次请用自己电脑上的工具查，例如 exiftool。', '这次结案的自评要降一级。'],
+    verbatim: '原文照录，未修改任何标点与空格。', files: '文件', filesLead: '夜鹭从公司系统导出的数据。公司的调查员手上也有这些。', fileCol: '文件', rawCol: '源文件', download: '下载',
+    downloadsNote: '从网站下载的照片会在这里。爆料附图在<a href="../photo.html">照片</a>页。', downloadRaw: '下载源文件',
+    photo: '照片', photoLead: c => `论坛附件的源文件。<a href="../assets/${c}">打开原图</a>后，用浏览器放大（Ctrl 或 ⌘ 加 +），仔细看画面的每个角落。`,
+    photoAlt: '爆料附图：酒店书桌上的笔记本，屏幕显示心跳鸟科技的内部备忘录', fileSec: '文件', dims: '尺寸', size: '文件大小', camera: '相机信息',
+    cameraNote: '这里只列出常见字段，就像电脑「内容」窗口里看到的一样，有些字段不会显示。完整的元数据请看<a href="terminal.html">终端记录</a>。', realJpeg: '它是真的 JPEG，可以用你自己的工具检查。',
+    terminal: '终端记录', terminalLead: '调查员在工作站上跑过的命令。点一下命令，就像按下 Enter，会展开它的输出。',
+    terminalNote: '会用终端的话，可以在<a href="photo.html">照片</a>页下载源文件，在自己的电脑上运行 <code>exiftool</code> 验证；Slack 记录的源文件在<a href="files/index.html">文件</a>页。',
+    notes: '调查笔记', notesLead: '静态版不会记录进度。把这页打印出来，或抄在纸上：符合打 ○，排除打 ✕。', clue: '线索', clueRows: ['收到备忘录', '时区 +09:00', '手机型号', '照片画面', '写作风格'], suspects: '嫌疑人', sep: '　',
+    hints: '提示', hintsLead: '卡住再看，一次打开一条。记下你看了几条，结案时自评会用到。', hint: n => `提示 ${n}`,
+    hintList: ['先到「浏览器」里的无名广场，把爆料文附件的源文件下载下来。', '照片的完整元数据，可以看「终端记录」里 exiftool 的输出。会用命令行的人，也可以下载源文件，在自己的电脑上运行 exiftool。', '时区 +09:00 是哪里？在雾搜查「时区」，再对照「文件」里的差勤表。新加坡要小心。', '手机型号要对照 BYOD 登记表，但那是三月的数据。看看 Slack 记录的 random 频道，或 PicNote 上大家最近的帖子。', '打开「照片」页的原图，用浏览器放大（Ctrl 或 ⌘ 加 +），仔细看左下角和触摸板右侧。', '那张贴纸和笔记本的颜色，在 Slack 记录和 PicNote 的帖子里都找得到对应。雾搜也查得到贴纸的来历。', '写作习惯：比较中英文之间有没有空格、标点是全角还是半角、句尾的「以上。」有没有句号。终端记录里有 grep 以上 的结果。', '最后一步：在「调查笔记」把排除的人划掉，然后到「结案报告」指认。'],
+    report: '结案报告', reportLead: '先在心里或纸上作答，再打开「对答案」。', check: '对答案',
+    q: ['1. 照片的元数据泄露了哪些信息？（多选）', '2. 照片画面本身泄露了什么？（多选）', '3. 爆料文的文本泄露了什么？', '4. 夜鹭是谁？'],
+    a: ['手机型号与拍摄时区。夜鹭确实关掉了 GPS，照片里也没有拍摄者姓名；拍摄时间有记录，但不是关键。', '酒店便条纸与笔记本上的贴纸。', '用字与标点习惯。夜鹭用了新账号、没用公司网络，剩下能出卖人的是写作风格。'],
+    accuseLead: '想好了就点名字。指认错的话，夜鹭会告诉你。', closed: '结案', accused: '指认',
+    selfRank: '<div class="rank"><b>自评</b><ul><li>没看提示、一次就指认正确：<b>洋葱首席调查员</b></li><li>看了 3 条以内的提示、误判 1 次以内：<b>资深隐私志愿者</b></li><li>其他：<b>见习调查员</b></li></ul><p>如果把原始照片上传到在线 EXIF 工具，再降一级。</p></div>',
+    solved: '……你找到我了。谢谢你比他们早一步。我会照你的建议处理。', wrong: '我读了你的报告……不是那个人。但公司的调查员也可能这样误判，冤枉一个无辜的同事。可以再查一次吗？', backToReport: '回到结案报告',
+  },
   en: {
     lang: 'en', title: 'Night Heron', station: 'Mistport Workstation', staticTag: 'static', navLabel: 'Workstation',
     nav: ['Workstation', 'Chat', 'Browser', 'Files', 'Photo', 'Terminal log', 'Notes', 'Hints', 'Case report'],
     start: 'Start', lead: 'A photo with “location turned off”. How many secrets can it still tell?', intro: 'You volunteer at the Mistport Privacy Aid. Tonight, a whistleblower has sent you a message.', open: 'Open the encrypted message',
     aside: ['This is the static version: no JavaScript needed, for Tor Browser’s “Safest” level or browsers with JavaScript off. It has the same case as the interactive version but doesn’t save your progress, so keep pen and paper handy, or use the Notes page.',
       'If your browser runs JavaScript, try the <a href="../">interactive version</a>.', '<a href="../../">Back to the case board</a> for other cases.',
-      'To play offline or on paper: <a href="../night-heron.pdf" download="night-heron.pdf">download the PDF</a> (solution on the last pages, printed upside down).',
-      '<a href="../../../night-heron/static/" lang="zh-Hant-TW">中文</a>'],
+      'To play offline or on paper: <a href="../night-heron.pdf" download="night-heron.pdf">download the PDF</a> (solution on the last pages, printed upside down).'],
     chat: 'Secure chat', yelu: 'Night Heron', e2e: 'End-to-end encrypted · safety number verified', opening: '— Safety number verified · messages disappear after 24 hours —',
     zip: 'heron-export.zip', zipMeta: '48 KB · sent encrypted', acceptHint: 'Tap “Accept” to receive the files', accept: 'Accept the file', received: 'Received heron-export.zip · unpacked to ~/heron-export',
     caseOpen: '— Case accepted · investigation open —', begin: 'Start investigating', choose: 'Choose your reply',
@@ -88,7 +121,7 @@ const T = {
   },
 };
 
-export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialSizes, lang = 'zh' }) {
+export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialSizes, lang = 'zh', langs = [lang] }) {
   const C = loadCase(caseDir, pxlSize, lang);
   const L = T[lang];
   const root = join(out, 'static');
@@ -98,9 +131,11 @@ export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialS
 
   /* ---------- page shell ---------- */
   const NAV = ['desk.html', 'chat.html', 'web/search.html', 'files/index.html', 'photo.html', 'terminal.html', 'notes.html', 'hints.html', 'report.html'].map((h, i) => [h, L.nav[i]]);
-  // static/ sits in the case folder, which sits in the language folder (en/ for English)
-  const toRoot = up => up + '../../' + (lang === 'zh' ? '' : '../');
-  const casePath = (lang === 'zh' ? '' : lang + '/') + JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8')).slug + '/';
+  // static/ sits in the case folder, which sits in the language folder (en/, zh-cn/)
+  const toRoot = up => up + '../../' + (LANG_INFO[lang].dir ? '../' : '');
+  const slug = JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8')).slug;
+  const casePath = LANG_INFO[lang].dir + slug + '/';
+  const aside = [...L.aside, langLinks(langs, lang, toRoot(''), l => LANG_INFO[l].dir + slug + '/static/').join(' · ')].filter(Boolean);
   const doc = ({ title, up, body, nav = true, here = '', cls = '', og = false }) => `<!doctype html>
 <html lang="${L.lang}">
 <head>
@@ -129,7 +164,7 @@ ${body}
   <p>${L.intro}</p>
   <p><a class="go" href="intro/start.html#reply">${L.open}</a></p>
   <div class="aside">
-    ${L.aside.map(p => `<p>${p}</p>`).join('\n    ')}
+    ${aside.map(p => `<p>${p}</p>`).join('\n    ')}
   </div>
 </div>` }));
 

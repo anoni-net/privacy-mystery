@@ -14,7 +14,6 @@ const UI = Object.assign({}, ENGINE_UI, {
   sticky2: '拆穿扣款信和假網站',
   sticky3: '幫她把帳號拿回來',
   sticky4: '找出資料從誰手上流出',
-  langHref: '../en/blue-magpie/',
   clockDate: '12月9日 週三 ',
   termDate: 'Wed Dec  9',
   lockedToast: ['還不能開始調查', '先和芷寧聊完、收下她整理的資料。'],

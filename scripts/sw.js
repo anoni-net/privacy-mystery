@@ -12,14 +12,14 @@
  * - Other files on this site: stored copy first, refreshed in the background.
  * - Other sites (the analytics script) and PDFs pass straight through.
  *
- * A page posts {type: 'precache', lang: '' | 'en/'} once the worker is ready, and the worker
+ * A page posts {type: 'precache', lang: '' | 'en/' | 'zh-cn/'} once the worker is ready, and the worker
  * stores that language's list. A new release takes over right away: pages are fetched from the
  * network first anyway, and a game already open keeps running from memory. */
 const VERSION = '__VERSION__';
 const PRECACHE = 'mystery-precache-' + VERSION;
 const RUNTIME = 'mystery-runtime';
 const RUNTIME_MAX = 120;
-// { '': [paths], 'en/': [paths] }, relative to the scope
+// { '': [paths], 'en/': [paths], 'zh-cn/': [paths] }, relative to the scope
 const LISTS = __PRECACHE__;
 const SCOPE = new URL(self.registration.scope).pathname;
 
@@ -87,7 +87,8 @@ async function page(request) {
     if (stored) return stored;
     // Never stored: go to the lobby in the page's language, or the Chinese one. A redirect
     // rather than the lobby's HTML at this address, so the lobby's relative links still work.
-    const lang = new URL(request.url).pathname.slice(SCOPE.length).startsWith('en/') ? 'en/' : '';
+    const rest = new URL(request.url).pathname.slice(SCOPE.length);
+    const lang = Object.keys(LISTS).find(l => l && rest.startsWith(l)) || '';
     for (const lobby of [SCOPE + lang, SCOPE]) {
       if (lobby !== new URL(request.url).pathname && await caches.match(lobby)) return Response.redirect(lobby, 302);
     }

@@ -1,7 +1,8 @@
 // Builds the site served at anoni.net/mystery into dist/mystery/: the lobby at the top,
 // and each case under its slug (cases/*/case.json), e.g. dist/mystery/night-heron/.
-// English lives under en/ (dist/mystery/en/, dist/mystery/en/night-heron/) and is built
-// when the case has its English files (case.en.js, web/ui.en.js, solution.en.enc).
+// 正體中文 is at the top; 简体中文 lives under zh-cn/ and English under en/
+// (dist/mystery/en/, dist/mystery/en/night-heron/), each built when the case has that
+// language's files (case.<lang>.js, web/ui.<lang>.js, solution.<lang>.enc).
 // Every case's interactive page is the shared engine (engine/index.src.html with the
 // engine's interface text) plus the case's own files: case.js (story data), web/ui.<lang>.js
 // (its interface text), web/game.js (its behaviour), web/sites.css and web/assets/.
@@ -27,7 +28,7 @@ import { decryptB64 } from './crypt.mjs';
 import { buildStatic } from './static.mjs';
 import { buildPdf } from './pdf.mjs';
 import { buildLobby } from './lobby.mjs';
-import { iconTags, ogTags, swScript, SITE_NAME } from './meta.mjs';
+import { iconTags, ogTags, swScript, SITE_NAME, LANG_INFO, langLinks } from './meta.mjs';
 import { createHash } from 'node:crypto';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -67,6 +68,7 @@ const target = TARGETS[targetName] || {};
 // Chinese at the top of the site; other languages under their code, when the case has them
 const LANGS = [
   { code: 'zh', dir: '', caseFile: 'case.js', ui: 'ui.zh.js', solution: 'solution.enc' },
+  { code: 'zh-cn', dir: 'zh-cn', caseFile: 'case.zh-cn.js', ui: 'ui.zh-cn.js', solution: 'solution.zh-cn.enc' },
   { code: 'en', dir: 'en', caseFile: 'case.en.js', ui: 'ui.en.js', solution: 'solution.en.enc' },
 ];
 const langsOf = caseDir => LANGS.filter(l => [join(caseDir, l.caseFile), join(caseDir, 'web', l.ui), join(caseDir, l.solution)].every(existsSync));
@@ -108,7 +110,8 @@ caseDirs.forEach((caseDir, ci) => {
     const UI = vm.runInNewContext(`${uiCode}\n;UI`);
 
     // Editions this case has: links to the others are left out of the page
-    const has = { static: !!manifest.printEditions, nostatic: !manifest.printEditions, lang: langsOf(caseDir).length > 1 };
+    const has = { static: !!manifest.printEditions, nostatic: !manifest.printEditions };
+    const caseLangs = langsOf(caseDir).map(l => l.code);
     // {{key}} in the page template takes the interface text for this language (filled before
     // the UI, case and CSS files are inlined, so their own text is never touched)
     let page = readFileSync(join(root, 'engine', 'index.src.html'), 'utf8')
@@ -129,6 +132,7 @@ caseDirs.forEach((caseDir, ci) => {
     fill('__CASE_META__', JSON.stringify(caseMeta));
     fill('__ASSET_SIZES__', JSON.stringify(assetSizes));
     if (page.includes('__PDF__')) fill('__PDF__', manifest.pdf);  // only cases with a PDF link it
+    fill('__LANG_LINKS__', langLinks(caseLangs, lang.code, lang.dir ? '../../' : '../', l => LANG_INFO[l].dir + manifest.slug + '/', 'menu-btn').join('\n    '));
     fill('/*__SW__*/', swScript(lang.dir ? '../../' : '../', lang.code));
     if (lang.code === 'zh' && !fragment) fragment = page;
 
@@ -164,7 +168,7 @@ ${page.slice(cut).trim()}
       const pxlSize = assetSizes['PXL_20260914_144712345.jpg'];
       const socialSizes = Object.fromEntries(Object.entries(assetSizes).filter(([f]) => f.startsWith('social/')).map(([f, v]) => [f.slice(7, -4), v]));
       const pages = buildStatic({
-        caseDir, out: caseOut, lang: lang.code,
+        caseDir, out: caseOut, lang: lang.code, langs: caseLangs,
         sitesCss: readFileSync(join(web, 'sites.css'), 'utf8'),
         solution, pxlSize, socialSizes,
       });
@@ -179,7 +183,8 @@ ${page.slice(cut).trim()}
   }
 });
 // One lobby per language, listing every case
-for (const lang of LANGS.filter(l => anyLangs.has(l.code))) buildLobby({ out: join(out, lang.dir), cases, analytics, lang: lang.code });
+const lobbyLangs = LANGS.filter(l => anyLangs.has(l.code));
+for (const lang of lobbyLangs) buildLobby({ out: join(out, lang.dir), cases, analytics, lang: lang.code, langs: lobbyLangs.map(l => l.code) });
 
 if (target.rewrites) {
   const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>

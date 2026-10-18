@@ -4,7 +4,7 @@
 
 **正體中文** | [English](#en)
 
-隱私推理遊戲，從一張照片的中繼資料、背景細節與文字習慣，找出不小心暴露身分的吹哨者。由[匿名網路社群 anoni.net](https://anoni.net/) 維護，網址是 <https://anoni.net/mystery>，英文版在 <https://anoni.net/mystery/en/>。
+隱私推理遊戲，從一張照片的中繼資料、背景細節與文字習慣，找出不小心暴露身分的吹哨者。由[匿名網路社群 anoni.net](https://anoni.net/) 維護，網址是 <https://anoni.net/mystery>，简体中文版在 <https://anoni.net/mystery/zh-cn/>，英文版在 <https://anoni.net/mystery/en/>。
 
 > 這份 README 不含任何解答。
 
@@ -36,9 +36,15 @@
 
 ## 英文版
 
-英文版的大廳在 `/mystery/en/`，案件在 `/mystery/en/night-heron/`，同樣有互動版、`static/` 靜態版與 `night-heron.pdf`，中英文之間都有切換連結。舞台仍在台灣，人名用拼音，爆料照片裡的備忘錄維持中文（解謎不需要讀懂）。寫作風格這條線索改用英文的習慣，包括英式或美式拼法、引號的樣式與固定的結尾語。
+英文版的大廳在 `/mystery/en/`，案件在 `/mystery/en/night-heron/`，同樣有互動版、`static/` 靜態版與 `night-heron.pdf`，每種語言之間都有切換連結。舞台仍在台灣，人名用拼音，爆料照片裡的備忘錄維持中文（解謎不需要讀懂）。寫作風格這條線索改用英文的習慣，包括英式或美式拼法、引號的樣式與固定的結尾語。
 
-兩種語言共用同一份進度，玩到一半切換語言，對話與調查板會跟著換成另一種語言。
+## 简体中文版
+
+简体中文版在 `/mystery/zh-cn/`，網址與 [anoni.net 文件庫](https://anoni.net/docs/zh-cn/)的简体中文版一致，同樣有三種玩法。文字由 `scripts/zhcn.py` 從正體中文轉換（OpenCC 的 `tw2sp`，再修正它不擅長的用語，例如「中繼資料」改成「元数据」、「指令」改成「命令」），之後人工校對。故事仍然發生在台灣。
+
+正體中文的寫作風格線索裡有「台」與「臺」的用字差異，简体中文寫起來都是「台」，所以简体中文版改看中英文之間的空格、全形或半形標點，以及句尾「以上。」有沒有句號，提示與解答也跟著改寫。嫌疑人在 `case.zh-cn.js` 的 `PEOPLE[].key` 維持正體中文：它是解答的鑰匙，也是存檔記錄標記與筆記的地方，所有語言共用。
+
+所有語言共用同一份進度，玩到一半切換語言，對話與調查板會跟著換成另一種語言。
 
 ## 大廳
 
@@ -51,22 +57,27 @@
 ```
 engine/
   index.src.html       所有案件共用的互動版引擎：視窗、聊天、瀏覽器、檔案、看圖、終端機、調查板、結案報告
-  ui.zh.js、ui.en.js   引擎的介面文字，案件的介面文字疊在上面
+  ui.zh.js、ui.zh-cn.js、ui.en.js
+                       引擎的介面文字，案件的介面文字疊在上面
 cases/01-night-heron/
-  case.json            大廳卡片的資料：代號、名稱、引子、技巧標籤，英文寫在 i18n.en
+  case.json            大廳卡片的資料：代號、名稱、引子、技巧標籤，其他語言寫在 i18n.zh-cn、i18n.en
   case.js              劇本資料與遊戲內網站，所有版本共用
+  case.zh-cn.js        简体中文劇本，結構與 case.js 相同
   case.en.js           英文劇本，結構與 case.js 相同
   web/game.js          這個案件在互動版裡的行為，透過 HOOKS 接上引擎（爆料照片、EXIF、陷阱、結案報告的答案）
   web/ui.zh.js         這個案件的介面文字（中文）
+  web/ui.zh-cn.js      這個案件的介面文字（简体中文）
   web/ui.en.js         這個案件的介面文字（英文）
   web/sites.css        遊戲內網站的樣式
   web/assets/          遊戲用的 JPEG（爆料照片帶有刻意的 EXIF）
   static.css           靜態版樣式
   art/                 圖片的 SVG 原稿
   solution.enc         加密的解答
+  solution.zh-cn.enc   加密的简体中文解答，鑰匙相同
   solution.en.enc      加密的英文解答，鑰匙相同
-  og.png、og.en.png    案件的社群分享預覽圖
-site/                  複製到網站最上層：icon、app icon、大廳的分享預覽圖與 web app manifest（英文的在 site/en/）
+  og.png、og.zh-cn.png、og.en.png
+                       案件的社群分享預覽圖
+site/                  複製到網站最上層：icon、app icon、大廳的分享預覽圖與 web app manifest（其他語言的在 site/zh-cn/、site/en/）
 scripts/
   build.mjs            建置網站
   static.mjs           產生靜態版
@@ -94,7 +105,7 @@ tools/
 CASE_KEY=兇手全名 node scripts/build.mjs
 ```
 
-輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。最上層是中文的大廳，`en/` 是英文版，每個案件在自己的代號底下，例如 `/mystery/night-heron/`。建置出來的頁面不會向其他網站發出請求，也不載入網路字型。
+輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。最上層是正體中文的大廳，`zh-cn/` 是简体中文版，`en/` 是英文版，每個案件在自己的代號底下，例如 `/mystery/night-heron/`。建置出來的頁面不會向其他網站發出請求，也不載入網路字型。
 
 `--target clearnet` 與 `--target onion` 只給 anoni.net 部署用（見下方「anoni.net 的部署」），`--out <資料夾>` 可以改變輸出位置。
 
@@ -105,7 +116,7 @@ CASE_KEY=兇手全名 node scripts/build.mjs
 
 PDF 版需要 Chrome、Chromium 或 Brave 來輸出，建置時會自動尋找，也可以用 `CHROME_PATH` 指定。找不到瀏覽器時只會跳過 PDF，並留下可列印的 HTML 原稿。
 
-正式發布的 PDF 請在安裝了 Noto Sans CJK TC 與 Noto Serif CJK TC 的環境建置（例如 Debian 或 Ubuntu 的 `fonts-noto-cjk`）。這兩套字型是 SIL OFL 授權，可以隨 PDF 嵌入散布，版面會優先使用它們。macOS 內建的蘋方等系統字型，授權不一定允許隨文件散布。建置腳本也會把 PDF 的 Creator 欄位設成中性的名稱，不寫入作業系統與瀏覽器版本。
+正式發布的 PDF 請在安裝了 Noto Sans CJK 與 Noto Serif CJK 的環境建置（例如 Debian 或 Ubuntu 的 `fonts-noto-cjk`，正體用 TC、简体用 SC）。這兩套字型是 SIL OFL 授權，可以隨 PDF 嵌入散布，版面會優先使用它們。macOS 內建的蘋方等系統字型，授權不一定允許隨文件散布。建置腳本也會把 PDF 的 Creator 欄位設成中性的名稱，不寫入作業系統與瀏覽器版本。
 
 ### 放在 CDN 後面
 
@@ -113,7 +124,7 @@ CDN 的圖片最佳化（例如 Cloudflare Polish）會移除 JPEG 的 EXIF，�
 
 ### 安裝成 app 與離線遊玩
 
-網站可以安裝成 web app（Android 與電腦的 Chrome 會出現「安裝」，iPhone 用 Safari 的「加入主畫面」）。中英文各一份 manifest，在 `site/manifest.webmanifest` 與 `site/en/manifest.webmanifest`，app icon 由 `scripts/make_og.mjs` 一起產生。
+網站可以安裝成 web app（Android 與電腦的 Chrome 會出現「安裝」，iPhone 用 Safari 的「加入主畫面」）。每種語言各一份 manifest，在 `site/manifest.webmanifest`、`site/zh-cn/manifest.webmanifest` 與 `site/en/manifest.webmanifest`，app icon 由 `scripts/make_og.mjs` 一起產生。
 
 大廳與互動版會註冊 service worker（原稿 `scripts/sw.js`，建置時寫到網站最上層的 `sw.js`），把玩家目前語言的大廳、互動版與遊戲圖片存在裝置上，一種語言約 1 MB，沒有網路時照樣可以玩。網頁一律先問伺服器，新版本發布之後馬上看得到，離線時才用存下的副本。靜態版與 PDF 不存，前者是給不執行 JavaScript 的瀏覽器用的，後者本來就是下載檔。service worker 只在 anoni.net 與本機預覽註冊，Tor Browser 本來就關閉這個功能。
 
@@ -142,7 +153,7 @@ clearnet 的互動版用 anoni.net 自架的 Umami 計算有多少人玩，不�
 
 ## 解答與防暴雷
 
-repo 裡不放解答明文。解答以兇手的中文全名作為鑰匙加密成 `solution.enc`（英文版是 `solution.en.enc`，鑰匙相同），遊戲頁面在玩家指認正確時才解得開。破了案的人自然取得鑰匙，可以參與修改，還沒破案的人逛 repo 也不會被暴雷。
+repo 裡不放解答明文。解答以兇手的中文全名作為鑰匙加密成 `solution.enc`（简体中文版是 `solution.zh-cn.enc`，英文版是 `solution.en.enc`，鑰匙相同），遊戲頁面在玩家指認正確時才解得開。破了案的人自然取得鑰匙，可以參與修改，還沒破案的人逛 repo 也不會被暴雷。
 
 這個做法只能防止不小心看到，嫌疑人只有幾位，把每個名字都試一次就能解開。
 
@@ -155,6 +166,7 @@ CASE_KEY=兇手全名 node scripts/encrypt.mjs cases/01-night-heron      # 寫�
 
 CASE_KEY=兇手全名 node scripts/decrypt.mjs cases/01-night-heron en   # 英文解答：solution.en.html
 CASE_KEY=兇手全名 node scripts/encrypt.mjs cases/01-night-heron en   # 寫回 solution.en.enc
+CASE_KEY=兇手全名 node scripts/encrypt.mjs cases/01-night-heron zh-cn  # 寫回 solution.zh-cn.enc
 ```
 
 建置時若設定 `CASE_KEY`，會順便檢查鑰匙能否解開。請不要在 issue、PR 或 commit message 裡寫出兇手的名字。
@@ -175,7 +187,7 @@ python3 scripts/make_images.py <PNG 所在資料夾> cases/01-night-heron
 icon 的原稿是 `site/favicon.svg`，分享預覽圖照文件站的[社群分享卡](https://anoni.net/docs/community/visual-guide/)版型，版面在 `tools/og/og.html`。改了 icon、版型，或案件 `case.json` 的標題、引言、簡介之後，重新產生 PNG：
 
 ```sh
-node scripts/make_og.mjs --fonts <放 Noto Sans TC 與 Public Sans 的資料夾>
+node scripts/make_og.mjs --fonts <放 Noto Sans TC、Noto Sans SC 與 Public Sans 的資料夾>
 ```
 
 需要 Chrome、Chromium 或 Brave。字型已經安裝在系統上的話可以省略 `--fonts`。產生的 PNG 直接進 repo，建置與部署都不需要執行這支腳本。新增案件時記得一起產生它的預覽圖。
@@ -198,7 +210,7 @@ node scripts/make_og.mjs --fonts <放 Noto Sans TC 與 Public Sans 的資料夾>
 
 [正體中文](#zh-tw) | **English**
 
-A privacy mystery game: unmask a whistleblower from a photo's metadata, the details in its background and their writing habits. It is maintained by [anoni.net](https://anoni.net/), a community based in Taiwan, and served at <https://anoni.net/mystery/en/> (Chinese at <https://anoni.net/mystery>).
+A privacy mystery game: unmask a whistleblower from a photo's metadata, the details in its background and their writing habits. It is maintained by [anoni.net](https://anoni.net/), a community based in Taiwan, and served at <https://anoni.net/mystery/en/> (Traditional Chinese at <https://anoni.net/mystery>, Simplified Chinese at <https://anoni.net/mystery/zh-cn/>).
 
 > This README contains no spoilers.
 
@@ -230,9 +242,15 @@ The leaked photo, `PXL_20260914_144712345.jpg`, is a real JPEG with deliberately
 
 ## English edition
 
-The English lobby is at `/mystery/en/` and the case at `/mystery/en/night-heron/`, with the same interactive, `static/` and `night-heron.pdf` editions and language links both ways. The story stays in Taiwan and the names are romanised. The memo in the leaked photo stays in Chinese; you do not need to read it to solve the case. The writing-style clue uses English habits instead: British or American spelling, the style of quotation marks and a fixed sign-off.
+The English lobby is at `/mystery/en/` and the case at `/mystery/en/night-heron/`, with the same interactive, `static/` and `night-heron.pdf` editions and links between every language. The story stays in Taiwan and the names are romanised. The memo in the leaked photo stays in Chinese; you do not need to read it to solve the case. The writing-style clue uses English habits instead: British or American spelling, the style of quotation marks and a fixed sign-off.
 
-Both languages share one save, so a player who switches language halfway through sees the conversation and the evidence board in the new language.
+## Simplified Chinese edition
+
+The Simplified Chinese edition is at `/mystery/zh-cn/`, the same path as the [anoni.net docs](https://anoni.net/docs/zh-cn/) in Simplified Chinese, with all three editions. `scripts/zhcn.py` converts the Traditional Chinese text (OpenCC's `tw2sp`, then fixes for wording it gets wrong, such as 「中繼資料」 to 「元数据」 and 「指令」 to 「命令」), and the result is proofread by hand. The story still takes place in Taiwan.
+
+The Traditional Chinese writing-style clue includes the choice between 台 and 臺, which Simplified Chinese writes the same way. The Simplified edition relies on the spacing between Chinese and English, full-width or half-width punctuation, and whether the sign-off 「以上。」 ends with a full stop instead, and its hints and solution say so. The suspects' `PEOPLE[].key` in `case.zh-cn.js` stays in Traditional Chinese: it is the solution's key and where the save keeps marks and notes, shared by every language.
+
+All languages share one save, so a player who switches language halfway through sees the conversation and the evidence board in the new language.
 
 ## Lobby
 
@@ -245,22 +263,26 @@ To add a case, put a `case.json` in `cases/<number>-<slug>/` and it appears in t
 ```
 engine/
   index.src.html       the interactive engine every case shares: windows, chat, browser, files, images, terminal, evidence board, report
-  ui.zh.js, ui.en.js   the engine's interface text; each case's goes on top
+  ui.zh.js, ui.zh-cn.js, ui.en.js
+                       the engine's interface text; each case's goes on top
 cases/01-night-heron/
-  case.json            lobby card: slug, title, hook and skills; English under i18n.en
+  case.json            lobby card: slug, title, hook and skills; other languages under i18n.zh-cn and i18n.en
   case.js              story data and in-game sites, shared by every edition
+  case.zh-cn.js        Simplified Chinese story data, same structure as case.js
   case.en.js           English story data, same structure as case.js
   web/game.js          how this case behaves in the interactive edition, plugged into the engine through HOOKS (leaked photo, EXIF, trap, report answers)
   web/ui.zh.js         this case's interface text, Chinese
+  web/ui.zh-cn.js      this case's interface text, Simplified Chinese
   web/ui.en.js         this case's interface text, English
   web/sites.css        styles for the in-game sites
   web/assets/          JPEGs used in the game (the leaked photo carries crafted EXIF)
   static.css           static edition styles
   art/                 SVG sources for the images
   solution.enc         encrypted solution
+  solution.zh-cn.enc   encrypted Simplified Chinese solution, same key
   solution.en.enc      encrypted English solution, same key
   og.png, og.en.png    the case's social preview images
-site/                  copied to the top of the site: icons, app icons, the lobby's preview images and the web app manifest (English in site/en/)
+site/                  copied to the top of the site: icons, app icons, the lobby's preview images and the web app manifest (other languages in site/zh-cn/ and site/en/)
 scripts/
   build.mjs            build the site
   static.mjs           generate the static edition
@@ -288,7 +310,7 @@ Requires Node.js 18 or later, with no packages to install.
 CASE_KEY=<culprit's full name> node scripts/build.mjs
 ```
 
-The output goes to `dist/mystery/`; put the whole folder under `/mystery/` on a web server. The top level is the Chinese lobby, `en/` is the English edition, and each case lives under its slug, for example `/mystery/night-heron/`. The pages make no requests to other sites and load no web fonts.
+The output goes to `dist/mystery/`; put the whole folder under `/mystery/` on a web server. The top level is the Traditional Chinese lobby, `zh-cn/` is the Simplified Chinese edition, `en/` is the English edition, and each case lives under its slug, for example `/mystery/night-heron/`. The pages make no requests to other sites and load no web fonts.
 
 `--target clearnet` and `--target onion` are for the anoni.net deployment only (see "Deployment on anoni.net" below), and `--out <dir>` changes the output directory.
 
@@ -299,7 +321,7 @@ The output goes to `dist/mystery/`; put the whole folder under `/mystery/` on a 
 
 The PDF edition is printed by Chrome, Chromium or Brave. The build finds one automatically, or you can set `CHROME_PATH`. Without a browser it skips the PDF and leaves the printable HTML source.
 
-Build release PDFs where Noto Sans CJK TC and Noto Serif CJK TC are installed (for example `fonts-noto-cjk` on Debian or Ubuntu). Both are under the SIL OFL, which allows embedding them in a distributed PDF, and the layout prefers them. System fonts such as PingFang on macOS may not be licensed for distribution in documents. The build also sets the PDF's Creator field to a neutral name, leaving out the operating system and browser version.
+Build release PDFs where Noto Sans CJK and Noto Serif CJK are installed (for example `fonts-noto-cjk` on Debian or Ubuntu; TC for Traditional, SC for Simplified Chinese). Both are under the SIL OFL, which allows embedding them in a distributed PDF, and the layout prefers them. System fonts such as PingFang on macOS may not be licensed for distribution in documents. The build also sets the PDF's Creator field to a neutral name, leaving out the operating system and browser version.
 
 ### Serving behind a CDN
 
@@ -307,7 +329,7 @@ Image optimisation on a CDN (Cloudflare Polish, for example) strips EXIF from JP
 
 ### Installing as an app and playing offline
 
-The site can be installed as a web app (Chrome on Android and desktop offers "Install"; on an iPhone, use "Add to Home Screen" in Safari). Each language has its own manifest, `site/manifest.webmanifest` and `site/en/manifest.webmanifest`, and `scripts/make_og.mjs` draws the app icons with the others.
+The site can be installed as a web app (Chrome on Android and desktop offers "Install"; on an iPhone, use "Add to Home Screen" in Safari). Each language has its own manifest, `site/manifest.webmanifest`, `site/zh-cn/manifest.webmanifest` and `site/en/manifest.webmanifest`, and `scripts/make_og.mjs` draws the app icons with the others.
 
 The lobby and the interactive edition register a service worker (source in `scripts/sw.js`, written to `sw.js` at the top of the site by the build). It keeps the lobby, the interactive edition and the game's images for the player's language on the device, about 1 MB per language, so the case can be played without a connection. Pages are always fetched from the server first, so a new release shows up straight away, and the stored copy is used only offline. The static edition and the PDFs are not stored: the first is for browsers that do not run JavaScript, and the second is a download anyway. The service worker registers only on anoni.net and local previews; Tor Browser turns service workers off in any case.
 
@@ -336,7 +358,7 @@ Who a player accused, what they answered and which hints they read are never sen
 
 ## Solutions and spoilers
 
-The repository holds no plaintext solutions. Each solution is encrypted with the culprit's full Chinese name as the key into `solution.enc` (and `solution.en.enc` for English, with the same key), and the game decrypts it only when a player names the right person. Anyone who has solved the case therefore has the key and can help edit the solution, while people browsing the repository before solving it are not spoiled.
+The repository holds no plaintext solutions. Each solution is encrypted with the culprit's full Chinese name as the key into `solution.enc` (`solution.zh-cn.enc` for Simplified Chinese and `solution.en.enc` for English, with the same key), and the game decrypts it only when a player names the right person. Anyone who has solved the case therefore has the key and can help edit the solution, while people browsing the repository before solving it are not spoiled.
 
 This only prevents accidental spoilers: there are few suspects, and trying every name opens it.
 
@@ -349,6 +371,7 @@ CASE_KEY=<culprit's full name> node scripts/encrypt.mjs cases/01-night-heron    
 
 CASE_KEY=<culprit's full name> node scripts/decrypt.mjs cases/01-night-heron en   # English: solution.en.html
 CASE_KEY=<culprit's full name> node scripts/encrypt.mjs cases/01-night-heron en   # writes solution.en.enc
+CASE_KEY=<culprit's full name> node scripts/encrypt.mjs cases/01-night-heron zh-cn  # writes solution.zh-cn.enc
 ```
 
 When `CASE_KEY` is set, the build also checks that the key opens the solution. Please keep the culprit's name out of issues, pull requests and commit messages.
@@ -369,10 +392,10 @@ The script writes the EXIF the story needs into the leaked photo only (Pixel 7a,
 The icon's source is `site/favicon.svg`. The preview images follow the docs site's [share card](https://anoni.net/docs/en/community/visual-guide/) layout, set in `tools/og/og.html`. After changing the icon, the layout, or a case's title, hook or summary in `case.json`, regenerate the PNGs:
 
 ```sh
-node scripts/make_og.mjs --fonts <folder with Noto Sans TC and Public Sans>
+node scripts/make_og.mjs --fonts <folder with Noto Sans TC, Noto Sans SC and Public Sans>
 ```
 
-It needs Chrome, Chromium or Brave, and `--fonts` can be left out when both fonts are installed. The PNGs are committed, so neither the build nor the deployment runs this script. A new case needs its preview images generated too.
+It needs Chrome, Chromium or Brave, and `--fonts` can be left out when the fonts are installed. The PNGs are committed, so neither the build nor the deployment runs this script. A new case needs its preview images generated too.
 
 ## Further reading
 

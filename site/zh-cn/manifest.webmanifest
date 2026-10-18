@@ -1,0 +1,20 @@
+{
+  "id": "/mystery/zh-cn/",
+  "name": "隐私推理游戏｜anoni.net",
+  "short_name": "隐私推理",
+  "description": "anoni.net 的隐私推理游戏。每一份委托都是一个案件：从照片、文件与文本里找出破绽，学会保护自己和别人的隐私。",
+  "lang": "zh-Hans",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#11161d",
+  "theme_color": "#11161d",
+  "categories": ["games", "education"],
+  "icons": [
+    { "src": "../icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "../icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "../favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

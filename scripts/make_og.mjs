@@ -2,11 +2,11 @@
 // The results are committed, so building the site does not need this script:
 //   site/favicon-32.png, site/apple-touch-icon.png   from site/favicon.svg
 //   site/icon-192.png, icon-512.png, icon-maskable-512.png   web app icons
-//   site/og.png, site/og-en.png                      the lobby, Chinese and English
-//   cases/<case>/og.png, cases/<case>/og.en.png      each case, Chinese and English
+//   site/og.png, site/og-zh-cn.png, site/og-en.png   the lobby in each language
+//   cases/<case>/og.png, og.zh-cn.png, og.en.png     each case, in the languages it has
 // Usage: node scripts/make_og.mjs [--fonts <dir>]
-//   The cards use Noto Sans TC and Public Sans (both SIL OFL). Install them, or pass a folder
-//   holding their font files with --fonts. Set CHROME_PATH if the browser is not found.
+//   The cards use Noto Sans TC, Noto Sans SC and Public Sans (all SIL OFL). Install them, or
+//   pass a folder holding their font files with --fonts. Set CHROME_PATH if the browser is not found.
 // Run it again after changing site/favicon.svg, tools/og/og.html or a case's title, hook or
 // summary in case.json.
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync, copyFileSync, rmSync } from 'node:fs';
@@ -31,7 +31,8 @@ const fontDir = arg('--fonts') && resolve(arg('--fonts'));
 if (fontDir) {
   const files = readdirSync(fontDir, { recursive: true }).filter(f => /\.(ttf|otf|woff2?)$/i.test(f));
   for (const f of files) {
-    const family = /noto\s*sans\s*tc/i.test(f.replace(/[-_]/g, ' ')) ? 'Noto Sans TC' : /public\s*sans/i.test(f.replace(/[-_]/g, ' ')) ? 'Public Sans' : null;
+    const name = f.replace(/[-_]/g, ' ');
+    const family = /noto\s*sans\s*tc/i.test(name) ? 'Noto Sans TC' : /noto\s*sans\s*sc/i.test(name) ? 'Noto Sans SC' : /public\s*sans/i.test(name) ? 'Public Sans' : null;
     if (family) faces += `@font-face { font-family: "${family}"; src: url("${pathToFileURL(join(fontDir, f)).href}"); font-weight: 100 900; }\n`;
   }
 }
@@ -68,6 +69,8 @@ shot(iconPage('mask512.html', 512, true, 0.8), join(root, 'site', 'icon-maskable
 const card = (data, file) => shot(pathToFileURL(tpl).href + '#' + encodeURIComponent(JSON.stringify(data)), file, 1200, 630, false);
 card({ lang: 'zh-Hant', site: SITE_NAME.zh, kicker: '霧港隱私互助站 · 委託板', title: '隱私推理遊戲',
   desc: '每一份委託都是一個案件：從照片、檔案與文字裡找出破綻，學會保護自己和別人的隱私。', url: 'anoni.net/mystery' }, join(root, 'site', 'og.png'));
+card({ lang: 'zh-Hans', site: SITE_NAME['zh-cn'], kicker: '雾港隐私互助站 · 委托板', title: '隐私推理游戏',
+  desc: '每一份委托都是一个案件：从照片、文件与文本里找出破绽，学会保护自己和别人的隐私。', url: 'anoni.net/mystery/zh-cn' }, join(root, 'site', 'og-zh-cn.png'));
 card({ lang: 'en', site: SITE_NAME.en, kicker: 'Mistport Privacy Aid · case board', title: 'Privacy mysteries',
   desc: 'Each request is a case: find the leaks in photos, files and writing, and learn to protect your own privacy and other people’s.', url: 'anoni.net/mystery/en' }, join(root, 'site', 'og-en.png'));
 
@@ -77,6 +80,9 @@ for (const dir of readdirSync(join(root, 'cases')).sort()) {
   const c = JSON.parse(readFileSync(manifest, 'utf8'));
   card({ lang: 'zh-Hant', site: SITE_NAME.zh, kicker: `案件 ${c.number}`, title: c.title, hook: c.hook, desc: c.summary, url: `anoni.net/mystery/${c.slug}` },
     join(root, 'cases', dir, 'og.png'));
+  const cn = c.i18n && c.i18n['zh-cn'];
+  if (cn) card({ lang: 'zh-Hans', site: SITE_NAME['zh-cn'], kicker: `案件 ${c.number}`, title: cn.title, hook: cn.hook, desc: cn.summary, url: `anoni.net/mystery/zh-cn/${c.slug}` },
+    join(root, 'cases', dir, 'og.zh-cn.png'));
   const en = c.i18n && c.i18n.en;
   if (en) card({ lang: 'en', site: SITE_NAME.en, kicker: `Case ${c.number}`, title: en.title, hook: en.hook, desc: en.summary, url: `anoni.net/mystery/en/${c.slug}` },
     join(root, 'cases', dir, 'og.en.png'));
