@@ -507,6 +507,7 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
     <a class="menu-btn" href="{{lobbyHref}}" title="{{menuLobbyTitle}}">{{menuLobby}}</a>
     <!--if:static--><a class="menu-btn" href="__PDF__" download="{{pdfName}}" title="{{menuPdfTitle}}">{{menuPdf}}</a><!--end:static-->
     <!--if:lang--><a class="menu-btn" href="{{langHref}}" lang="{{otherLang}}" title="{{menuLangTitle}}">{{menuLang}}</a><!--end:lang-->
+    <a class="menu-btn" id="feedbackBtn" href="../feedback/" title="{{menuFeedbackTitle}}">{{menuFeedback}}</a>
     <button class="menu-btn" id="resetBtn" type="button">{{menuReset}}</button>
   </div>
   <div class="clock" id="clock"><span class="clock-date">{{clockDate}}</span><span id="clockTime">21:17</span></div>
@@ -1601,8 +1602,8 @@ function rankFor() {
 }
 function showSolution(html) {
   const w = W.report || openApp('report');
-  const [t, d] = rankFor();
-  $('.report', w.body).innerHTML = `<div class="sol">${html.replace('<h3>', `<div class="rank">${UI.rankLabel}<b>${t}</b><br>${d}</div><h3>`)}<p style="margin-top:18px"><button type="button" class="chip" id="replay">${UI.replay}</button></p></div>`;
+  const [t, d, lv] = rankFor();
+  $('.report', w.body).innerHTML = `<div class="sol">${html.replace('<h3>', `<div class="rank">${UI.rankLabel}<b>${t}</b><br>${d}</div><h3>`)}<p style="margin-top:18px"><a class="chip primary" style="text-decoration:none" href="${feedbackHref('solved', lv)}">${UI.feedbackSolved}</a> <button type="button" class="chip" id="replay">${UI.replay}</button></p></div>`;
   $('#replay', w.body).onclick = () => resetGame(true);
   w.setTitle(UI.solvedTitle);
 }
@@ -1637,6 +1638,12 @@ function resetGame(force) {
   boot();
 }
 $('#resetBtn').onclick = () => resetGame(false);
+// The feedback page (scripts/feedback.mjs) takes the case, where the player came from and,
+// once the case is closed, the rank. Never who they accused or what they answered.
+function feedbackHref(from, rank) {
+  return '../feedback/?case=' + CASE.number + '&from=' + from + (rank == null ? '' : '&rank=' + rank);
+}
+$('#feedbackBtn').href = feedbackHref('menu');
 // Phone menu: the menu bar's items fold into a sheet behind "⋯".
 const setMenu = open => { $('#menubar').classList.toggle('open', open); $('#moreBtn').setAttribute('aria-expanded', String(open)); };
 $('#moreBtn').onclick = e => { e.stopPropagation(); setMenu(!$('#menubar').classList.contains('open')); };

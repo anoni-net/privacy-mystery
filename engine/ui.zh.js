@@ -23,6 +23,8 @@ const ENGINE_UI = {
   menuPdfTitle: '可列印的 PDF 版，解答在最後幾頁',
   menuLang: 'English',
   menuLangTitle: '英文版',
+  menuFeedback: '建議與回饋',
+  menuFeedbackTitle: '寫下感想、案件的點子或遇到的問題',
   menuReset: '重新開始',
   menuResetConfirm: '再按一次確認重來',
   moreLabel: '更多選項',
@@ -152,6 +154,7 @@ const ENGINE_UI = {
   fbRightFixRest: '✓ 你指認的人沒錯。把上面錯的題目修正後再交一次，才能結案。',
   rankPerfect: '沒看任何提示，一次就指認正確。',
   rankLabel: '評等：',
+  feedbackSolved: '留下遊玩感想',
   replay: '重新開始一局',
   solvedTitle: '結案報告 — 已結案',
 };

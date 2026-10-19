@@ -141,7 +141,7 @@ export function findChrome() {
 const T = {
   zh: {
     lang: 'zh-Hant-TW', title: '夜鷺事件', sub: '一張「已經關掉定位」的照片，能說出多少祕密？',
-    meta: '<b>類型</b>　隱私推理／單人或 2–4 人合作<br><b>時間</b>　約 45–75 分鐘<br><b>需要</b>　筆、這份檔案、懷疑一切的眼睛<br><br>anoni.net 匿名網路社群 · anoni.net/mystery<br>本作品為虛構，人物、公司與事件皆非真實。內容以 CC BY 4.0 授權。',
+    meta: '<b>類型</b>　隱私推理／單人或 2–4 人合作<br><b>時間</b>　約 45–75 分鐘<br><b>需要</b>　筆、這份檔案、懷疑一切的眼睛<br><br>anoni.net 匿名網路社群 · anoni.net/mystery<br>玩完的感想與案件的點子：anoni.net/mystery/feedback/<br>本作品為虛構，人物、公司與事件皆非真實。內容以 CC BY 4.0 授權。',
     warn: '最後幾頁是解答，上下顛倒印刷。破案之前，請不要翻到最後。',
     briefing: '遊戲說明', briefLead: '你是「霧港隱私互助站」的志工。我們幫助需要匿名的人：記者、吹哨者，以及任何不想被找到的人。',
     job: '今晚的委託',
@@ -182,7 +182,7 @@ const T = {
   },
   en: {
     lang: 'en', title: 'Night Heron', sub: 'A photo with “location turned off”. How many secrets can it still tell?',
-    meta: '<b>Type</b> privacy mystery, solo or 2–4 players together<br><b>Time</b> about 45–75 minutes<br><b>You need</b> a pen, this file, and a suspicious mind<br><br>anoni.net community · anoni.net/mystery/en/<br>A work of fiction: all people, companies and events are made up. Content licensed CC BY 4.0.',
+    meta: '<b>Type</b> privacy mystery, solo or 2–4 players together<br><b>Time</b> about 45–75 minutes<br><b>You need</b> a pen, this file, and a suspicious mind<br><br>anoni.net community · anoni.net/mystery/en/<br>Feedback and case ideas: anoni.net/mystery/en/feedback/<br>A work of fiction: all people, companies and events are made up. Content licensed CC BY 4.0.',
     warn: 'The last pages are the solution, printed upside down. Don’t turn to the end before you’ve solved the case.',
     briefing: 'How to play', briefLead: 'You volunteer at the Mistport Privacy Aid. We help people who need to stay anonymous: journalists, whistleblowers, anyone who doesn’t want to be found.',
     job: 'Tonight’s case',
