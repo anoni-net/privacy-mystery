@@ -48,6 +48,7 @@ const T = {
     a: ['手機型號與拍攝時區。夜鷺確實關掉了 GPS，照片裡也沒有拍攝者姓名；拍攝時間有記錄，但不是關鍵。', '飯店便條紙與筆電上的貼紙。', '用字與標點習慣。夜鷺用了新帳號、沒用公司網路，剩下能出賣人的是寫作風格。'],
     accuseLead: '想好了就點名字。指認錯的話，夜鷺會告訴你。', closed: '結案', accused: '指認',
     selfRank: '<div class="rank"><b>自評</b><ul><li>沒看提示、一次就指認正確：<b>洋蔥首席調查員</b></li><li>看了 3 條以內的提示、誤判 1 次以內：<b>資深隱私志工</b></li><li>其他：<b>見習調查員</b></li></ul><p>如果把原始照片上傳到線上 EXIF 工具，再降一級。</p></div>',
+    feedback: url => `<p class="lead">玩完的感想、想看的案件主題，歡迎寫在<a href="${url}">建議與回饋</a>（送出需要 JavaScript）。</p>`,
     solved: '……你找到我了。謝謝你比他們早一步。我會照你的建議處理。', wrong: '我讀了你的報告……不是那個人。但公司的調查員也可能這樣誤判，冤枉一個無辜的同事。可以再查一次嗎？', backToReport: '回到結案報告',
   },
   en: {
@@ -84,6 +85,7 @@ const T = {
     a: ['The phone model and the time zone. Night Heron really did turn off GPS, and the photo has no name in it; the time is recorded but isn’t the key.', 'The hotel notepad and the sticker on the laptop.', 'Spelling and punctuation habits. Night Heron used a new account and avoided the company network, so what was left to give them away was their writing.'],
     accuseLead: 'When you’re sure, click a name. If you’re wrong, Night Heron will tell you.', closed: 'Case closed', accused: 'Accusation',
     selfRank: '<div class="rank"><b>Rate yourself</b><ul><li>No hints, right first time: <b>Chief Onion Investigator</b></li><li>Three hints or fewer, at most one wrong guess: <b>Senior Privacy Volunteer</b></li><li>Otherwise: <b>Trainee Investigator</b></li></ul><p>If you uploaded the original photo to an online EXIF tool, drop one level.</p></div>',
+    feedback: url => `<p class="lead">Tell us how the case went, or which privacy topic you’d like a case about, on the <a href="${url}">feedback page</a> (it needs JavaScript to send).</p>`,
     solved: '…You found me. Thank you for getting there before they did. I’ll do what you suggest.', wrong: 'I read your report… it isn’t them. But the company’s investigators could make the same mistake and blame an innocent colleague. Can you look again?', backToReport: 'Back to the case report',
   },
 };
@@ -100,7 +102,10 @@ export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialS
   const NAV = ['desk.html', 'chat.html', 'web/search.html', 'files/index.html', 'photo.html', 'terminal.html', 'notes.html', 'hints.html', 'report.html'].map((h, i) => [h, L.nav[i]]);
   // static/ sits in the case folder, which sits in the language folder (en/ for English)
   const toRoot = up => up + '../../' + (lang === 'zh' ? '' : '../');
-  const casePath = (lang === 'zh' ? '' : lang + '/') + JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8')).slug + '/';
+  const manifest = JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8'));
+  const casePath = (lang === 'zh' ? '' : lang + '/') + manifest.slug + '/';
+  // The feedback page (scripts/feedback.mjs); the onion build rewrites it with every other link
+  const feedbackUrl = `https://anoni.net/mystery/${lang === 'zh' ? '' : lang + '/'}feedback/?case=${manifest.number}&amp;from=static`;
   const doc = ({ title, up, body, nav = true, here = '', cls = '', og = false }) => `<!doctype html>
 <html lang="${L.lang}">
 <head>
@@ -299,7 +304,7 @@ ${[C.Q1, C.Q2, C.Q3].map((q, i) => `<section class="q"><h2>${L.q[i]}</h2>${opts(
   C.PEOPLE.forEach(p => {
     const right = p.name === culprit;
     put(accuseSlug(p.key), doc({ title: right ? L.closed : L.accused, up: '../', here: 'report.html', body: right
-      ? `<section class="chat"><div class="log"><div class="bub them">${L.solved}<span class="tm">${L.yelu}</span></div></div></section><div class="sol">${solution.replace('<h3>', L.selfRank + '<h3>')}</div>`
+      ? `<section class="chat"><div class="log"><div class="bub them">${L.solved}<span class="tm">${L.yelu}</span></div></div></section><div class="sol">${solution.replace('<h3>', L.selfRank + '<h3>')}</div>${L.feedback(feedbackUrl)}`
       : `<section class="chat"><div class="log"><div class="bub them">${L.wrong}<span class="tm">${L.yelu}</span></div></div></section><p><a class="go" href="../report.html">${L.backToReport}</a></p>` }));
   });
 
