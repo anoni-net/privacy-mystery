@@ -76,11 +76,11 @@ fi
 
 dest=$BASE/releases/$sha
 # 要檢查的檔案：案件 01 一定有靜態版與 PDF，案件 02 有鑰匙時才有
-need="index.html night-heron/index.html night-heron/static/index.html night-heron/night-heron.pdf en/index.html en/night-heron/index.html en/night-heron/static/index.html en/night-heron/night-heron.pdf blue-magpie/index.html"
+need="index.html night-heron/index.html night-heron/static/index.html night-heron/night-heron.pdf en/index.html en/night-heron/index.html en/night-heron/static/index.html en/night-heron/night-heron.pdf zh-cn/index.html zh-cn/night-heron/static/index.html zh-cn/night-heron/night-heron.pdf blue-magpie/index.html"
 case02=""
 if [ "$key02" != none ]; then
     case02="$(cat "$KEYFILE_02")"
-    need="$need blue-magpie/static/index.html blue-magpie/blue-magpie.pdf en/blue-magpie/static/index.html en/blue-magpie/blue-magpie.pdf"
+    need="$need blue-magpie/static/index.html blue-magpie/blue-magpie.pdf en/blue-magpie/static/index.html en/blue-magpie/blue-magpie.pdf zh-cn/blue-magpie/static/index.html zh-cn/blue-magpie/blue-magpie.pdf"
 fi
 rm -rf "$dest.tmp"
 # onion 那份的頁面不能有任何指向 clearnet 的資源或連結，檢查不到才算建置成功。

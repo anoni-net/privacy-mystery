@@ -41,7 +41,7 @@
 
 ## 简体中文版
 
-简体中文版在 `/mystery/zh-cn/`，網址與 [anoni.net 文件庫](https://anoni.net/docs/zh-cn/)的简体中文版一致，同樣有三種玩法。文字由 `scripts/zhcn.py` 從正體中文轉換（OpenCC 的 `tw2sp`，再修正它不擅長的用語，例如「中繼資料」改成「元数据」、「指令」改成「命令」），之後人工校對。故事仍然發生在台灣。
+简体中文版在 `/mystery/zh-cn/`，網址與 [anoni.net 文件庫](https://anoni.net/docs/zh-cn/)的简体中文版一致，同樣有三種玩法。文字由 `scripts/zhcn.py` 從正體中文轉換（OpenCC 的 `tw2sp`，再修正它不擅長的用語，例如「中繼資料」改成「元数据」、「指令」改成「命令」），之後人工校對。故事仍然發生在台灣。藍鵲事件的简体中文版另外把通訊軟體的「連結裝置」寫成「关联设备」（「链接」只用來指網址），「已連結的裝置」截圖也用简体中文重畫（`art/devices.zh-cn.svg`）。
 
 正體中文的寫作風格線索裡有「台」與「臺」的用字差異，简体中文寫起來都是「台」，所以简体中文版改看中英文之間的空格、全形或半形標點，以及句尾「以上。」有沒有句號，提示與解答也跟著改寫。嫌疑人在 `case.zh-cn.js` 的 `PEOPLE[].key` 維持正體中文：它是解答的鑰匙，也是存檔記錄標記與筆記的地方，所有語言共用。
 
@@ -256,7 +256,7 @@ The English lobby is at `/mystery/en/` and the case at `/mystery/en/night-heron/
 
 ## Simplified Chinese edition
 
-The Simplified Chinese edition is at `/mystery/zh-cn/`, the same path as the [anoni.net docs](https://anoni.net/docs/zh-cn/) in Simplified Chinese, with all three editions. `scripts/zhcn.py` converts the Traditional Chinese text (OpenCC's `tw2sp`, then fixes for wording it gets wrong, such as 「中繼資料」 to 「元数据」 and 「指令」 to 「命令」), and the result is proofread by hand. The story still takes place in Taiwan.
+The Simplified Chinese edition is at `/mystery/zh-cn/`, the same path as the [anoni.net docs](https://anoni.net/docs/zh-cn/) in Simplified Chinese, with all three editions. `scripts/zhcn.py` converts the Traditional Chinese text (OpenCC's `tw2sp`, then fixes for wording it gets wrong, such as 「中繼資料」 to 「元数据」 and 「指令」 to 「命令」), and the result is proofread by hand. The story still takes place in Taiwan. In Blue Magpie, linking a device to a messaging app becomes 「关联设备」 (「链接」 is kept for web links), and the linked-devices screenshot is redrawn in Simplified Chinese (`art/devices.zh-cn.svg`).
 
 The Traditional Chinese writing-style clue includes the choice between 台 and 臺, which Simplified Chinese writes the same way. The Simplified edition relies on the spacing between Chinese and English, full-width or half-width punctuation, and whether the sign-off 「以上。」 ends with a full stop instead, and its hints and solution say so. The suspects' `PEOPLE[].key` in `case.zh-cn.js` stays in Traditional Chinese: it is the solution's key and where the save keeps marks and notes, shared by every language.
 
