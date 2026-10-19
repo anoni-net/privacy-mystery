@@ -22,11 +22,9 @@
 // "printEditions": true have a static version and a PDF so far.
 import { readFileSync, writeFileSync, mkdirSync, cpSync, statSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import { decryptB64 } from './crypt.mjs';
-import { buildStatic } from './static.mjs';
-import { buildPdf } from './pdf.mjs';
 import { buildLobby } from './lobby.mjs';
 import { iconTags, ogTags, swScript, SITE_NAME, LANG_INFO, langLinks } from './meta.mjs';
 import { createHash } from 'node:crypto';
@@ -87,6 +85,15 @@ rmSync(out, { recursive: true, force: true });
 // Icons and the lobby's preview images sit at the top of the site (made by scripts/make_og.mjs)
 mkdirSync(out, { recursive: true });
 cpSync(join(root, 'site'), out, { recursive: true });
+// Each case with print editions lays them out in its own print/static.mjs and print/pdf.mjs
+const printers = {};
+for (const caseDir of caseDirs) {
+  const dir = join(caseDir, 'print');
+  if (existsSync(join(dir, 'static.mjs'))) printers[caseDir] = {
+    static: (await import(pathToFileURL(join(dir, 'static.mjs')).href)).buildStatic,
+    pdf: (await import(pathToFileURL(join(dir, 'pdf.mjs')).href)).buildPdf,
+  };
+}
 let fragment = '';
 const built = [];  // { lang, slug, assets } for the service worker
 const anyLangs = new Set();
@@ -96,6 +103,12 @@ caseDirs.forEach((caseDir, ci) => {
   const web = join(caseDir, 'web');
   if (!existsSync(join(web, 'game.js'))) return;
   const key = keyOf(manifest);
+  // The static version and the PDF hold the ending, so they need the key. Without it the case
+  // is built as if it had no print editions yet: no links to them anywhere, lobby included.
+  if (manifest.printEditions && !key) {
+    console.warn(`${manifest.slug}: key not set (${manifest.number === '01' ? 'CASE_KEY' : 'CASE_KEY_' + manifest.number}), built without the static version and the PDF.`);
+    manifest.printEditions = false;
+  }
   const assets = existsSync(join(web, 'assets')) ? listFiles(join(web, 'assets')) : [];
   const assetSizes = Object.fromEntries(assets.map(f => [f, kb(join(web, 'assets', f))]));
   const caseMeta = { slug: manifest.slug, number: manifest.number, pdf: manifest.pdf,
@@ -164,21 +177,18 @@ ${page.slice(cut).trim()}
     built.push({ lang, slug: manifest.slug, assets });
 
     if (key && manifest.printEditions) {
+      if (!printers[caseDir]) throw new Error(`${manifest.slug}: printEditions is set but print/static.mjs and print/pdf.mjs are missing`);
       const solution = decryptB64(blob, key);
-      const pxlSize = assetSizes['PXL_20260914_144712345.jpg'];
-      const socialSizes = Object.fromEntries(Object.entries(assetSizes).filter(([f]) => f.startsWith('social/')).map(([f, v]) => [f.slice(7, -4), v]));
-      const pages = buildStatic({
+      const pages = printers[caseDir].static({
         caseDir, out: caseOut, lang: lang.code, langs: caseLangs,
         sitesCss: readFileSync(join(web, 'sites.css'), 'utf8'),
-        solution, pxlSize, socialSizes,
+        solution, assetSizes,
       });
       console.log(`built ${manifest.slug} ${lang.code} static version: ${pages} pages`);
       // The print source holds the ending in plain text: keep it outside the served site
-      const { pdf, html } = buildPdf({ caseDir, out: caseOut, lang: lang.code, srcDir: join(out, '..', 'pdf-src', manifest.slug, lang.code), solution, pxlSize });
+      const { pdf, html } = printers[caseDir].pdf({ caseDir, out: caseOut, lang: lang.code, srcDir: join(out, '..', 'pdf-src', manifest.slug, lang.code), solution, assetSizes });
       if (pdf) console.log('built', pdf);
       else console.warn(`No Chromium-based browser found (set CHROME_PATH): skipped the ${manifest.slug} ${lang.code} PDF. Print source: ${html}`);
-    } else if (manifest.printEditions) {
-      console.warn(`${manifest.slug}: key not set, skipped the static version and the PDF (they contain the ending).`);
     }
   }
 });

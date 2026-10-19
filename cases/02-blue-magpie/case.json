@@ -16,6 +16,7 @@
   "players": "單人或 2–4 人合作",
   "pdf": "blue-magpie.pdf",
   "pdfName": "藍鵲事件.pdf",
+  "printEditions": true,
   "i18n": {
     "en": {
       "title": "Blue Magpie",

@@ -1,15 +1,12 @@
-// Static version: plain HTML and CSS, no JavaScript and no SVG, for Tor Browser's
-// "Safest" security level. Generated from the same case data as the interactive page,
-// in each language the case has (lang: 'zh', 'zh-cn' or 'en').
-import { writeFileSync, mkdirSync, cpSync, readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { createHash } from 'node:crypto';
-import { loadCase, esc } from './case-data.mjs';
-import { iconTags, ogTags, SITE_NAME, LANG_INFO, langLinks } from './meta.mjs';
+// Night Heron's static edition: plain HTML and CSS, no JavaScript and no SVG, for Tor
+// Browser's "Safest" security level. Generated from the same case data as the interactive
+// page, in each language the case has, with the shared kit (scripts/static-kit.mjs).
+import { loadCase } from '../../../scripts/case-data.mjs';
+import { staticKit, BASE, esc, short } from '../../../scripts/static-kit.mjs';
 
-const short = s => createHash('sha256').update(s).digest('hex').slice(0, 10);
-// Accusation pages are named by hash of each suspect's key, so a URL never reveals who is right.
-const accuseSlug = key => 'accuse/' + createHash('sha256').update('night-heron:' + key).digest('hex').slice(0, 12) + '.html';
+// What this file reads from case.js
+const EXPORTS = ['PEOPLE', 'PIC', 'SLACK', 'TEXTS', 'INTRO', 'PXL', 'EXIF_PXL', 'EXIF_PXL_NOTE', 'EXIF_SOCIAL',
+  'EXIF_SOCIAL_NOTE', 'CAMERA_INFO', 'FILE_KEYS', 'EXPORT_DIR', 'BOOKMARKS', 'INITIAL', 'STYLE_GREP', 'SEARCH_TIPS', 'SOL_PREFIX', 'Q1', 'Q2', 'Q3', 'socialFile', 'makeSites'];
 // Download names for the exported files (ASCII, so every server serves them)
 const RAW = { recipients: 'recipients.txt', profiles: 'profiles.txt', attendance: 'attendance_0912-0916.csv', byod: 'byod_202603.csv' };
 
@@ -121,168 +118,53 @@ const T = {
   },
 };
 
-export function buildStatic({ caseDir, sitesCss, out, solution, pxlSize, socialSizes, lang = 'zh', langs = [lang] }) {
-  const C = loadCase(caseDir, pxlSize, lang);
-  const L = T[lang];
-  const root = join(out, 'static');
-  const files = new Map();
-  const put = (path, html) => files.set(path, html);
+export function buildStatic({ caseDir, sitesCss, out, solution, assetSizes, lang = 'zh', langs = [lang] }) {
+  const pxlSize = assetSizes['PXL_20260914_144712345.jpg'];
+  const socialSizes = Object.fromEntries(Object.entries(assetSizes).filter(([f]) => f.startsWith('social/')).map(([f, v]) => [f.slice(7, -4), v]));
+  const C = loadCase(caseDir, lang, EXPORTS, { __PXL_SIZE__: pxlSize });
+  const L = Object.assign({}, BASE[lang], T[lang]);
+  const NAV = ['desk.html', 'chat.html', 'web/search.html', 'files/index.html', 'photo.html', 'terminal.html', 'notes.html', 'hints.html', 'report.html'].map((h, i) => [h, L.nav[i]]);
+  const K = staticKit({ caseDir, out, lang, langs, L, nav: NAV });
+  const { put, doc } = K;
   const EXPORT = '~/' + C.EXPORT_DIR;
 
-  /* ---------- page shell ---------- */
-  const NAV = ['desk.html', 'chat.html', 'web/search.html', 'files/index.html', 'photo.html', 'terminal.html', 'notes.html', 'hints.html', 'report.html'].map((h, i) => [h, L.nav[i]]);
-  // static/ sits in the case folder, which sits in the language folder (en/, zh-cn/)
-  const toRoot = up => up + '../../' + (LANG_INFO[lang].dir ? '../' : '');
-  const slug = JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8')).slug;
-  const casePath = LANG_INFO[lang].dir + slug + '/';
-  const aside = [...L.aside, langLinks(langs, lang, toRoot(''), l => LANG_INFO[l].dir + slug + '/static/').join(' · ')].filter(Boolean);
-  const doc = ({ title, up, body, nav = true, here = '', cls = '', og = false }) => `<!doctype html>
-<html lang="${L.lang}">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="referrer" content="no-referrer">
-<title>${esc(title)} · ${L.title}</title>
-${iconTags(toRoot(up), lang)}${og ? '\n' + ogTags({ lang, siteName: SITE_NAME[lang], title: `${L.title} · ${L.staticTag}`, desc: L.lead, path: casePath + 'static/', image: casePath + 'og.png' }) : ''}
-<link rel="stylesheet" href="${up}static.css">
-<link rel="stylesheet" href="${up}sites.css">
-</head>
-<body${cls ? ` class="${cls}"` : ''}>
-${nav ? `<header class="top"><a class="brand" href="${up}desk.html">${L.station} <small>${L.staticTag}</small></a><nav aria-label="${L.navLabel}">${NAV.map(([h, t]) => `<a href="${up}${h}"${h === here ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav></header>` : ''}
-<main class="main">
-${body}
-</main>
-</body>
-</html>
-`;
-
-  /* ---------- entry ---------- */
-  put('index.html', doc({ title: L.start, up: '', nav: false, og: true, body: `<div class="cover">
-  <p class="kicker">PRIVACY MYSTERY · CASE FILE 01</p>
-  <h1>${L.title}</h1>
-  <p class="lead">${L.lead}</p>
-  <p>${L.intro}</p>
-  <p><a class="go" href="intro/start.html#reply">${L.open}</a></p>
-  <div class="aside">
-    ${aside.map(p => `<p>${p}</p>`).join('\n    ')}
-  </div>
-</div>` }));
-
-  /* ---------- opening chat: one page per path through the conversation ---------- */
-  const tm = count => '21:' + String(3 + Math.floor(count * 0.6)).padStart(2, '0');
-  const bubbles = log => log.map(m => m.sys ? `<p class="sys">${esc(m.sys)}</p>` : m.file
-    ? `<div class="filecard"><span class="fi">ZIP</span><span><b>${esc(m.file)}</b><br><small>${L.zipMeta}</small></span></div>`
-    : `<div class="bub ${m.me ? 'me' : 'them'}">${esc(m.text)}<span class="tm">${m.tm}</span></div>`).join('');
-  // Each reply loads a new page. Without JavaScript, two things keep the newest
-  // messages in view: the log is a column-reverse scroller (it opens scrolled to the
-  // bottom), and reply links carry #reply so small screens land on the replies.
-  const chatPage = (id, log, actions) => put(`intro/${id}.html`, doc({ title: L.chat, up: '../', nav: false, cls: 'chat-page', body: `<section class="chat intro">
-  <header class="chat-head"><b>${L.yelu}</b><span>${L.e2e}</span></header>
-  <div class="log"><div class="log-in">${bubbles([{ sys: L.opening }].concat(log))}</div></div>
-  <div class="replies" id="reply">${actions}</div>
-</section>` }));
-  function walk(nodeId, log, id) {
-    const node = C.INTRO[nodeId];
-    const said = log.filter(m => !m.sys).length;
-    const say = log.concat(node.msgs.map((text, i) => ({ text, tm: tm(said + i) })));
-    if (node.file) {
-      const withFile = say.concat({ file: L.zip });
-      chatPage(id, withFile, `<p class="label">${L.acceptHint}</p><a class="reply primary" href="${id}-f.html#reply">${L.accept}</a>`);
-      return walk(node.next, withFile.concat({ sys: L.received }), id + '-f');
-    }
-    if (node.end) {
-      chatPage(id, say.concat({ sys: L.caseOpen }), `<a class="reply primary" href="../desk.html">${L.begin}</a>`);
-      return;
-    }
-    if (node.choices) {
-      chatPage(id, say, `<p class="label">${L.choose}</p>${node.choices.map(([text], i) => `<a class="reply" href="${id}-${i}.html#reply">${esc(text)}</a>`).join('')}`);
-      node.choices.forEach(([text, next], i) => walk(next, say.concat({ text, me: true, tm: tm(say.filter(m => !m.sys).length) }), `${id}-${i}`));
-      return;
-    }
-    walk(node.next, say, id);
-  }
-  walk('n1', [], 'start');
+  K.cover();
+  K.intro({ nodes: C.INTRO, who: L.yelu, tm: count => '21:' + String(3 + Math.floor(count * 0.6)).padStart(2, '0') });
 
   /* ---------- workstation ---------- */
-  const tileLinks = ['chat.html', 'web/search.html', 'files/index.html', 'photo.html', 'terminal.html', 'notes.html', 'hints.html', 'report.html'];
-  put('desk.html', doc({ title: L.nav[0], up: '', here: 'desk.html', body: `<h1>${L.mission}</h1>
-<ol class="mission">${L.missionItems.map(m => `<li>${m}</li>`).join('')}</ol>
-<div class="tiles">${L.tiles.map(([t, d], i) => `<a class="tile" href="${tileLinks[i]}"><b>${t}</b><span>${d}</span></a>`).join('')}</div>` }));
-
-  put('chat.html', doc({ title: L.nav[1], up: '', here: 'chat.html', body: `<h1>${L.chatLog}</h1>
-<section class="chat"><header class="chat-head"><b>${L.awu}</b><span>${L.internal}</span></header><div class="log">
-${bubbles([{ sys: L.awuSys }].concat(L.awuMsgs.map((text, i) => ({ tm: i ? '21:19' : '21:18', text }))))}</div></section>
-<h2>${L.facts}</h2>
-<ul class="facts">${L.factItems.map(f => `<li>${f}</li>`).join('')}</ul>
-<p><a href="intro/start.html#reply">${L.replay}</a></p>` }));
+  K.desk(['chat.html', 'web/search.html', 'files/index.html', 'photo.html', 'terminal.html', 'notes.html', 'hints.html', 'report.html']);
+  K.chatLog({ msgs: L.awuMsgs.map((text, i) => ({ tm: i ? '21:19' : '21:18', text })) });
 
   /* ---------- in-game websites (crawled from the shared site pages) ---------- */
-  const slugs = new Map();
-  const queue = [];
-  const makeSlug = url => {
-    const [path, qs] = url.split('?');
-    const q = qs ? decodeURIComponent((qs.match(/q=([^&]*)/) || [])[1] || '') : '';
-    if (path.startsWith('mist.search')) return q ? 'search-' + short(q) : 'search';
-    if (path === 'picnote.social/search') return 'picnote-search-' + short(q);
-    if (path.startsWith('exifpeek.example')) return qs ? 'exifpeek-uploaded' : 'exifpeek';
-    return path.replace(/\/$/, '').replace(/[^a-zA-Z0-9]+/g, '-');
-  };
-  const link = url => { if (!slugs.has(url)) { slugs.set(url, makeSlug(url)); queue.push(url); } return slugs.get(url) + '.html'; };
-  let current = '';
   const queries = C.SEARCH_TIPS.concat([L.extraQuery], C.PEOPLE.map(p => p.name));
-  const sites = C.makeSites({
-    esc,
-    searchTips: false, // the static search box already lists every keyword
-    href: url => `href="${link(url)}"`,
-    pin: () => '',
-    asset: path => '../../assets/' + path,
-    form: (base, v, cls, placeholder) => {
-      const list = base.startsWith('picnote') ? C.PEOPLE.map(p => p.name) : queries;
-      return `<div class="${cls} static-box"><span class="sq">${esc(v || placeholder)}</span></div><p class="static-tips">${L.staticTips}${list.map(q => `<a href="${link(base + encodeURIComponent(q))}">${esc(q)}</a>`).join(L.sep)}</p>`;
+  K.sites({
+    makeSites: C.makeSites,
+    bookmarks: C.BOOKMARKS,
+    slugOf: (path, q, qs) => {
+      if (path === 'picnote.social/search') return 'picnote-search-' + short(q);
+      if (path.startsWith('exifpeek.example')) return qs ? 'exifpeek-uploaded' : 'exifpeek';
     },
-    thumb: (fn, inner) => `<a class="thumb" href="../photo.html" aria-label="${L.viewAttachment}">${inner}</a>`,
-    dl: (fn, kind, attrs, cls, path) => `<a class="${cls}" href="../../assets/${kind === 'pxl' ? fn : path}" download="${esc(fn)}">${kind === 'pxl' ? L.dlOriginal : L.saveImage}</a>`,
-    upload: () => `<a class="site-btn" href="${link('exifpeek.example/?uploaded=1')}">${L.upload}</a>`,
-    state: () => ({ downloads: [C.PXL], uploaded: [], peekLast: current.includes('uploaded') ? C.PXL : '' }),
-    afterUpload: () => `<div class="awu-note"><b>${L.trapTitle}</b>${L.trap.map(p => `<p>${p}</p>`).join('')}</div>`,
-    pxlSize,
+    ctx: ({ link, state }) => ({
+      searchTips: false, // the static search box already lists every keyword
+      form: K.staticForm(link, base => base.startsWith('picnote') ? C.PEOPLE.map(p => p.name) : queries),
+      thumb: (fn, inner) => `<a class="thumb" href="../photo.html" aria-label="${L.viewAttachment}">${inner}</a>`,
+      dl: (fn, kind, attrs, cls, path) => `<a class="${cls}" href="../../assets/${kind === 'pxl' ? fn : path}" download="${esc(fn)}">${kind === 'pxl' ? L.dlOriginal : L.saveImage}</a>`,
+      upload: () => `<a class="site-btn" href="${link('exifpeek.example/?uploaded=1')}">${L.upload}</a>`,
+      state: () => ({ downloads: [C.PXL], uploaded: [], peekLast: state.current.includes('uploaded') ? C.PXL : '' }),
+      afterUpload: () => `<div class="awu-note"><b>${L.trapTitle}</b>${L.trap.map(p => `<p>${p}</p>`).join('')}</div>`,
+      pxlSize,
+    }),
   });
-  const BM = C.BOOKMARKS;
-  BM.forEach(([, u]) => link(u));
-  while (queue.length) {
-    current = queue.shift();
-    const body = `<div class="browser"><div class="b-bar"><span class="b-lock">https://</span><span class="b-url">${esc(current)}</span></div><nav class="b-bm" aria-label="${L.bookmarks}">${BM.map(([t, u]) => `<a href="${link(u)}">${t}</a>`).join('')}</nav><div class="b-view">${sites.route(current)}</div></div>`;
-    put('web/' + slugs.get(current) + '.html', doc({ title: current, up: '../', here: 'web/search.html', body }));
-  }
 
   /* ---------- exported files ---------- */
   const COLOR = Object.fromEntries(C.PEOPLE.map(p => [p.name, p.color]));
   const fileList = Object.entries(C.FILE_KEYS).map(([k, n]) => [n, RAW[k], C.TEXTS[n]]).concat(Object.keys(C.SLACK).map(n => ['slack/' + n, n, C.SLACK[n]]));
-  const render = (name, text) => {
-    if (/\.csv$/.test(name)) {
-      const lines = text.split('\n'), rows = lines.filter(l => !l.startsWith('#')).map(l => l.split(','));
-      return `<div class="scroll"><table class="data"><tr>${rows[0].map(h => `<th>${esc(h)}</th>`).join('')}</tr>${rows.slice(1).map(r => `<tr>${r.map(x => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table></div>${lines.filter(l => l.startsWith('#')).map(l => `<p class="note">※ ${esc(l.slice(1).trim())}</p>`).join('')}`;
-    }
-    if (/\.log$/.test(name)) {
-      const lines = text.split('\n');
-      return `<p class="chan">${esc(lines[0])}</p>${lines.slice(1).map(l => {
-        const m = l.match(/^\[(.+?)\] (.+?): (.*)$/); if (!m) return '';
-        return `<div class="slk"><span class="av" style="background:${COLOR[m[2]] || '#555'}">${C.INITIAL(m[2])}</span><div><b>${esc(m[2])}</b> <small>${m[1]}</small><br>${esc(m[3])}</div></div>`;
-      }).join('')}<p class="note">${L.verbatim}</p>`;
-    }
-    return `<pre class="txt">${esc(text)}</pre>`;
-  };
-  const rawDir = join(root, 'files', 'raw');
   put('files/index.html', doc({ title: L.files, up: '../', here: 'files/index.html', body: `<h1>${esc(EXPORT)}</h1>
 <p class="lead">${L.filesLead}</p>
-<table class="data files"><tr><th>${L.fileCol}</th><th>${L.rawCol}</th></tr>${fileList.map(([n, raw]) => `<tr><td><a href="${raw.replace(/\.\w+$/, '')}.html">${esc(n)}</a></td><td><a href="raw/${raw}" download="${esc(n.split('/').pop())}">${L.download}</a></td></tr>`).join('')}</table>
+${K.fileTable(fileList)}
 <h2>~/Downloads</h2>
 <p>${L.downloadsNote}</p>` }));
-  fileList.forEach(([n, raw, text]) => {
-    mkdirSync(rawDir, { recursive: true });
-    writeFileSync(join(rawDir, raw), text + '\n');
-    put(`files/${raw.replace(/\.\w+$/, '')}.html`, doc({ title: n, up: '../', here: 'files/index.html', body: `<p class="crumb"><a href="index.html">${esc(EXPORT)}</a> / ${esc(n)}</p><h1>${esc(n.split('/').pop())}</h1>${render(n, text)}<p><a href="raw/${raw}" download="${esc(n.split('/').pop())}">${L.downloadRaw}</a></p>` }));
-  });
+  fileList.forEach(([name, raw, text]) => K.filePage({ name, raw, text, crumb: EXPORT, html: K.render(name, text, { color: COLOR, initial: C.INITIAL }) }));
 
   /* ---------- the leaked photo ---------- */
   put('photo.html', doc({ title: L.photo, up: '', here: 'photo.html', body: `<h1>${C.PXL}</h1>
@@ -300,50 +182,18 @@ ${bubbles([{ sys: L.awuSys }].concat(L.awuMsgs.map((text, i) => ({ tm: i ? '21:1
   const social = C.PIC['jiahao.chang'].posts[1];
   const socialName = C.socialFile(social, 'jiahao.chang');
   const styleArg = /\s/.test(C.STYLE_GREP) ? `"${C.STYLE_GREP}"` : C.STYLE_GREP;
-  const cmds = [
+  K.terminal([
     ['~', 'ls Downloads', [C.PXL, socialName].join('    ')],
     ['~/Downloads', `exiftool ${C.PXL}`, C.EXIF_PXL.map(row).join('\n') + '\n' + C.EXIF_PXL_NOTE],
     ['~/Downloads', `exiftool ${socialName}`, C.EXIF_SOCIAL(socialName, socialSizes[social.img]).map(row).join('\n') + '\n' + C.EXIF_SOCIAL_NOTE],
     [EXPORT, 'grep Pixel slack/*.log', grep('Pixel')],
     [EXPORT, `grep ${styleArg} slack/*.log`, grep(C.STYLE_GREP)],
-  ];
-  put('terminal.html', doc({ title: L.terminal, up: '', here: 'terminal.html', body: `<h1>${L.terminal}</h1>
-<p class="lead">${L.terminalLead}</p>
-<div class="term">${cmds.map(([cwd, cmd, output]) => `<details><summary><span class="p">investigator@mistport</span>:<span class="k">${esc(cwd)}</span>$ ${esc(cmd)}</summary><pre>${esc(output)}</pre></details>`).join('')}</div>
-<p class="note">${L.terminalNote}</p>` }));
+  ]);
 
   /* ---------- notes, hints, report ---------- */
-  put('notes.html', doc({ title: L.notes, up: '', here: 'notes.html', body: `<h1>${L.notes}</h1>
-<p class="lead">${L.notesLead}</p>
-<div class="scroll"><table class="data grid"><tr><th>${L.clue}</th>${C.PEOPLE.map(p => `<th>${p.name}</th>`).join('')}</tr>${L.clueRows.map((r, i) => `<tr><td>${r}</td>${C.PEOPLE.map(() => `<td>${i === 0 ? '○' : ''}</td>`).join('')}</tr>`).join('')}</table></div>
-<h2>${L.suspects}</h2><ul class="people">${C.PEOPLE.map(p => `<li><b>${p.name}</b>${L.sep}${p.role}</li>`).join('')}</ul>` }));
+  K.notes(C.PEOPLE);
+  K.hints();
+  K.report({ qs: [C.Q1, C.Q2, C.Q3], people: C.PEOPLE, solution, solPrefix: C.SOL_PREFIX, who: L.yelu });
 
-  put('hints.html', doc({ title: L.hints, up: '', here: 'hints.html', body: `<h1>${L.hints}</h1>
-<p class="lead">${L.hintsLead}</p>
-${L.hintList.map((h, i) => `<details class="hint"><summary>${L.hint(i + 1)}</summary><p>${esc(h)}</p></details>`).join('')}` }));
-
-  const opts = list => `<ul class="opts">${list.map(([, l]) => `<li>${l}</li>`).join('')}</ul>`;
-  put('report.html', doc({ title: L.report, up: '', here: 'report.html', body: `<h1>${L.report}</h1>
-<p class="lead">${L.reportLead}</p>
-${[C.Q1, C.Q2, C.Q3].map((q, i) => `<section class="q"><h2>${L.q[i]}</h2>${opts(q)}<details><summary>${L.check}</summary><p>${L.a[i]}</p></details></section>`).join('\n')}
-<section class="q"><h2>${L.q[3]}</h2><p>${L.accuseLead}</p><div class="accuse">${C.PEOPLE.map(p => `<a href="${accuseSlug(p.key)}">${p.name}<small>${p.role}</small></a>`).join('')}</div></section>` }));
-
-  const prefix = C.SOL_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const culprit = (solution.match(new RegExp(`<h2 class="sol-title">${prefix}(.+?)</h2>`)) || [])[1];
-  if (!culprit) throw new Error('solution has no culprit title');
-  C.PEOPLE.forEach(p => {
-    const right = p.name === culprit;
-    put(accuseSlug(p.key), doc({ title: right ? L.closed : L.accused, up: '../', here: 'report.html', body: right
-      ? `<section class="chat"><div class="log"><div class="bub them">${L.solved}<span class="tm">${L.yelu}</span></div></div></section><div class="sol">${solution.replace('<h3>', L.selfRank + '<h3>')}</div>`
-      : `<section class="chat"><div class="log"><div class="bub them">${L.wrong}<span class="tm">${L.yelu}</span></div></div></section><p><a class="go" href="../report.html">${L.backToReport}</a></p>` }));
-  });
-
-  /* ---------- write ---------- */
-  for (const [path, html] of files) {
-    mkdirSync(dirname(join(root, path)), { recursive: true });
-    writeFileSync(join(root, path), html);
-  }
-  writeFileSync(join(root, 'sites.css'), sitesCss);
-  cpSync(join(caseDir, 'static.css'), join(root, 'static.css'));
-  return files.size;
+  return K.write(sitesCss);
 }

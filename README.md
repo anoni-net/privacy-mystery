@@ -4,7 +4,7 @@
 
 **正體中文** | [English](#en)
 
-隱私推理遊戲，從一張照片的中繼資料、背景細節與文字習慣，找出不小心暴露身分的吹哨者。由[匿名網路社群 anoni.net](https://anoni.net/) 維護，網址是 <https://anoni.net/mystery>，简体中文版在 <https://anoni.net/mystery/zh-cn/>，英文版在 <https://anoni.net/mystery/en/>。
+隱私推理遊戲：每個案件是一份委託，從照片、信件、檔案與網站裡找出破綻。由[匿名網路社群 anoni.net](https://anoni.net/) 維護，網址是 <https://anoni.net/mystery>，简体中文版在 <https://anoni.net/mystery/zh-cn/>，英文版在 <https://anoni.net/mystery/en/>。
 
 > 這份 README 不含任何解答。
 
@@ -13,6 +13,7 @@
 | 編號 | 案件 | 會用到的技巧 |
 |---|---|---|
 | `01` | 夜鷺事件 | EXIF 中繼資料、時區、檔名、照片背景、寫作風格、匿名集合 |
+| `02` | 藍鵲事件 | 郵件標頭、假網域、搜尋廣告、QR code、已連結裝置、陷阱資料 |
 
 人物、公司與事件皆為虛構。
 
@@ -26,11 +27,11 @@
 
 ### 靜態版
 
-網址是 `/mystery/night-heron/static/`，只用 HTML 與 CSS，不需要 JavaScript，也不用 SVG，給使用 Tor Browser「最安全」安全等級的人。內容與互動版相同，開場對話的每個選擇是一頁，終端機指令點開就能看到輸出，公司資料可以下載原始檔。互動版偵測到 JavaScript 無法使用時，會提示改用靜態版。
+網址是案件底下的 `static/`，例如 `/mystery/night-heron/static/`，只用 HTML 與 CSS，不需要 JavaScript，也不用 SVG，給使用 Tor Browser「最安全」安全等級的人。內容與互動版相同，對話的每個選擇是一頁，終端機指令點開就能看到輸出，檔案可以下載原始檔。互動版裡要先找到線索才會出現的東西（例如藍鵲事件裡資料保護長的紀錄），靜態版一開始就放在裡面。互動版偵測到 JavaScript 無法使用時，會提示改用靜態版。
 
 ### PDF 版
 
-網址是 `/mystery/night-heron/night-heron.pdf`，可以離線或印出來玩的 A4 案件檔案。解答在最後，前面有一頁黑色的「停」，解答頁上下顛倒、字小、淺灰色，避免翻閱時不小心看到。互動版的選單、靜態版首頁與「需要 JavaScript」的提示都有下載連結。
+網址是案件底下的 PDF，例如 `/mystery/night-heron/night-heron.pdf`，可以離線或印出來玩的 A4 案件檔案。解答在最後，前面有一頁黑色的「停」，解答頁上下顛倒、字小、淺灰色，避免翻閱時不小心看到。互動版的選單、靜態版首頁與「需要 JavaScript」的提示都有下載連結。
 
 爆料照片 `PXL_20260914_144712345.jpg` 是一張真的 JPEG，EXIF 是刻意寫入的，下載後可以用自己的工具檢查。
 
@@ -57,6 +58,7 @@
 ```
 engine/
   index.src.html       所有案件共用的互動版引擎：視窗、聊天、瀏覽器、檔案、看圖、終端機、調查板、結案報告
+  static.css           所有案件共用的靜態版樣式
   ui.zh.js、ui.zh-cn.js、ui.en.js
                        引擎的介面文字，案件的介面文字疊在上面
 cases/01-night-heron/
@@ -70,18 +72,21 @@ cases/01-night-heron/
   web/ui.en.js         這個案件的介面文字（英文）
   web/sites.css        遊戲內網站的樣式
   web/assets/          遊戲用的 JPEG（爆料照片帶有刻意的 EXIF）
-  static.css           靜態版樣式
   art/                 圖片的 SVG 原稿
   solution.enc         加密的解答
   solution.zh-cn.enc   加密的简体中文解答，鑰匙相同
   solution.en.enc      加密的英文解答，鑰匙相同
   og.png、og.zh-cn.png、og.en.png
                        案件的社群分享預覽圖
+  print/static.mjs     這個案件的靜態版，用 scripts/static-kit.mjs 組出頁面
+  print/pdf.mjs        這個案件的 PDF 版版面，用 scripts/pdf-kit.mjs
+  static.css           （選用）靜態版額外的樣式，接在 engine/static.css 後面
+cases/02-blue-magpie/  結構相同；print/text.mjs 是靜態版與 PDF 版的文字
 site/                  複製到網站最上層：icon、app icon、大廳的分享預覽圖與 web app manifest（其他語言的在 site/zh-cn/、site/en/）
 scripts/
   build.mjs            建置網站
-  static.mjs           產生靜態版
-  pdf.mjs              產生 PDF 版，版面也寫在這裡
+  static-kit.mjs       靜態版共用的部分：頁面外框、對話、遊戲內網站、檔案、提示、結案報告
+  pdf-kit.mjs          PDF 版共用的部分：樣式、封面、答題卡、提示、顛倒的解答、輸出 PDF
   lobby.mjs            產生大廳（委託板）
   case-data.mjs        在 Node 讀取 case.js
   meta.mjs             每一頁共用的 icon 與分享預覽標籤
@@ -102,7 +107,7 @@ tools/
 需要 Node.js 18 以上，不需要安裝套件。
 
 ```sh
-CASE_KEY=兇手全名 node scripts/build.mjs
+CASE_KEY=案件01的兇手全名 CASE_KEY_02=案件02的兇手全名 node scripts/build.mjs
 ```
 
 輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。最上層是正體中文的大廳，`zh-cn/` 是简体中文版，`en/` 是英文版，每個案件在自己的代號底下，例如 `/mystery/night-heron/`。建置出來的頁面不會向其他網站發出請求，也不載入網路字型。
@@ -110,7 +115,7 @@ CASE_KEY=兇手全名 node scripts/build.mjs
 `--target clearnet` 與 `--target onion` 只給 anoni.net 部署用（見下方「anoni.net 的部署」），`--out <資料夾>` 可以改變輸出位置。
 
 > [!IMPORTANT]
-> 部署時一定要設定 `CASE_KEY`。靜態版的結局頁是一般的 HTML，建置時必須解開解答，沒有設定的話只會產生互動版，互動版裡「前往靜態版」的連結會找不到頁面。靜態版的結局明文只會出現在部署出去的網站上，不會進 repo。
+> 部署時一定要設定每個案件的鑰匙：案件 01 是 `CASE_KEY`，其他案件是 `CASE_KEY_<編號>`（例如 `CASE_KEY_02`）。靜態版的結局頁是一般的 HTML，建置時必須解開解答。缺了某個案件的鑰匙，那個案件就只建置互動版，大廳和互動版裡也不會出現靜態版與 PDF 的連結。靜態版的結局明文只會出現在部署出去的網站上，不會進 repo。
 
 ### PDF 版的建置
 
@@ -134,12 +139,14 @@ CDN 的圖片最佳化（例如 Cloudflare Polish）會移除 JPEG 的 EXIF，�
 
 anoni.net 的主機用 cron 每 5 分鐘執行 `tools/deploy-m6.sh`，拉取 `main`、建置並切換到新版本，合併之後最慢約 5 分鐘上線。建置或檢查失敗時線上維持原本的版本。改了這支腳本之後，要再複製到主機上。
 
+鑰匙放在主機的 `/home/ubuntu/.config/mystery-case-key`（案件 01）與 `/home/ubuntu/.config/mystery-case-key-02`（案件 02），權限 600。沒有案件 01 的鑰匙時不發布。案件 02 的鑰匙還沒放上去時照常發布，只是藍鵲事件先不提供靜態版與 PDF，放上去之後的下一輪會自動重建。
+
 部署時建置兩份：
 
 - `--target clearnet` 給 `anoni.net/mystery/`，互動版會載入流量統計
 - `--target onion` 給 onion 站，連到 anoni.net 的網址改成對應的 onion 位址，不載入流量統計
 
-主機上沒有安裝瀏覽器，PDF 版用 docker 裡的 Chromium 產生。映像由 `tools/pdf/Dockerfile` 建立（Debian 的 `chromium` 加上 `fonts-noto-cjk`），`tools/chrome-docker.sh` 透過 `CHROME_PATH` 接上 `scripts/pdf.mjs`，容器沒有網路。Dockerfile 改了之後，下一次部署會重建映像。
+主機上沒有安裝瀏覽器，PDF 版用 docker 裡的 Chromium 產生。映像由 `tools/pdf/Dockerfile` 建立（Debian 的 `chromium` 加上 `fonts-noto-cjk`），`tools/chrome-docker.sh` 透過 `CHROME_PATH` 接上 `scripts/pdf-kit.mjs`，容器沒有網路。Dockerfile 改了之後，下一次部署會重建映像。
 
 ### 流量統計
 
@@ -153,7 +160,7 @@ clearnet 的互動版用 anoni.net 自架的 Umami 計算有多少人玩，不�
 
 ## 解答與防暴雷
 
-repo 裡不放解答明文。解答以兇手的中文全名作為鑰匙加密成 `solution.enc`（简体中文版是 `solution.zh-cn.enc`，英文版是 `solution.en.enc`，鑰匙相同），遊戲頁面在玩家指認正確時才解得開。破了案的人自然取得鑰匙，可以參與修改，還沒破案的人逛 repo 也不會被暴雷。
+repo 裡不放解答明文。每個案件的解答以那個案件兇手的中文全名作為鑰匙加密成 `solution.enc`（简体中文版是 `solution.zh-cn.enc`，英文版是 `solution.en.enc`，鑰匙相同），遊戲頁面在玩家指認正確時才解得開。破了案的人自然取得鑰匙，可以參與修改，還沒破案的人逛 repo 也不會被暴雷。
 
 這個做法只能防止不小心看到，嫌疑人只有幾位，把每個名字都試一次就能解開。
 
@@ -168,6 +175,8 @@ CASE_KEY=兇手全名 node scripts/decrypt.mjs cases/01-night-heron en   # 英�
 CASE_KEY=兇手全名 node scripts/encrypt.mjs cases/01-night-heron en   # 寫回 solution.en.enc
 CASE_KEY=兇手全名 node scripts/encrypt.mjs cases/01-night-heron zh-cn  # 寫回 solution.zh-cn.enc
 ```
+
+其他案件換成它的資料夾，例如 `cases/02-blue-magpie`，`CASE_KEY` 填那個案件的鑰匙。
 
 建置時若設定 `CASE_KEY`，會順便檢查鑰匙能否解開。請不要在 issue、PR 或 commit message 裡寫出兇手的名字。
 
@@ -210,7 +219,7 @@ node scripts/make_og.mjs --fonts <放 Noto Sans TC、Noto Sans SC 與 Public San
 
 [正體中文](#zh-tw) | **English**
 
-A privacy mystery game: unmask a whistleblower from a photo's metadata, the details in its background and their writing habits. It is maintained by [anoni.net](https://anoni.net/), a community based in Taiwan, and served at <https://anoni.net/mystery/en/> (Traditional Chinese at <https://anoni.net/mystery>, Simplified Chinese at <https://anoni.net/mystery/zh-cn/>).
+A privacy mystery game: each case is a request for help, solved by finding the leaks in photos, emails, files and websites. It is maintained by [anoni.net](https://anoni.net/), a community based in Taiwan, and served at <https://anoni.net/mystery/en/> (Traditional Chinese at <https://anoni.net/mystery>, Simplified Chinese at <https://anoni.net/mystery/zh-cn/>).
 
 > This README contains no spoilers.
 
@@ -219,6 +228,7 @@ A privacy mystery game: unmask a whistleblower from a photo's metadata, the deta
 | No. | Case | Skills you will use |
 |---|---|---|
 | `01` | Night Heron | EXIF metadata, time zones, file names, photo backgrounds, writing style, anonymity sets |
+| `02` | Blue Magpie | Email headers, lookalike domains, search ads, QR codes, linked devices, canary records |
 
 All people, companies and events are fictional.
 
@@ -232,11 +242,11 @@ On a phone it becomes an app that shows one screen at a time, with a back button
 
 ### Static edition
 
-At `/mystery/en/night-heron/static/`, built from HTML and CSS only (no JavaScript, no SVG) for people using Tor Browser's "Safest" security level. It has the same content as the interactive edition: each choice in the opening conversation is its own page, terminal commands show their output when opened, and the company files can be downloaded as originals. The interactive page points players here when JavaScript is unavailable.
+At `static/` under each case, for example `/mystery/en/night-heron/static/`, built from HTML and CSS only (no JavaScript, no SVG) for people using Tor Browser's "Safest" security level. It has the same content as the interactive edition: each choice in a conversation is its own page, terminal commands show their output when opened, and the files can be downloaded as originals. Anything the interactive edition unlocks along the way (such as the data protection officer's records in Blue Magpie) is there from the start. The interactive page points players here when JavaScript is unavailable.
 
 ### PDF edition
 
-At `/mystery/en/night-heron/night-heron.pdf`, an A4 case file to play offline or on paper. The solution is at the back behind a black "stop" page, printed small, light grey and upside down so that leafing through the file does not give it away. The interactive edition's menu, the static edition's front page and the "JavaScript needed" notice all link to it.
+At the PDF under each case, for example `/mystery/en/night-heron/night-heron.pdf`, an A4 case file to play offline or on paper. The solution is at the back behind a black "stop" page, printed small, light grey and upside down so that leafing through the file does not give it away. The interactive edition's menu, the static edition's front page and the "JavaScript needed" notice all link to it.
 
 The leaked photo, `PXL_20260914_144712345.jpg`, is a real JPEG with deliberately written EXIF, so you can download it and inspect it with your own tools.
 
@@ -263,6 +273,7 @@ To add a case, put a `case.json` in `cases/<number>-<slug>/` and it appears in t
 ```
 engine/
   index.src.html       the interactive engine every case shares: windows, chat, browser, files, images, terminal, evidence board, report
+  static.css           the static edition's styles, shared by every case
   ui.zh.js, ui.zh-cn.js, ui.en.js
                        the engine's interface text; each case's goes on top
 cases/01-night-heron/
@@ -276,17 +287,21 @@ cases/01-night-heron/
   web/ui.en.js         this case's interface text, English
   web/sites.css        styles for the in-game sites
   web/assets/          JPEGs used in the game (the leaked photo carries crafted EXIF)
-  static.css           static edition styles
   art/                 SVG sources for the images
   solution.enc         encrypted solution
   solution.zh-cn.enc   encrypted Simplified Chinese solution, same key
   solution.en.enc      encrypted English solution, same key
-  og.png, og.en.png    the case's social preview images
+  og.png, og.zh-cn.png, og.en.png
+                       the case's social preview images
+  print/static.mjs     this case's static edition, built with scripts/static-kit.mjs
+  print/pdf.mjs        this case's PDF layout, with scripts/pdf-kit.mjs
+  static.css           (optional) extra static-edition styles, after engine/static.css
+cases/02-blue-magpie/  same layout; print/text.mjs holds the static and PDF text
 site/                  copied to the top of the site: icons, app icons, the lobby's preview images and the web app manifest (other languages in site/zh-cn/ and site/en/)
 scripts/
   build.mjs            build the site
-  static.mjs           generate the static edition
-  pdf.mjs              generate the PDF edition, including its layout
+  static-kit.mjs       what every static edition shares: page shell, conversations, in-game sites, files, hints, case report
+  pdf-kit.mjs          what every PDF shares: styles, cover, answer sheet, hints, upside-down solution, printing
   lobby.mjs            generate the lobby (case board)
   case-data.mjs        load case.js in Node
   meta.mjs             icon and preview tags shared by every page
@@ -307,7 +322,7 @@ tools/
 Requires Node.js 18 or later, with no packages to install.
 
 ```sh
-CASE_KEY=<culprit's full name> node scripts/build.mjs
+CASE_KEY=<case 01 culprit's full name> CASE_KEY_02=<case 02 culprit's full name> node scripts/build.mjs
 ```
 
 The output goes to `dist/mystery/`; put the whole folder under `/mystery/` on a web server. The top level is the Traditional Chinese lobby, `zh-cn/` is the Simplified Chinese edition, `en/` is the English edition, and each case lives under its slug, for example `/mystery/night-heron/`. The pages make no requests to other sites and load no web fonts.
@@ -315,7 +330,7 @@ The output goes to `dist/mystery/`; put the whole folder under `/mystery/` on a 
 `--target clearnet` and `--target onion` are for the anoni.net deployment only (see "Deployment on anoni.net" below), and `--out <dir>` changes the output directory.
 
 > [!IMPORTANT]
-> Always set `CASE_KEY` when deploying. The static edition's ending is plain HTML, so the build has to decrypt the solution; without the key only the interactive edition is built, and its link to the static edition leads nowhere. The decrypted ending only ever appears on the deployed site and is never committed.
+> Always set every case's key when deploying: `CASE_KEY` for case 01 and `CASE_KEY_<number>` for the others (such as `CASE_KEY_02`). The static edition's ending is plain HTML, so the build has to decrypt the solution. A case whose key is missing is built as the interactive edition only, and neither the lobby nor the interactive page links to its static edition or PDF. The decrypted ending only ever appears on the deployed site and is never committed.
 
 ### Building the PDF
 
@@ -339,12 +354,14 @@ The version of `sw.js` is a hash of the files it stores, so a deployment that ch
 
 A cron job on the anoni.net server runs `tools/deploy-m6.sh` every 5 minutes: it pulls `main`, builds and switches to the new release, so a merge is live within about 5 minutes. If the build or its checks fail, the live site stays on the previous release. After changing the script, copy it to the server again.
 
+The keys live on the server in `/home/ubuntu/.config/mystery-case-key` (case 01) and `/home/ubuntu/.config/mystery-case-key-02` (case 02), mode 600. Without case 01's key nothing is published. Until case 02's key is in place, releases go out as usual but Blue Magpie has no static edition or PDF; the next run after the key appears rebuilds with them.
+
 The deployment builds twice:
 
 - `--target clearnet` for `anoni.net/mystery/`, where the interactive edition loads analytics
 - `--target onion` for the onion site, with links to anoni.net rewritten to the matching onion addresses and no analytics
 
-The server has no browser installed, so the PDF is printed by Chromium in a container. The image is built from `tools/pdf/Dockerfile` (Debian's `chromium` plus `fonts-noto-cjk`), and `tools/chrome-docker.sh` connects it to `scripts/pdf.mjs` through `CHROME_PATH`. The container has no network access. When the Dockerfile changes, the next deployment rebuilds the image.
+The server has no browser installed, so the PDF is printed by Chromium in a container. The image is built from `tools/pdf/Dockerfile` (Debian's `chromium` plus `fonts-noto-cjk`), and `tools/chrome-docker.sh` connects it to `scripts/pdf-kit.mjs` through `CHROME_PATH`. The container has no network access. When the Dockerfile changes, the next deployment rebuilds the image.
 
 ### Analytics
 
@@ -358,7 +375,7 @@ Who a player accused, what they answered and which hints they read are never sen
 
 ## Solutions and spoilers
 
-The repository holds no plaintext solutions. Each solution is encrypted with the culprit's full Chinese name as the key into `solution.enc` (`solution.zh-cn.enc` for Simplified Chinese and `solution.en.enc` for English, with the same key), and the game decrypts it only when a player names the right person. Anyone who has solved the case therefore has the key and can help edit the solution, while people browsing the repository before solving it are not spoiled.
+The repository holds no plaintext solutions. Each case's solution is encrypted with that case's culprit's full Chinese name as the key into `solution.enc` (`solution.zh-cn.enc` for Simplified Chinese and `solution.en.enc` for English, with the same key), and the game decrypts it only when a player names the right person. Anyone who has solved the case therefore has the key and can help edit the solution, while people browsing the repository before solving it are not spoiled.
 
 This only prevents accidental spoilers: there are few suspects, and trying every name opens it.
 
@@ -373,6 +390,8 @@ CASE_KEY=<culprit's full name> node scripts/decrypt.mjs cases/01-night-heron en 
 CASE_KEY=<culprit's full name> node scripts/encrypt.mjs cases/01-night-heron en   # writes solution.en.enc
 CASE_KEY=<culprit's full name> node scripts/encrypt.mjs cases/01-night-heron zh-cn  # writes solution.zh-cn.enc
 ```
+
+For another case, use its folder, such as `cases/02-blue-magpie`, with that case's key as `CASE_KEY`.
 
 When `CASE_KEY` is set, the build also checks that the key opens the solution. Please keep the culprit's name out of issues, pull requests and commit messages.
 

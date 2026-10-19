@@ -1,0 +1,9 @@
+/* Blue Magpie's own rules on top of engine/static.css: emails and the images page */
+.mail { background: #fff; color: #1f2328; border-radius: 8px; padding: 14px 18px; }
+.mail h2 { margin: 0 0 8px; font-size: 17px; }
+.mail .kv { margin: 0 0 10px; }
+.mail-body { background: none; border: 0; padding: 0; color: inherit; white-space: pre-wrap; }
+.raw { margin-top: 12px; }
+.raw summary { cursor: pointer; }
+.photo.shot { max-width: 320px; }
+.qr { display: block; background: #fff; padding: 8px; border-radius: 6px; }

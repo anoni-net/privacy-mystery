@@ -1,8 +1,8 @@
 #!/bin/sh
-# CHROME_PATH for scripts/pdf.mjs on the anoni.net server: runs Chromium from the image
+# CHROME_PATH for scripts/pdf-kit.mjs on the anoni.net server: runs Chromium from the image
 # built from tools/pdf/Dockerfile instead of a browser installed on the host.
 #
-# pdf.mjs passes a file:// URL and --print-to-pdf=<path>, both under the directory being
+# pdf-kit.mjs passes a file:// URL and --print-to-pdf=<path>, both under the directory being
 # built. MYSTERY_PDF_MOUNT names that directory; it is mounted at the same path so the
 # paths in the arguments work inside the container. No network, and the files it writes
 # belong to the calling user. tools/deploy-m6.sh sets both variables.

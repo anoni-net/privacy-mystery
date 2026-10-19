@@ -14,7 +14,7 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { findChrome } from './pdf.mjs';
+import { findChrome } from './pdf-kit.mjs';
 import { SITE_NAME } from './meta.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');

@@ -18,9 +18,10 @@
 # PDF 版用 docker 裡的 Chromium 產生（tools/pdf/Dockerfile，主機上不裝瀏覽器）。映像的標籤
 # 是 Dockerfile 內容的雜湊，Dockerfile 改了才會重建，第一次建置要下載約 850 MB。
 #
-# 靜態版的結局頁只有在設定 CASE_KEY 時才會建置，鑰匙放在 KEYFILE（權限 600，不進 repo）。
-# 沒有鑰匙時互動版連到 static/ 的連結會 404，所以讀不到鑰匙就不發布，等鑰匙放上去的
-# 下一輪再建置。
+# 靜態版與 PDF 含有結局，要有案件的鑰匙才會建置。鑰匙放在 KEYFILE（案件 01）與
+# KEYFILE_02（案件 02），權限 600，不進 repo。讀不到案件 01 的鑰匙就不發布，等鑰匙放上去的
+# 下一輪再建置。案件 02 的鑰匙還沒放上去時照常發布，只是案件 02 先不提供靜態版與 PDF
+# （build.mjs 會拿掉所有連到它們的連結）；放上去之後的下一輪會自動重建。
 #
 # 建置完成、檢查通過之後才切換 current，切換是原子操作，建置失敗時線上維持原本的版本。
 # 只接受 fast-forward，main 的歷史被改寫時停下來寫進 log，不強制覆蓋，等人處理。
@@ -33,6 +34,7 @@ BASE=/srv/anoni-net-mystery
 REPO=$BASE/repo
 LOG=/home/ubuntu/mystery-deploy.log
 KEYFILE=/home/ubuntu/.config/mystery-case-key
+KEYFILE_02=/home/ubuntu/.config/mystery-case-key-02
 KEEP=5
 
 exec 9>/tmp/mystery-deploy.lock
@@ -55,9 +57,12 @@ if ! git -C "$REPO" pull --ff-only -q origin main 2>>"$LOG"; then
     exit 1
 fi
 sha=$(git -C "$REPO" rev-parse --short=12 HEAD)
-attempt="$sha $(stat -c %Y "$KEYFILE")"
+# 案件 02 有沒有鑰匙也算在版本裡：鑰匙放上去之後，同一個 commit 也要重建
+key02=none
+[ -s "$KEYFILE_02" ] && key02=$(stat -c %Y "$KEYFILE_02")
+attempt="$sha $(stat -c %Y "$KEYFILE") $key02"
 current=$(readlink "$BASE/current" 2>/dev/null || true)
-[ "$current" = "releases/$sha" ] && exit 0
+[ "$current" = "releases/$sha" ] && [ "$(cat "$BASE/current-attempt" 2>/dev/null || true)" = "$attempt" ] && exit 0
 [ "$(cat "$BASE/failed" 2>/dev/null || true)" = "$attempt" ] && exit 0
 
 img=anoni-mystery-chromium:$(sha256sum "$REPO/tools/pdf/Dockerfile" | cut -c1-12)
@@ -70,14 +75,21 @@ if ! docker image inspect "$img" >/dev/null 2>&1; then
 fi
 
 dest=$BASE/releases/$sha
+# 要檢查的檔案：案件 01 一定有靜態版與 PDF，案件 02 有鑰匙時才有
+need="index.html night-heron/index.html night-heron/static/index.html night-heron/night-heron.pdf en/index.html en/night-heron/index.html en/night-heron/static/index.html en/night-heron/night-heron.pdf blue-magpie/index.html"
+case02=""
+if [ "$key02" != none ]; then
+    case02="$(cat "$KEYFILE_02")"
+    need="$need blue-magpie/static/index.html blue-magpie/blue-magpie.pdf en/blue-magpie/static/index.html en/blue-magpie/blue-magpie.pdf"
+fi
 rm -rf "$dest.tmp"
 # onion 那份的頁面不能有任何指向 clearnet 的資源或連結，檢查不到才算建置成功。
 # PDF 不在檢查範圍：它是給人下載列印的文件，解答裡連到文件庫的網址會留在裡面。
-if ! (cd "$REPO" && export CASE_KEY="$(cat "$KEYFILE")" \
+if ! (cd "$REPO" && export CASE_KEY="$(cat "$KEYFILE")" CASE_KEY_02="$case02" \
         CHROME_PATH="$REPO/tools/chrome-docker.sh" MYSTERY_PDF_MOUNT="$dest.tmp" MYSTERY_PDF_IMAGE="$img" \
         && node scripts/build.mjs --target clearnet --out "$dest.tmp/clearnet" \
         && node scripts/build.mjs --target onion --out "$dest.tmp/onion" \
-        && for t in clearnet onion; do for f in index.html night-heron/index.html night-heron/static/index.html night-heron/night-heron.pdf en/index.html en/night-heron/index.html en/night-heron/static/index.html en/night-heron/night-heron.pdf; do test -s "$dest.tmp/$t/$f" || exit 1; done; done \
+        && for t in clearnet onion; do for f in $need; do test -s "$dest.tmp/$t/$f" || exit 1; done; done \
         && ! grep -rqE --include='*.html' --include='*.css' --include='*.js' \
             'https://([a-z]+\.)?anoni\.net' "$dest.tmp/onion") >/dev/null 2>>"$LOG"; then
     echo "$(date -Iseconds) $sha 建置或檢查失敗，線上維持 ${current:-（尚未發布）}" >>"$LOG"
@@ -91,6 +103,7 @@ mv "$dest.tmp" "$dest"
 ln -sfn "releases/$sha" "$BASE/current.tmp"
 mv -T "$BASE/current.tmp" "$BASE/current"
 rm -f "$BASE/failed"
+echo "$attempt" >"$BASE/current-attempt"
 echo "$(date -Iseconds) 發布 $sha $(git -C "$REPO" log -1 --format=%s)" >>"$LOG"
 
 # 保留最近 KEEP 份，正在使用的那一份不會被刪
