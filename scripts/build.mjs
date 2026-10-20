@@ -8,8 +8,8 @@
 // (its interface text), web/game.js (its behaviour), web/sites.css and web/assets/.
 // Usage: [CASE_KEY=<culprit name>] node scripts/build.mjs [--target clearnet|onion] [--out <dir>] [--fragment <file>] [--drafts]
 //   --target clearnet adds anoni.net's self-hosted Umami to the interactive page
-//   (scripts/analytics.html). --target onion rewrites links to anoni.net into the onion
-//   addresses and loads no analytics. Without --target the build has neither, which is
+//   (scripts/analytics.html). --target onion rewrites links to anoni.net, and the feedback
+//   page's form server, into the onion addresses and loads no analytics. Without --target the build has neither, which is
 //   what local previews and other hosts want.
 //   --out writes somewhere other than dist/mystery/.
 //   --fragment also writes the Chinese page without the <html>/<head> wrapper (for previews
@@ -26,6 +26,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import { decryptB64 } from './crypt.mjs';
 import { buildLobby } from './lobby.mjs';
+import { buildFeedback } from './feedback.mjs';
 import { iconTags, ogTags, swScript, SITE_NAME, LANG_INFO, langLinks } from './meta.mjs';
 import { createHash } from 'node:crypto';
 
@@ -55,6 +56,7 @@ const TARGETS = {
       ['https://anoni.net/docs/', `http://docs.${ONION}/`],
       ['https://anoni.net/news/', `http://news.${ONION}/`],
       ['https://anoni.net/mystery/', `http://mystery.${ONION}/`],
+      ['https://form.anoni.net/', `http://form.${ONION}/`],  // the feedback page posts here
       ['https://anoni.net/', `http://${ONION}/`],
     ],
   },
@@ -192,9 +194,13 @@ ${page.slice(cut).trim()}
     }
   }
 });
-// One lobby per language, listing every case
+// One lobby per language, listing every case, and the feedback page (scripts/feedback.mjs)
 const lobbyLangs = LANGS.filter(l => anyLangs.has(l.code));
-for (const lang of lobbyLangs) buildLobby({ out: join(out, lang.dir), cases, analytics, lang: lang.code, langs: lobbyLangs.map(l => l.code) });
+for (const lang of lobbyLangs) {
+  buildLobby({ out: join(out, lang.dir), cases, analytics, lang: lang.code, langs: lobbyLangs.map(l => l.code) });
+  const listed = cases.filter(c => lang.code === 'zh' || (c.i18n || {})[lang.code]).map(c => Object.assign({}, c, (c.i18n || {})[lang.code] || {}));
+  buildFeedback({ out: join(out, lang.dir), cases: listed, analytics, lang: lang.code });
+}
 
 if (target.rewrites) {
   const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>

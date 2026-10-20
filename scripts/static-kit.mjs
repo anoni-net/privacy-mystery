@@ -27,6 +27,7 @@ export const BASE = {
     hints: '提示', hintsLead: '卡住再看，一次打開一條。記下你看了幾條，結案時自評會用到。', hint: n => `提示 ${n}`,
     report: '結案報告', reportLead: '先在心裡或紙上作答，再打開「對答案」。', check: '對答案',
     closed: '結案', accused: '指認', backToReport: '回到結案報告',
+    feedback: url => `<p class="lead">玩完的感想、想看的案件主題，歡迎寫在<a href="${url}">建議與回饋</a>（送出需要 JavaScript）。</p>`,
   },
   'zh-cn': {
     lang: 'zh-Hans', station: '雾港工作站', staticTag: '静态版', navLabel: '工作站', start: '开始',
@@ -39,6 +40,7 @@ export const BASE = {
     hints: '提示', hintsLead: '卡住再看，一次打开一条。记下你看了几条，结案时自评会用到。', hint: n => `提示 ${n}`,
     report: '结案报告', reportLead: '先在心里或纸上作答，再打开「对答案」。', check: '对答案',
     closed: '结案', accused: '指认', backToReport: '回到结案报告',
+    feedback: url => `<p class="lead">玩完的感想、想看的案件主题，欢迎写在<a href="${url}">建议与反馈</a>（提交需要 JavaScript）。</p>`,
   },
   en: {
     lang: 'en', station: 'Mistport Workstation', staticTag: 'static', navLabel: 'Workstation', start: 'Start',
@@ -51,6 +53,7 @@ export const BASE = {
     hints: 'Hints', hintsLead: 'Open them only when stuck, one at a time, and keep count for your self-assessment.', hint: n => `Hint ${n}`,
     report: 'Case report', reportLead: 'Answer in your head or on paper first, then open “Check”.', check: 'Check',
     closed: 'Case closed', accused: 'Accusation', backToReport: 'Back to the case report',
+    feedback: url => `<p class="lead">Tell us how the case went, or which privacy topic you’d like a case about, on the <a href="${url}">feedback page</a> (it needs JavaScript to send).</p>`,
   },
 };
 
@@ -66,6 +69,8 @@ export function staticKit({ caseDir, out, lang, langs = [lang], L, nav }) {
   // static/ sits in the case folder, which sits in the language folder (en/, zh-cn/)
   const toRoot = up => up + '../../' + (LANG_INFO[lang].dir ? '../' : '');
   const casePath = LANG_INFO[lang].dir + slug + '/';
+  // The feedback page (scripts/feedback.mjs); the onion build rewrites it with every other link
+  const feedbackUrl = `https://anoni.net/mystery/${LANG_INFO[lang].dir}feedback/?case=${meta.number}&amp;from=static`;
 
   const doc = ({ title, up, body, nav: showNav = true, here = '', cls = '', og = false }) => `<!doctype html>
 <html lang="${L.lang}">
@@ -251,7 +256,7 @@ ${qs.map((q, i) => `<section class="q"><h2>${L.q[i]}</h2>${opts(q)}<details><sum
     people.forEach(p => {
       const right = p.name === culprit;
       put(accuseSlug(p.key), doc({ title: right ? L.closed : L.accused, up: '../', here: 'report.html', body: right
-        ? `<section class="chat"><div class="log"><div class="bub them">${L.solved}<span class="tm">${who}</span></div></div></section><div class="sol">${solution.replace('<h3>', L.selfRank + '<h3>')}</div>`
+        ? `<section class="chat"><div class="log"><div class="bub them">${L.solved}<span class="tm">${who}</span></div></div></section><div class="sol">${solution.replace('<h3>', L.selfRank + '<h3>')}</div>${L.feedback(feedbackUrl)}`
         : `<section class="chat"><div class="log"><div class="bub them">${L.wrong}<span class="tm">${who}</span></div></div></section><p><a class="go" href="../report.html">${L.backToReport}</a></p>` }));
     });
   }

@@ -32,7 +32,7 @@ export const T = {
     },
     pdf: {
       lang: 'zh-Hant-TW', title: '藍鵲事件', sub: '一封沒有連結的扣款通知，怎麼把人的帳號整個接走？',
-      meta: '<b>類型</b>　隱私推理／單人或 2–4 人合作<br><b>時間</b>　約 60–90 分鐘<br><b>需要</b>　筆、這份檔案、不急著照做的耐心<br><br>anoni.net 匿名網路社群 · anoni.net/mystery<br>本作品為虛構，人物、公司與事件皆非真實。內容以 CC BY 4.0 授權。',
+      meta: '<b>類型</b>　隱私推理／單人或 2–4 人合作<br><b>時間</b>　約 60–90 分鐘<br><b>需要</b>　筆、這份檔案、不急著照做的耐心<br><br>anoni.net 匿名網路社群 · anoni.net/mystery<br>玩完的感想與案件的點子：anoni.net/mystery/feedback/<br>本作品為虛構，人物、公司與事件皆非真實。內容以 CC BY 4.0 授權。',
       warn: '最後幾頁是解答，上下顛倒印刷。破案之前，請不要翻到最後。',
       briefing: '遊戲說明', briefLead: '你是「霧港隱私互助站」的志工。我們幫助需要匿名的人，也幫被騙、被冒用、被追蹤的人把自己拿回來。',
       job: '今晚的委託',
@@ -102,7 +102,7 @@ export const T = {
     },
     pdf: {
       lang: 'zh-Hans', title: '蓝鹊事件', sub: '一封没有链接的扣款通知，怎么把人的账号整个接走？',
-      meta: '<b>类型</b>　隐私推理／单人或 2–4 人合作<br><b>时间</b>　约 60–90 分钟<br><b>需要</b>　笔、这份文件、不急着照做的耐心<br><br>anoni.net 匿名网络社群 · anoni.net/mystery/zh-cn<br>本作品为虚构，人物、公司与事件皆非真实。内容以 CC BY 4.0 授权。',
+      meta: '<b>类型</b>　隐私推理／单人或 2–4 人合作<br><b>时间</b>　约 60–90 分钟<br><b>需要</b>　笔、这份文件、不急着照做的耐心<br><br>anoni.net 匿名网络社群 · anoni.net/mystery/zh-cn<br>玩完的感想与案件的点子：anoni.net/mystery/zh-cn/feedback/<br>本作品为虚构，人物、公司与事件皆非真实。内容以 CC BY 4.0 授权。',
       warn: '最后几页是解答，上下颠倒印刷。破案之前，请不要翻到最后。',
       briefing: '游戏说明', briefLead: '你是「雾港隐私互助站」的志愿者。我们帮助需要匿名的人，也帮被骗、被冒用、被追踪的人把自己拿回来。',
       job: '今晚的委托',
@@ -172,7 +172,7 @@ export const T = {
     },
     pdf: {
       lang: 'en', title: 'Blue Magpie', sub: 'How does a billing notice with no link take over someone’s whole account?',
-      meta: '<b>Type</b>  Privacy mystery, solo or 2–4 together<br><b>Time</b>  About 60–90 minutes<br><b>You need</b>  A pen, this file, and no hurry to do what you’re told<br><br>anoni.net community · anoni.net/mystery/en<br>This is fiction: the people, companies and events are not real. Content licensed CC BY 4.0.',
+      meta: '<b>Type</b>  Privacy mystery, solo or 2–4 together<br><b>Time</b>  About 60–90 minutes<br><b>You need</b>  A pen, this file, and no hurry to do what you’re told<br><br>anoni.net community · anoni.net/mystery/en<br>Feedback and case ideas: anoni.net/mystery/en/feedback/<br>This is fiction: the people, companies and events are not real. Content licensed CC BY 4.0.',
       warn: 'The last pages are the solution, printed upside down. Don’t turn to the back until you’ve solved the case.',
       briefing: 'How to play', briefLead: 'You volunteer at the Mistport Privacy Aid. We help people who need to stay anonymous, and people who have been scammed, impersonated or tracked to take themselves back.',
       job: 'Tonight’s request',

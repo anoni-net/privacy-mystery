@@ -20,6 +20,8 @@ const ENGINE_UI = {
   menuLobbyTitle: 'Back to all cases',
   menuPdf: 'PDF',
   menuPdfTitle: 'Printable PDF, solution on the last pages',
+  menuFeedback: 'Feedback',
+  menuFeedbackTitle: 'Tell us how it went, share a case idea or report a problem',
   menuReset: 'Start over',
   menuResetConfirm: 'Tap again to start over',
   moreLabel: 'More',
@@ -151,6 +153,7 @@ const ENGINE_UI = {
   fbRightFixRest: '✓ You named the right person. Fix the answers marked wrong above and submit again to close the case.',
   rankPerfect: 'No hints, right first time. ',
   rankLabel: 'Rank: ',
+  feedbackSolved: 'Tell us how it went',
   replay: 'Play again',
   solvedTitle: 'Case report — closed',
 };

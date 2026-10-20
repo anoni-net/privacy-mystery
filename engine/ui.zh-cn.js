@@ -21,6 +21,8 @@ const ENGINE_UI = {
   menuLobbyTitle: '回到所有案件',
   menuPdf: 'PDF 版',
   menuPdfTitle: '可打印的 PDF 版，解答在最后几页',
+  menuFeedback: '建议与反馈',
+  menuFeedbackTitle: '写下感想、案件的点子或遇到的问题',
   menuReset: '重新开始',
   menuResetConfirm: '再按一次确认重来',
   moreLabel: '更多选项',
@@ -150,6 +152,7 @@ const ENGINE_UI = {
   fbRightFixRest: '✓ 你指认的人没错。把上面错的题目修正后再交一次，才能结案。',
   rankPerfect: '没看任何提示，一次就指认正确。',
   rankLabel: '评级：',
+  feedbackSolved: '留下游玩感想',
   replay: '重新开始一局',
   solvedTitle: '结案报告 — 已结案',
 };
