@@ -10,10 +10,13 @@
 #   /srv/anoni-net-mystery/repo            anoni-net/privacy-mystery 的 clone，只拉 main
 #   /srv/anoni-net-mystery/releases/<sha>  每個 commit 建置一份，保留最近 KEEP 份
 #   /srv/anoni-net-mystery/current         symlink，nginx 的 /mystery/ 讀 current/clearnet，
-#                                          mystery.<onion> 讀 current/onion
+#                                          mystery.<onion> 讀 current/onion，
+#                                          IPFS 鏡像的組裝讀 current/ipfs
 #
-# clearnet 與 onion 各建置一份（build.mjs 的 --target）。clearnet 的互動版載入流量統計，
-# onion 那份不載入，連到 anoni.net 的網址也改成 onion 位址。
+# clearnet、onion 與 ipfs 各建置一份（build.mjs 的 --target）。clearnet 的互動版載入流量統計，
+# onion 那份不載入，連到 anoni.net 的網址也改成 onion 位址。ipfs 那份給 anoni.net 的 IPFS 鏡像
+# （toomore/anoni-net-ws#422），連到 anoni.net 的網址改成根目錄的相對路徑，只有互動版：
+# 志工 pin 過的內容收不回來，結局的明文不放上去。
 #
 # PDF 版用 docker 裡的 Chromium 產生（tools/pdf/Dockerfile，主機上不裝瀏覽器）。映像的標籤
 # 是 Dockerfile 內容的雜湊，Dockerfile 改了才會重建，第一次建置要下載約 850 MB。
@@ -82,16 +85,25 @@ if [ "$key02" != none ]; then
     case02="$(cat "$KEYFILE_02")"
     need="$need blue-magpie/static/index.html blue-magpie/blue-magpie.pdf en/blue-magpie/static/index.html en/blue-magpie/blue-magpie.pdf zh-cn/blue-magpie/static/index.html zh-cn/blue-magpie/blue-magpie.pdf"
 fi
+# ipfs 那份只有互動版與大廳
+need_ipfs="index.html night-heron/index.html blue-magpie/index.html en/index.html en/night-heron/index.html zh-cn/index.html zh-cn/night-heron/index.html zh-cn/blue-magpie/index.html feedback/index.html"
 rm -rf "$dest.tmp"
 # onion 那份的頁面不能有任何指向 clearnet 的資源或連結，檢查不到才算建置成功。
 # PDF 不在檢查範圍：它是給人下載列印的文件，解答裡連到文件庫的網址會留在裡面。
+# ipfs 那份不能有靜態版與 PDF，連到 anoni.net 的網址只留分享預覽（content="…"）與
+# 不在鏡像裡的 Gears、API。建置時不給鑰匙，build.mjs 的 ipfs 目標本來也不讀。
 if ! (cd "$REPO" && export CASE_KEY="$(cat "$KEYFILE")" CASE_KEY_02="$case02" \
         CHROME_PATH="$REPO/tools/chrome-docker.sh" MYSTERY_PDF_MOUNT="$dest.tmp" MYSTERY_PDF_IMAGE="$img" \
         && node scripts/build.mjs --target clearnet --out "$dest.tmp/clearnet" \
         && node scripts/build.mjs --target onion --out "$dest.tmp/onion" \
+        && env -u CASE_KEY -u CASE_KEY_02 node scripts/build.mjs --target ipfs --out "$dest.tmp/ipfs" \
         && for t in clearnet onion; do for f in $need; do test -s "$dest.tmp/$t/$f" || exit 1; done; done \
+        && for f in $need_ipfs; do test -s "$dest.tmp/ipfs/$f" || exit 1; done \
         && ! grep -rqE --include='*.html' --include='*.css' --include='*.js' \
-            'https://([a-z]+\.)?anoni\.net' "$dest.tmp/onion") >/dev/null 2>>"$LOG"; then
+            'https://([a-z]+\.)?anoni\.net' "$dest.tmp/onion" \
+        && [ -z "$(find "$dest.tmp/ipfs" \( -path '*/static/*' -o -name '*.pdf' \) -print -quit)" ] \
+        && ! grep -rhoE --include='*.html' '(content=")?https://anoni\.net/[a-z]*' "$dest.tmp/ipfs" \
+            | grep -qvE '^content="|^https://anoni\.net/(gears|api)$') >/dev/null 2>>"$LOG"; then
     echo "$(date -Iseconds) $sha 建置或檢查失敗，線上維持 ${current:-（尚未發布）}" >>"$LOG"
     echo "$attempt" >"$BASE/failed"
     rm -rf "$dest.tmp"
