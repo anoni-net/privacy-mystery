@@ -15,5 +15,40 @@
   "time": "約 60–90 分鐘",
   "players": "單人或 2–4 人合作",
   "pdf": "blue-magpie.pdf",
-  "pdfName": "藍鵲事件.pdf"
+  "pdfName": "藍鵲事件.pdf",
+  "printEditions": true,
+  "i18n": {
+    "zh-cn": {
+      "title": "蓝鹊事件",
+      "hook": "「信里没有链接，我才以为是真的。」",
+      "summary": "一封「已开通、按月扣款 3,480」的信没有链接，只叫人自己搜索客服。照做的人账号被接走，名单上还有睡眠时数。找出是谁把会员数据卖了出去。",
+      "skills": [
+        "邮件头",
+        "假域名",
+        "搜索广告",
+        "QR code",
+        "已关联设备",
+        "陷阱数据"
+      ],
+      "time": "约 60–90 分钟",
+      "players": "单人或 2–4 人合作",
+      "pdfName": "蓝鹊事件.pdf"
+    },
+    "en": {
+      "title": "Blue Magpie",
+      "hook": "“No link, so I thought it was real.”",
+      "summary": "A “3,480 a month” billing notice with no link, only a line telling you to search for support. People who searched lost their accounts, and the list had their hours of sleep. Find out who sold the member data.",
+      "skills": [
+        "Email headers",
+        "Lookalike domains",
+        "Search ads",
+        "QR codes",
+        "Linked devices",
+        "Canary records"
+      ],
+      "time": "About 60–90 minutes",
+      "players": "Solo or 2–4 together",
+      "pdfName": "blue-magpie.pdf"
+    }
+  }
 }

@@ -5,7 +5,7 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { esc } from './case-data.mjs';
-import { iconTags, ogTags, swScript, SITE_NAME } from './meta.mjs';
+import { iconTags, ogTags, swScript, SITE_NAME, LANG_INFO, langLinks } from './meta.mjs';
 
 const CSS = `
 /* Layout: a dark cork board with cream case folders pinned to it, then how to play below. */
@@ -131,7 +131,7 @@ const T = {
     desc: 'anoni.net 的隱私推理遊戲。每一份委託都是一個案件：從照片、檔案與文字裡找出破綻，學會保護自己和別人的隱私。',
     title: '霧港委託板｜隱私推理遊戲', kicker: '霧港隱私互助站 · PRIVACY MYSTERY', h1: '委託板',
     lead: '今晚有人需要你。每一份委託都是一個案件：從照片、檔案和文字裡找出破綻，在別人之前找到它們，也學會怎麼不留下它們。',
-    langLink: '<a href="en/" lang="en">English</a>', next: '下一份委託',
+    next: '下一份委託',
     printSoon: '靜態版與 PDF 版準備中',
     soon: '準備中。想看哪一種隱私主題？<a href="feedback/?from=lobby&amp;kind=idea">告訴我們</a>。',
     modes: '三種玩法',
@@ -141,25 +141,41 @@ const T = {
     foot: '<p>霧港隱私互助站與所有案件裡的人物、公司和事件都是虛構的。</p><p>由 <a href="https://anoni.net/">anoni.net 匿名網路社群</a>製作 · 內容 CC BY 4.0 · 程式 MIT · <a href="https://github.com/anoni-net/privacy-mystery">原始碼</a> · <a href="feedback/?from=lobby">建議與回饋</a></p>',
     stamp: { solved: '已結案', open: '調查中', back: '回到案件', resume: '繼續調查', ranks: ['洋蔥首席調查員', '資深隱私志工', '見習調查員'] },
   },
+  'zh-cn': {
+    lang: 'zh-Hans', skills: '会练到的技巧', start: '开始调查', stat: '静态版', pdf: 'PDF 版',
+    desc: 'anoni.net 的隐私推理游戏。每一份委托都是一个案件：从照片、文件与文本里找出破绽，学会保护自己和别人的隐私。',
+    title: '雾港委托板｜隐私推理游戏', kicker: '雾港隐私互助站 · PRIVACY MYSTERY', h1: '委托板',
+    lead: '今晚有人需要你。每一份委托都是一个案件：从照片、文件和文本里找出破绽，在别人之前找到它们，也学会怎么不留下它们。',
+    next: '下一份委托',
+    printSoon: '静态版与 PDF 版准备中',
+    soon: '准备中。想看哪一种隐私主题？<a href="feedback/?from=lobby&amp;kind=idea">告诉我们</a>。',
+    modes: '三种玩法',
+    modeList: [['交互版', '模拟一台调查员的电脑：浏览器、终端、看图工具和调查板。需要 JavaScript，手机也能玩。'], ['静态版', '只用 HTML 和 CSS，不需要 JavaScript。Tor Browser 的「最安全」等级也能完整破案。'], ['PDF 版', '离线或打印出来玩，适合读书会与课堂。解答在最后几页，上下颠倒印刷。']],
+    learn: '你会练到的技巧',
+    reading: '<li><a href="https://anoni.net/docs/zh-cn/basics/">anoni.net 文档库：概念篇</a>（元数据、去匿名化）</li><li><a href="https://anoni.net/docs/zh-cn/scenarios/journalist/">记者情境：消息来源保护</a></li><li><a href="https://anoni.net/docs/zh-cn/tools/">工具篇：威胁模型与工具评估</a></li>',
+    foot: '<p>雾港隐私互助站与所有案件里的人物、公司和事件都是虚构的。</p><p>由 <a href="https://anoni.net/">anoni.net 匿名网络社群</a>制作 · 内容 CC BY 4.0 · 程序 MIT · <a href="https://github.com/anoni-net/privacy-mystery">源代码</a> · <a href="feedback/?from=lobby">建议与反馈</a></p>',
+    stamp: { solved: '已结案', open: '调查中', back: '回到案件', resume: '继续调查', ranks: ['洋葱首席调查员', '资深隐私志愿者', '见习调查员'] },
+  },
   en: {
     lang: 'en', skills: 'Skills you practise', start: 'Start investigating', stat: 'Static version', pdf: 'PDF',
     desc: 'Privacy mysteries from anoni.net. Each request is a case: find the leaks in photos, files and writing, and learn to protect your own privacy and other people’s.',
     title: 'Mistport case board | privacy mysteries', kicker: 'MISTPORT PRIVACY AID · PRIVACY MYSTERY', h1: 'Case board',
     lead: 'Someone needs you tonight. Each request is a case: find the leaks in photos, files and writing before anyone else does, and learn not to leave them yourself.',
-    langLink: '<a href="../" lang="zh-Hant-TW">中文</a>', next: 'The next case',
+    next: 'The next case',
     printSoon: 'Static and PDF editions coming soon',
     soon: 'In preparation. Which privacy topic would you like to see? <a href="feedback/?from=lobby&amp;kind=idea">Tell us</a>.',
     modes: 'Three ways to play',
     modeList: [['Interactive', 'A simulated investigator’s computer: browser, terminal, image viewer and evidence board. Needs JavaScript; works on phones.'], ['Static', 'Plain HTML and CSS, no JavaScript. The whole case works at Tor Browser’s “Safest” level.'], ['PDF', 'Offline or on paper, for reading groups and classrooms. The solution is on the last pages, printed upside down.']],
     learn: 'Skills you practise',
-    reading: '<li><a href="https://anoni.net/docs/basics/">anoni.net docs: concepts</a> (metadata, de-anonymisation; in Chinese)</li><li><a href="https://anoni.net/docs/scenarios/journalist/">For journalists: protecting sources</a> (in Chinese)</li><li><a href="https://anoni.net/docs/tools/">Tools: threat models and choosing tools</a> (in Chinese)</li>',
+    reading: '<li><a href="https://anoni.net/docs/en/basics/">anoni.net docs: concepts</a> (metadata, de-anonymisation)</li><li><a href="https://anoni.net/docs/en/scenarios/journalist/">For journalists: protecting sources</a></li><li><a href="https://anoni.net/docs/en/tools/">Tools: threat models and choosing tools</a></li>',
     foot: '<p>The Mistport Privacy Aid and every person, company and event in these cases are fictional.</p><p>Made by the <a href="https://anoni.net/">anoni.net community</a> · content CC BY 4.0 · code MIT · <a href="https://github.com/anoni-net/privacy-mystery">source</a> · <a href="feedback/?from=lobby">feedback</a></p>',
     stamp: { solved: 'CLOSED', open: 'OPEN', back: 'Back to the case', resume: 'Keep investigating', ranks: ['Chief Onion Investigator', 'Senior Privacy Volunteer', 'Trainee Investigator'] },
   },
 };
 
-export function buildLobby({ out, cases, analytics = '', lang = 'zh' }) {
+export function buildLobby({ out, cases, analytics = '', lang = 'zh', langs = [lang] }) {
   const L = T[lang];
+  const toRoot = LANG_INFO[lang].dir ? '../' : '';
   // a language's lobby lists the cases written in it (Chinese is every case's first language)
   cases = cases.filter(c => lang === 'zh' || (c.i18n || {})[lang]).map(c => Object.assign({}, c, (c.i18n || {})[lang] || {}));
   const next = String(cases.length + 1).padStart(2, '0');
@@ -189,14 +205,14 @@ export function buildLobby({ out, cases, analytics = '', lang = 'zh' }) {
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="${L.desc}">
 <title>${L.title}</title>
-${iconTags(lang === 'en' ? '../' : '', lang)}
-${ogTags({ lang, siteName: SITE_NAME[lang], title: L.title, desc: L.desc, path: lang === 'en' ? 'en/' : '', image: lang === 'en' ? 'og-en.png' : 'og.png' })}
+${iconTags(toRoot, lang)}
+${ogTags({ lang, siteName: SITE_NAME[lang], title: L.title, desc: L.desc, path: LANG_INFO[lang].dir, image: lang === 'zh' ? 'og.png' : `og-${lang}.png` })}
 ${analytics}<style>${CSS}</style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <p class="kicker">${L.kicker} · ${L.langLink}</p>
+  <p class="kicker">${[L.kicker, ...langLinks(langs, lang, toRoot, l => LANG_INFO[l].dir)].join(' · ')}</p>
   <h1>${L.h1}</h1>
   <p class="lead">${L.lead}</p>
 </header>
@@ -231,7 +247,7 @@ ${cases.map(folder).join('\n')}
 </footer>
 </div>
 <script>${SCRIPT(L)}
-${swScript(lang === 'en' ? '../' : '', lang)}</script>
+${swScript(toRoot, lang)}</script>
 </body>
 </html>
 `;

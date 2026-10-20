@@ -14,7 +14,6 @@ const UI = Object.assign({}, ENGINE_UI, {
   sticky2: 'Find what the photo gave away',
   sticky3: 'Narrow six people to one',
   sticky4: 'File the case report',
-  langHref: '../../night-heron/',
   clockDate: 'Wed 16 Sep ',
   termDate: 'Wed Sep 16',
   lockedToast: ['Not yet', 'Finish talking to Night Heron and accept the files first.'],

@@ -1,14 +1,16 @@
-// The feedback page at /mystery/feedback/ (and /mystery/en/feedback/): players write how the
+// The feedback page at /mystery/feedback/ (and /mystery/zh-cn/feedback/, /mystery/en/feedback/): players write how the
 // case went, an idea for a new case, where they got stuck or what went wrong. The page draws
 // its own form and posts it to anoni.net's self-hosted form server (Formbricks, form.anoni.net)
 // through its public client API, which needs no key. Nothing is sent until the player presses
 // the button, and the request carries no cookies and no Referer. The onion build rewrites the
 // address to the form server's onion address along with every other link to anoni.net.
 //
-// Each language has its own survey. The question ids (kind, message, difficulty, play, contact)
-// and the hidden fields (case, from, rank, locale) match formbricks/mystery_survey.py in the
-// anoni.net workspace. Formbricks stores the text of the chosen option, so the option labels
-// below must match that file word for word: change both together.
+// Traditional Chinese and English each have their own survey. The question ids (kind, message,
+// difficulty, play, contact) and the hidden fields (case, from, rank, locale) match
+// formbricks/mystery_survey.py in the anoni.net workspace. Formbricks stores the text of the
+// chosen option, so the option labels below must match that file word for word: change both
+// together. The Simplified Chinese page shows its own labels but sends the Traditional Chinese
+// ones to the Traditional Chinese survey (SEND_AS), with locale zh-CN to tell them apart.
 //
 // The case, where the player came from and the rank come in the query string (the case page,
 // the lobby and the static edition link here with them) and are checked against fixed lists
@@ -20,6 +22,7 @@ import { iconTags } from './meta.mjs';
 
 // The workspace's formbricks/mystery_survey.py has the same ids
 const SURVEYS = { zh: 'cmvezavlt000o01o1kbzes7qy', en: 'cmvezaw9q000p01o15uavg68q' };
+const SEND_AS = { zh: 'zh', 'zh-cn': 'zh', en: 'en' };
 const ENVIRONMENT = 'cmc9borto0008lj014bq33jqq';
 const ENDPOINT = `https://form.anoni.net/api/v1/client/${ENVIRONMENT}/responses`;
 // Same as the form's character limits
@@ -120,6 +123,45 @@ const T = {
     noscript: '這個表單需要 JavaScript 才能送出。',
     foot: '<p>由 <a href="https://anoni.net/">anoni.net 匿名網路社群</a>製作 · <a href="../">回到委託板</a></p>',
   },
+  'zh-cn': {
+    lang: 'zh-Hans', locale: 'zh-CN', toRoot: '../../',
+    title: '建议与反馈｜隐私推理游戏', kicker: '雾港隐私互助站 · FEEDBACK', h1: '建议与反馈',
+    desc: 'anoni.net 隐私推理游戏的建议与反馈：游玩感想、新案件的点子、卡关或遇到的错误。',
+    lead: '玩完的感想、想看的案件主题、卡住或看不懂的地方，都可以写在这里。每一条我们都会读过整理，你写的原文与联系方式不会公开。',
+    privacy: '表单只记下提交时所在的国家与浏览器类型，不记录你的 IP 地址。从游戏链接过来时，会一并带上你玩的案件与语言，结案之后还有评级，不包含你指认了谁或答了什么。',
+    about: n => `关于 CASE ${n}`,
+    required: '必填', optional: '选填',
+    kind: '想告诉我们的是',
+    kinds: { impression: '游玩感想', idea: '新案件的点子', stuck: '卡关或看不懂的地方', bug: '遇到错误', other: '其他' },
+    message: '想告诉我们什么？',
+    messageSub: '写到解答也没关系。请不要写真实姓名或其他个人信息。',
+    placeholders: {
+      impression: '例如：哪一段印象最深、哪一条线索最意外',
+      idea: '主题与方向就好，例如：想看一个从手机定位数据找出破绽的案件',
+      stuck: '例如：在哪一个画面、哪一个步骤卡住，当时以为要做什么',
+      bug: '例如：用手机打开终端之后，按下哪个按钮没有反应',
+      other: '',
+    },
+    count: (n, max) => `${n} / ${max}`,
+    tooShort: n => `再多写一点，至少 ${n} 个字。`,
+    difficulty: '难度如何？',
+    difficulties: { easy: '太简单', right: '刚好', hard: '有点难', 'too-hard': '太难' },
+    play: '怎么玩的？',
+    plays: { solo: '自己玩', friends: '跟朋友一起', class: '在课堂或工作坊' },
+    contact: '联系方式',
+    contactSub: '留下你方便的联系方式，email 或通信软件的账号都可以。需要细节，或想跟你一起发展案件的点子时会联系你。不留也没关系，每一条都会看。处理完之后就删除联系方式。',
+    contactPh: 'email 或通信软件的账号',
+    submit: '提交', sending: '提交中…',
+    errors: {
+      closed: '表单暂时没有开放，请过一段时间再试。',
+      network: '没有连上表单服务器，请确认网络连接之后再提交一次。写好的内容还在。',
+      other: '提交时发生错误，请过一会儿再提交一次。写好的内容还在。',
+    },
+    thanks: '收到了，谢谢', thanksBody: '每一条都会读。下一份委托准备好时，会出现在委托板上。',
+    backCase: '回到案件', backLobby: '回到委托板',
+    noscript: '这个表单需要 JavaScript 才能提交。',
+    foot: '<p>由 <a href="https://anoni.net/">anoni.net 匿名网络社群</a>制作 · <a href="../">回到委托板</a></p>',
+  },
   en: {
     lang: 'en', locale: 'en', toRoot: '../../',
     title: 'Feedback | privacy mysteries', kicker: 'MISTPORT PRIVACY AID · FEEDBACK', h1: 'Feedback',
@@ -208,10 +250,10 @@ const SCRIPT = `
     e.preventDefault();
     var k = kind(), text = msg.value.trim();
     if (!k || text.length < LIMITS.min) return;
-    var data = { kind: L.kinds[k], message: text, locale: L.locale };
+    var data = { kind: L.send.kinds[k], message: text, locale: L.locale };
     if (k !== 'idea') {
-      if (picked('difficulty')) data.difficulty = L.difficulties[picked('difficulty')];
-      if (picked('play')) data.play = L.plays[picked('play')];
+      if (picked('difficulty')) data.difficulty = L.send.difficulties[picked('difficulty')];
+      if (picked('play')) data.play = L.send.plays[picked('play')];
     }
     if (contact.value.trim()) data.contact = contact.value.trim();
     if (caseNo) data['case'] = caseNo;
@@ -245,11 +287,13 @@ const SCRIPT = `
 
 // cases: the cases listed in this language's lobby, each with number, slug and title
 export function buildFeedback({ out, cases, analytics = '', lang = 'zh' }) {
-  const L = T[lang];
+  const L = T[lang], S = T[SEND_AS[lang]];
   const caseMap = Object.fromEntries(cases.map(c => [c.number, { slug: c.slug, title: c.title }]));
   const clientText = {
     locale: L.locale, kinds: L.kinds, difficulties: L.difficulties, plays: L.plays,
     placeholders: L.placeholders, errors: L.errors, sending: L.sending, backCase: L.backCase,
+    // the labels the survey stores
+    send: { kinds: S.kinds, difficulties: S.difficulties, plays: S.plays },
   };
   // Functions do not survive JSON, so the few that build text are written out here
   const script = `var L = ${JSON.stringify(clientText)};
@@ -259,7 +303,7 @@ L.tooShort = ${L.tooShort.toString()};
 var CASES = ${JSON.stringify(caseMap)};
 var FROM = ${JSON.stringify(FROM)};
 var LIMITS = ${JSON.stringify(LIMITS)};
-var SURVEY = ${JSON.stringify(SURVEYS[lang])};
+var SURVEY = ${JSON.stringify(SURVEYS[SEND_AS[lang]])};
 var ENDPOINT = ${JSON.stringify(ENDPOINT)};
 ${SCRIPT}`;
 

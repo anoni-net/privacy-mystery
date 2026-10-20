@@ -1,4 +1,4 @@
-# Headless Chromium for the PDF edition (scripts/pdf.mjs), with the CJK fonts its CSS asks for.
+# Headless Chromium for the PDF edition (scripts/pdf-kit.mjs), with the CJK fonts its CSS asks for.
 FROM debian:bookworm-slim
 RUN apt-get update \
  && apt-get install -y --no-install-recommends chromium fonts-noto-cjk fonts-noto-mono fonts-dejavu-core \

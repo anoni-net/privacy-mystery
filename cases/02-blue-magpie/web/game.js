@@ -7,7 +7,7 @@ const HOME_BB = '~/' + BB_DIR;
 const FAKE_DOMAINS = FAKE_HOSTS.map(h => toAscii(regDomain(h)));
 const isFake = host => FAKE_DOMAINS.includes(toAscii(regDomain(host.replace(/^https?:\/\//, '').split('/')[0].toLowerCase())));
 const IMAGES = {
-  [FILES_CLIENT.devices]: { src: 'assets/devices.jpg', w: 1080, h: 1920, size: ASSET_SIZES['devices.jpg'], where: HOME_CLIENT },
+  [FILES_CLIENT.devices]: { src: 'assets/' + DEVICES_IMG, w: 1080, h: 1920, size: ASSET_SIZES[DEVICES_IMG], where: HOME_CLIENT },
   [QR_FILE]: { src: 'assets/qr-link.png', w: 344, h: 344, size: ASSET_SIZES['qr-link.png'] },
 };
 const CLIENT_TEXT = { [FILES_CLIENT.scam]: MAIL_SCAM, [FILES_CLIENT.real]: MAIL_REAL, [FILES_CLIENT.chat]: CHAT_LOG, [FILES_CLIENT.aliases]: ALIASES };
@@ -97,7 +97,7 @@ Object.assign(HOOKS, {
       if (!rest[0]) return out(`<span class="e">${UI.usageDig}</span>`);
       const name = rest[0].toLowerCase().replace(/\.$/, '');
       const recs = DNS_TXT[name];
-      out(`;; QUESTION SECTION:\n;${esc(name)}.\t\tIN\tTXT\n\n;; ANSWER SECTION:\n` + (recs ? recs.map(r => `${esc(name)}.\t300\tIN\tTXT\t<span class="a">${esc(r)}</span>`).join('\n') : '<span class="d">（沒有 TXT 紀錄）</span>'));
+      out(`;; QUESTION SECTION:\n;${esc(name)}.\t\tIN\tTXT\n\n;; ANSWER SECTION:\n` + (recs ? recs.map(r => `${esc(name)}.\t300\tIN\tTXT\t<span class="a">${esc(r)}</span>`).join('\n') : `<span class="d">${UI.digNone}</span>`));
     },
   },
   /* ---------- the conversations during play ---------- */

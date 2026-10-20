@@ -20,6 +20,22 @@
   "saveKey": "yelu-web-v2",
   "seenKey": "yelu-web-seen",
   "i18n": {
+    "zh-cn": {
+      "title": "夜鹭事件",
+      "hook": "「我已经关掉定位了。」",
+      "summary": "一位吹哨者在匿名论坛爆料，附上一张备忘录的照片。公司宣布 72 小时内要找出泄密者。你要比公司早一步，查出那张照片到底泄露了什么。",
+      "skills": [
+        "EXIF 元数据",
+        "时区",
+        "文件名",
+        "照片背景",
+        "写作风格",
+        "匿名集合"
+      ],
+      "time": "约 45–75 分钟",
+      "players": "单人或 2–4 人合作",
+      "pdfName": "夜鹭事件.pdf"
+    },
     "en": {
       "title": "Night Heron",
       "hook": "“I turned off location.”",

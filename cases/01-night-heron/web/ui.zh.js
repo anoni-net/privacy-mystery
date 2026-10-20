@@ -14,7 +14,6 @@ const UI = Object.assign({}, ENGINE_UI, {
   sticky2: '找出照片洩漏了什麼',
   sticky3: '把 6 人縮到 1 人',
   sticky4: '交出結案報告',
-  langHref: '../en/night-heron/',
   clockDate: '9月16日 週三 ',
   termDate: 'Wed Sep 16',
   lockedToast: ['還不能開始調查', '先和夜鷺聊完、收下資料再說。'],

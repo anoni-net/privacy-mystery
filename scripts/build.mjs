@@ -1,7 +1,8 @@
 // Builds the site served at anoni.net/mystery into dist/mystery/: the lobby at the top,
 // and each case under its slug (cases/*/case.json), e.g. dist/mystery/night-heron/.
-// English lives under en/ (dist/mystery/en/, dist/mystery/en/night-heron/) and is built
-// when the case has its English files (case.en.js, web/ui.en.js, solution.en.enc).
+// 正體中文 is at the top; 简体中文 lives under zh-cn/ and English under en/
+// (dist/mystery/en/, dist/mystery/en/night-heron/), each built when the case has that
+// language's files (case.<lang>.js, web/ui.<lang>.js, solution.<lang>.enc).
 // Every case's interactive page is the shared engine (engine/index.src.html with the
 // engine's interface text) plus the case's own files: case.js (story data), web/ui.<lang>.js
 // (its interface text), web/game.js (its behaviour), web/sites.css and web/assets/.
@@ -21,14 +22,12 @@
 // "printEditions": true have a static version and a PDF so far.
 import { readFileSync, writeFileSync, mkdirSync, cpSync, statSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import { decryptB64 } from './crypt.mjs';
-import { buildStatic } from './static.mjs';
-import { buildPdf } from './pdf.mjs';
 import { buildLobby } from './lobby.mjs';
 import { buildFeedback } from './feedback.mjs';
-import { iconTags, ogTags, swScript, SITE_NAME } from './meta.mjs';
+import { iconTags, ogTags, swScript, SITE_NAME, LANG_INFO, langLinks } from './meta.mjs';
 import { createHash } from 'node:crypto';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -69,6 +68,7 @@ const target = TARGETS[targetName] || {};
 // Chinese at the top of the site; other languages under their code, when the case has them
 const LANGS = [
   { code: 'zh', dir: '', caseFile: 'case.js', ui: 'ui.zh.js', solution: 'solution.enc' },
+  { code: 'zh-cn', dir: 'zh-cn', caseFile: 'case.zh-cn.js', ui: 'ui.zh-cn.js', solution: 'solution.zh-cn.enc' },
   { code: 'en', dir: 'en', caseFile: 'case.en.js', ui: 'ui.en.js', solution: 'solution.en.enc' },
 ];
 const langsOf = caseDir => LANGS.filter(l => [join(caseDir, l.caseFile), join(caseDir, 'web', l.ui), join(caseDir, l.solution)].every(existsSync));
@@ -87,6 +87,15 @@ rmSync(out, { recursive: true, force: true });
 // Icons and the lobby's preview images sit at the top of the site (made by scripts/make_og.mjs)
 mkdirSync(out, { recursive: true });
 cpSync(join(root, 'site'), out, { recursive: true });
+// Each case with print editions lays them out in its own print/static.mjs and print/pdf.mjs
+const printers = {};
+for (const caseDir of caseDirs) {
+  const dir = join(caseDir, 'print');
+  if (existsSync(join(dir, 'static.mjs'))) printers[caseDir] = {
+    static: (await import(pathToFileURL(join(dir, 'static.mjs')).href)).buildStatic,
+    pdf: (await import(pathToFileURL(join(dir, 'pdf.mjs')).href)).buildPdf,
+  };
+}
 let fragment = '';
 const built = [];  // { lang, slug, assets } for the service worker
 const anyLangs = new Set();
@@ -96,6 +105,12 @@ caseDirs.forEach((caseDir, ci) => {
   const web = join(caseDir, 'web');
   if (!existsSync(join(web, 'game.js'))) return;
   const key = keyOf(manifest);
+  // The static version and the PDF hold the ending, so they need the key. Without it the case
+  // is built as if it had no print editions yet: no links to them anywhere, lobby included.
+  if (manifest.printEditions && !key) {
+    console.warn(`${manifest.slug}: key not set (${manifest.number === '01' ? 'CASE_KEY' : 'CASE_KEY_' + manifest.number}), built without the static version and the PDF.`);
+    manifest.printEditions = false;
+  }
   const assets = existsSync(join(web, 'assets')) ? listFiles(join(web, 'assets')) : [];
   const assetSizes = Object.fromEntries(assets.map(f => [f, kb(join(web, 'assets', f))]));
   const caseMeta = { slug: manifest.slug, number: manifest.number, pdf: manifest.pdf,
@@ -110,7 +125,8 @@ caseDirs.forEach((caseDir, ci) => {
     const UI = vm.runInNewContext(`${uiCode}\n;UI`);
 
     // Editions this case has: links to the others are left out of the page
-    const has = { static: !!manifest.printEditions, nostatic: !manifest.printEditions, lang: langsOf(caseDir).length > 1 };
+    const has = { static: !!manifest.printEditions, nostatic: !manifest.printEditions };
+    const caseLangs = langsOf(caseDir).map(l => l.code);
     // {{key}} in the page template takes the interface text for this language (filled before
     // the UI, case and CSS files are inlined, so their own text is never touched)
     let page = readFileSync(join(root, 'engine', 'index.src.html'), 'utf8')
@@ -131,6 +147,7 @@ caseDirs.forEach((caseDir, ci) => {
     fill('__CASE_META__', JSON.stringify(caseMeta));
     fill('__ASSET_SIZES__', JSON.stringify(assetSizes));
     if (page.includes('__PDF__')) fill('__PDF__', manifest.pdf);  // only cases with a PDF link it
+    fill('__LANG_LINKS__', langLinks(caseLangs, lang.code, lang.dir ? '../../' : '../', l => LANG_INFO[l].dir + manifest.slug + '/', 'menu-btn').join('\n    '));
     fill('/*__SW__*/', swScript(lang.dir ? '../../' : '../', lang.code));
     if (lang.code === 'zh' && !fragment) fragment = page;
 
@@ -162,27 +179,25 @@ ${page.slice(cut).trim()}
     built.push({ lang, slug: manifest.slug, assets });
 
     if (key && manifest.printEditions) {
+      if (!printers[caseDir]) throw new Error(`${manifest.slug}: printEditions is set but print/static.mjs and print/pdf.mjs are missing`);
       const solution = decryptB64(blob, key);
-      const pxlSize = assetSizes['PXL_20260914_144712345.jpg'];
-      const socialSizes = Object.fromEntries(Object.entries(assetSizes).filter(([f]) => f.startsWith('social/')).map(([f, v]) => [f.slice(7, -4), v]));
-      const pages = buildStatic({
-        caseDir, out: caseOut, lang: lang.code,
+      const pages = printers[caseDir].static({
+        caseDir, out: caseOut, lang: lang.code, langs: caseLangs,
         sitesCss: readFileSync(join(web, 'sites.css'), 'utf8'),
-        solution, pxlSize, socialSizes,
+        solution, assetSizes,
       });
       console.log(`built ${manifest.slug} ${lang.code} static version: ${pages} pages`);
       // The print source holds the ending in plain text: keep it outside the served site
-      const { pdf, html } = buildPdf({ caseDir, out: caseOut, lang: lang.code, srcDir: join(out, '..', 'pdf-src', manifest.slug, lang.code), solution, pxlSize });
+      const { pdf, html } = printers[caseDir].pdf({ caseDir, out: caseOut, lang: lang.code, srcDir: join(out, '..', 'pdf-src', manifest.slug, lang.code), solution, assetSizes });
       if (pdf) console.log('built', pdf);
       else console.warn(`No Chromium-based browser found (set CHROME_PATH): skipped the ${manifest.slug} ${lang.code} PDF. Print source: ${html}`);
-    } else if (manifest.printEditions) {
-      console.warn(`${manifest.slug}: key not set, skipped the static version and the PDF (they contain the ending).`);
     }
   }
 });
 // One lobby per language, listing every case, and the feedback page (scripts/feedback.mjs)
-for (const lang of LANGS.filter(l => anyLangs.has(l.code))) {
-  buildLobby({ out: join(out, lang.dir), cases, analytics, lang: lang.code });
+const lobbyLangs = LANGS.filter(l => anyLangs.has(l.code));
+for (const lang of lobbyLangs) {
+  buildLobby({ out: join(out, lang.dir), cases, analytics, lang: lang.code, langs: lobbyLangs.map(l => l.code) });
   const listed = cases.filter(c => lang.code === 'zh' || (c.i18n || {})[lang.code]).map(c => Object.assign({}, c, (c.i18n || {})[lang.code] || {}));
   buildFeedback({ out: join(out, lang.dir), cases: listed, analytics, lang: lang.code });
 }

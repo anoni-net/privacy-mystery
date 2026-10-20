@@ -1,142 +1,10 @@
-// Printable edition: an A4 case file generated from the same case data, with the
-// solution at the back. Rendered to PDF with a headless Chromium-based browser.
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { spawnSync } from 'node:child_process';
-import { loadCase, esc } from './case-data.mjs';
+// Night Heron's printable edition: an A4 case file generated from the same case data, with the
+// solution at the back, laid out with the shared kit (scripts/pdf-kit.mjs).
+import { loadCase } from '../../../scripts/case-data.mjs';
+import { CSS, esc, csv, file, introChat, chatHTML, splitSolution, cover, briefing, grid, hintsSection, stopAndSolution, printPdf, assetsFrom } from '../../../scripts/pdf-kit.mjs';
 
-const CSS = `
-:root {
-  /* white paper: Chrome leaves page margins unpainted, and home printers save ink */
-  --ink: #1d1d1f; --muted: #66625a; --paper: #ffffff; --card: #faf7f0; --line: #d8d0bf; --head: #ece5d6;
-  --accent: #b5361f; --navy: #1f2a3a; --cream: #efe9dc; --gold: #c9b98f;
-  --term-bg: #15181d; --term-fg: #cfd6df; --term-key: #8fb3d9; --term-dim: #6c7686;
-  --font-sans: "Noto Sans CJK TC", "Noto Sans TC", "Source Han Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
-  --font-serif: "Noto Serif CJK TC", "Noto Serif TC", "Source Han Serif TC", "Songti TC", serif;
-  --font-mono: "Noto Sans Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
-}
-@page { size: A4; margin: 16mm 17mm 18mm; }
-@page full { margin: 0; }
-@page flipped { margin: 14mm 16mm; }
-* { box-sizing: border-box; }
-html { background: var(--paper); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { margin: 0; color: var(--ink); font-family: var(--font-sans); font-size: 10.3pt; line-height: 1.68; }
-h1 { font-size: 21pt; margin: 3mm 0 2mm; letter-spacing: .03em; }
-h2 { font-size: 13pt; margin: 6mm 0 2mm; break-after: avoid; }
-h3 { font-size: 11pt; margin: 4mm 0 1mm; break-after: avoid; }
-p { margin: 0 0 2.4mm; }
-.file { break-before: page; }
-.tag { display: inline-block; font: 8.5pt var(--font-mono); letter-spacing: .12em; color: var(--accent); border: 1.5px solid var(--accent); padding: 0 7px; border-radius: 2px; }
-.lead { color: var(--muted); font-size: 9.8pt; margin-bottom: 4mm; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 3px; padding: 4mm 5mm; margin-bottom: 4mm; break-inside: avoid; }
-.index { display: grid; grid-template-columns: 1fr 1fr; gap: .5mm 8mm; font-size: 9.6pt; }
-.note { font-size: 8.8pt; color: var(--muted); }
-.mono { font-family: var(--font-mono); }
-table { width: 100%; border-collapse: collapse; font-size: 9.4pt; }
-th, td { border-bottom: 1px solid var(--line); padding: 1.6mm 2.2mm; text-align: left; vertical-align: top; }
-th { background: var(--head); font-weight: 600; }
-tr { break-inside: avoid; }
-ul, ol { margin: 0 0 2mm; padding-left: 5mm; }
-li { margin-bottom: 1mm; }
-
-/* cover and the stop page are full-bleed */
-.full { page: full; height: 297mm; overflow: hidden; break-before: page; }
-.cover { break-before: auto; background: var(--navy); color: var(--cream); padding: 22mm 20mm; display: flex; flex-direction: column; justify-content: space-between; }
-.cover .kicker { font: 9pt var(--font-mono); letter-spacing: .3em; color: var(--gold); }
-.cover h1 { font-family: var(--font-serif); font-size: 52pt; letter-spacing: .14em; color: #fff; margin: 0; }
-.cover .sub { font-size: 15pt; color: #d9cfb8; margin-top: 4mm; }
-.cover .meta { font-size: 9.5pt; color: #b8ae98; line-height: 1.9; }
-.cover .meta b { color: var(--cream); font-weight: 600; }
-.cover .warn { margin-top: 6mm; border: 1px solid #5a6578; padding: 3mm 4mm; color: var(--cream); font-size: 9.5pt; }
-
-/* chat */
-.chat { display: flex; flex-direction: column; gap: 2mm; }
-.bub { max-width: 82%; padding: 2mm 4mm; border-radius: 4mm; font-size: 9.6pt; line-height: 1.55; break-inside: avoid; }
-.bub.them { background: #fff; border: 1px solid var(--line); align-self: flex-start; border-bottom-left-radius: 1mm; }
-.bub.me { background: #dfe8f2; align-self: flex-end; border-bottom-right-radius: 1mm; }
-.bub .t { display: block; font-size: 7.5pt; color: var(--muted); }
-.sys { text-align: center; font-size: 8.5pt; color: var(--muted); margin: 0; }
-
-/* forum */
-.forum { background: #fff; border: 1px solid #cfcfd4; border-radius: 3px; overflow: hidden; }
-.forum .bar { background: #33363d; color: #ddd; font: 8.5pt var(--font-mono); padding: 2mm 5mm; }
-.forum .body { padding: 4mm 6mm; }
-.forum .title { font-size: 12.5pt; font-weight: 700; }
-.forum .info { font: 8.3pt var(--font-mono); color: var(--muted); margin-bottom: 3mm; }
-.attach { font: 9pt var(--font-mono); background: #f2f2f4; padding: 2mm 3mm; border-radius: 2px; }
-.reply { border-top: 1px solid #eee; padding: 1.6mm 0; font-size: 9.4pt; }
-.reply span { font: 8pt var(--font-mono); color: var(--muted); }
-
-/* photo */
-.photo { width: 100%; border-radius: 3px; display: block; }
-.crops { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 4mm; }
-.crop { height: 46mm; border-radius: 2px; background-repeat: no-repeat; background-size: 520%; border: 1px solid var(--line); }
-
-/* terminal */
-.term { background: var(--term-bg); color: var(--term-fg); font: 8.8pt/1.7 var(--font-mono); padding: 4mm 5mm; border-radius: 3px; white-space: pre; }
-.term .k { color: var(--term-key); }
-.term .c { color: var(--term-dim); }
-
-/* people, slack, social */
-.people { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
-.person { display: flex; gap: 3mm; background: var(--card); border: 1px solid var(--line); border-radius: 3px; padding: 3mm 3.5mm; break-inside: avoid; }
-.av { flex: 0 0 11mm; height: 11mm; border-radius: 50%; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 12pt; }
-.person b { font-size: 10.5pt; }
-.person .role { font-size: 8.3pt; color: var(--muted); }
-.person p { font-size: 8.8pt; margin: 0; line-height: 1.55; }
-.chan { font: 600 9pt var(--font-mono); color: var(--accent); margin: 3mm 0 0; }
-.msg { display: flex; gap: 3mm; padding: 1.8mm 0; border-bottom: 1px dashed var(--line); break-inside: avoid; }
-.msg .av { flex-basis: 7mm; height: 7mm; border-radius: 1.5mm; font-size: 8.5pt; }
-.msg .who { font-weight: 700; font-size: 9.2pt; }
-.msg .when { font: 7.5pt var(--font-mono); color: var(--muted); margin-left: 2mm; font-weight: 400; }
-.posts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; }
-.post { background: #fff; border: 1px solid #ddd; border-radius: 2mm; overflow: hidden; font-size: 8.6pt; line-height: 1.5; break-inside: avoid; }
-.post img { width: 100%; display: block; aspect-ratio: 4 / 3; object-fit: cover; }
-.post div { padding: 2mm 2.5mm; }
-.post .h { font-size: 8pt; color: var(--muted); }
-
-/* answer sheet */
-.line { border-bottom: 1px solid #b9b09c; height: 7.5mm; }
-.q { margin-bottom: 3mm; break-inside: avoid; }
-.q b { display: block; }
-.opts { font-size: 9pt; color: var(--muted); }
-.grid td, .grid th { text-align: center; height: 8mm; font-size: 9pt; }
-.grid td:first-child, .grid th:first-child { text-align: left; }
-.hint { border-left: 3px solid var(--accent); padding: 1.5mm 0 1.5mm 4mm; margin-bottom: 3mm; break-inside: avoid; }
-.hint b { font: 8pt var(--font-mono); color: var(--accent); letter-spacing: .08em; display: block; }
-
-/* stop page */
-.stop { background: #111; color: #ddd; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 30mm; }
-.stop .big { font-family: var(--font-serif); font-size: 46pt; letter-spacing: .3em; color: #fff; }
-.stop p { font-size: 11pt; color: #aaa; max-width: 120mm; }
-
-/* the solution: small, grey and printed upside down */
-.flip { page: flipped; break-before: page; height: 260mm; overflow: hidden; padding-top: 3mm; }
-/* flow-root stops the first heading's margin from pushing the block down (its overflow
-   is clipped, and after the flip that clipped edge is the top of the text) */
-.flip-in { display: flow-root; transform: rotate(180deg); height: 100%; color: #8b867c; font-size: 8.2pt; line-height: 1.55; }
-.flip-in h2, .flip-in h3, .flip-in b, .flip-in th { color: #77726a; }
-.flip-in table { font-size: 7.8pt; }
-.flip-in th, .flip-in td { padding: 1mm 1.6mm; border-color: #e3dccd; }
-.flip-in th { background: #efe9dd; }
-.sol-kicker { font: 7.5pt var(--font-mono); letter-spacing: .2em; margin: 0; }
-.sol-title { font-family: var(--font-serif); font-size: 13pt; margin: 1mm 0 2mm; }
-.flip-in h3 { font-size: 9pt; letter-spacing: .1em; margin: 3.5mm 0 1mm; }
-.sol-grid td, .sol-grid th { text-align: center; white-space: nowrap; }
-.sol-grid td:first-child, .sol-grid th:first-child { text-align: left; }
-.flip-in a { color: inherit; }
-.key { border: 1px solid #e3dccd; padding: 2mm 3mm; margin-top: 3mm; }
-`;
-
-export function findChrome() {
-  return [process.env.CHROME_PATH,
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    '/Applications/Chromium.app/Contents/MacOS/Chromium',
-    '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
-    '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable',
-  ].find(p => p && existsSync(p));
-}
+// What this file reads from case.js
+const EXPORTS = ['PEOPLE', 'PIC', 'SLACK', 'TEXTS', 'INTRO', 'PXL', 'EXIF_PXL', 'EXIF_PXL_NOTE', 'FILE_KEYS', 'INITIAL', 'SOL_PREFIX', 'POST_PARAS', 'FORUM_REPLIES', 'Q1', 'Q2', 'Q3'];
 
 const T = {
   zh: {
@@ -179,6 +47,47 @@ const T = {
   1. 手機型號、拍攝時區（GPS 確實關掉了）　2. 飯店便條紙、筆電上的貼紙　3. 用字與標點習慣<br>
   加分 B1：論壇保留了原始檔名 PXL_…，「PXL_」是 Pixel 相機的命名格式。加分 B2：見上方「陷阱」。<br>
   <b>自評</b>　沒看提示、一次指認正確：洋蔥首席調查員　·　看了 3 條以內提示：資深隱私志工　·　其他：見習調查員</div>`,
+  },
+  'zh-cn': {
+    lang: 'zh-Hans', title: '夜鹭事件', sub: '一张「已经关掉定位」的照片，能说出多少秘密？',
+    meta: '<b>类型</b>　隐私推理／单人或 2–4 人合作<br><b>时间</b>　约 45–75 分钟<br><b>需要</b>　笔、这份文件、怀疑一切的眼睛<br><br>anoni.net 匿名网络社群 · anoni.net/mystery<br>玩完的感想与案件的点子：anoni.net/mystery/zh-cn/feedback/<br>本作品为虚构，人物、公司与事件皆非真实。内容以 CC BY 4.0 授权。',
+    warn: '最后几页是解答，上下颠倒印刷。破案之前，请不要翻到最后。',
+    briefing: '游戏说明', briefLead: '你是「雾港隐私互助站」的志愿者。我们帮助需要匿名的人：记者、吹哨者，以及任何不想被找到的人。',
+    job: '今晚的委托',
+    jobBody: '<p>一位化名「<b>夜鹭</b>」的吹哨者在匿名论坛揭露：健康 App 公司「心跳鸟科技」打算把用户的睡眠、心率与月经周期数据卖给保险公司。公司已经对全体员工宣布，会在 <b>72 小时内找出泄密者</b>。</p><p style="margin:0">夜鹭把公司内部看得到的数据交给你，请你<b>模拟公司调查员的思路</b>，比公司早一步找出破绽。夜鹭不会告诉你自己是谁：「如果你推得出来，公司也推得出来。」</p>',
+    task: '你的任务', taskBody: '<p><b>第一阶段・找出破绽</b>　夜鹭不小心暴露了哪些隐私？</p><p style="margin:0"><b>第二阶段・找出夜鹭</b>　只靠文件里的信息，把六位嫌疑人缩小到一人。答案写在后面的答题卡上。</p>',
+    rules: '规则', ruleItems: ['破案需要的信息都在文件 01–10 里，不需要上网。', '每一条结论都要有<b>证据</b>支撑。直觉不算数，公司的律师也不会接受直觉。', '小心过期的数据、巧合，以及「看起来很像」的人。', '卡关时看答题卡后面的提示，每一条都会影响最后的自评。', '解答在最后，前面有一页黑色的「停」。'],
+    files: '文件', fileNames: ['夜鹭的加密消息', '匿名论坛爆料文', '爆料附图（含放大区）', '附图的元数据', '收件名单与人物简介', '差勤表', 'BYOD 设备登记表', '公司 Slack 记录', '员工公开社交平台帖子', '附录：网络上查得到的数据'],
+    f01: ['夜鹭的加密消息', '2026 年 9 月 16 日（三）晚上，通过端对端加密通信软件传来。'], opening: '— 安全码已验证 · 消息 24 小时后自动销毁 —', zipSys: '夜鹭发送了 夜鹭导出.zip（48 KB）· 已接收',
+    f02: ['匿名论坛爆料文', '发布于「无名广场」匿名论坛。论坛会保留上传附件的原始文件。'], forumBar: '无名广场 › 科技业 › 爆料', postTitle: '【爆料】心跳鸟 BeatBird 正在把你的睡眠和心率卖给保险公司', postMeta: 'night_heron_0914 · 2026-09-14 22:52（UTC+8 台北时间）· 回复 1,284', attach: (f, s) => `附件：${f}（${s}）`, replies: '回复',
+    f03: (f) => ['爆料附图', `${f}。照片拍的是笔记本屏幕上的备忘录。下方两格是调查员截取的局部放大。`], cropA: '放大区 A｜触摸板右侧', cropB: '放大区 B｜左下角',
+    f04: ['附图的元数据', '调查员从论坛下载原始附件，用 exiftool 读出以下内容。'], glossary: '调查员小辞典',
+    glossaryItems: ['<b>EXIF</b>：相机或手机拍照时自动写进照片文件的元数据，记录拍摄设备、时间、参数，有时还有 GPS 座标。', '<b>时区偏移（Offset Time）</b>：拍摄当下手机设置的时区。手机到了国外通常会<b>自动切换</b>成当地时区。', '<b>Make／Camera Model Name</b>：设备制造商与型号。'],
+    f05: ['收件名单与人物简介', '2026/09/11（五）17:30，首席运营官室寄出〈鼎岳保险 健康数据合作案（第二阶段）〉备忘录。邮件系统记录显示只有以下 6 人收件，没有转发记录。'],
+    anonSet: '在隐私领域，这叫「<b>匿名集合</b>」：和你无法区分的人有多少个。夜鹭的匿名集合一开始只有 <b>6 人</b>，每一条泄露的信息都会让它变得更小。',
+    f06: ['差勤表 · 2026/09/12–09/16', '人事系统导出。'], f07: ['BYOD 个人设备登记表', '员工若要用私人手机收公司信件，须向 IT 部门登记。'],
+    f08: ['公司 Slack 记录', '夜鹭导出，公司 IT 可以读取所有公开频道。原文照录，未修改任何标点与空格。'],
+    f09: ['员工公开社交平台帖子', 'PicNote 上设为公开的帖子，任何人都看得到。时间为台北时间（UTC+8）。'], postHead: (h, n, w, t) => `<b>@${h}</b>（${n}）· ${w}${t ? ' · ' + t : ''}`, where: '地点：', noAccount: list => `${list.join('、')}：查无公开账号。`,
+    f10: ['附录：网络上查得到的数据', '调查员用搜索引擎查到的公开信息。'],
+    appendix: `<h3>世界时区对照</h3><table><tr><th style="width:20%">偏移</th><th>城市</th></tr>
+<tr><td class="mono">UTC+7</td><td>曼谷、河内、雅加达</td></tr><tr><td class="mono">UTC+8</td><td>台北、新加坡、香港、上海、吉隆坡、马尼拉</td></tr><tr><td class="mono">UTC+9</td><td>东京、大阪、首尔</td></tr></table>
+<p class="note">智能手机默认自动设置时区，到了国外连上当地网络就会切换，相机也会照当下的时区记录。</p>
+<h3>手机相机的文件名规则</h3><table><tr><th>品牌</th><th>格式</th></tr><tr><td>Google Pixel</td><td class="mono">PXL_年月日_时分秒毫秒（UTC 时间）</td></tr><tr><td>Apple iPhone</td><td class="mono">IMG_流水号</td></tr><tr><td>Samsung Galaxy</td><td class="mono">年月日_时分秒（当地时间）</td></tr></table>
+<h3>Hotel Sakura 新宿</h3><p>新宿站南口徒步 6 分钟。每间客房备有本馆专属便条纸：红色抬头印着「HOTEL SAKURA」，下方是「SHINJUKU · TOKYO」。</p>
+<h3>开源嘉年华 2026</h3><div style="display:flex;gap:4mm;align-items:flex-start"><img src="__CAT__" alt="" style="width:42mm;border-radius:2mm"><p>8/22–8/23 在台北举办。今年的纪念品是限量 300 张的「洋葱猫」贴纸：橘色猫头，头顶长出一株洋葱芽。很多参加者把它贴在笔记本上。</p></div>
+<h3>BeatBird 隐私权政策（最后更新 2024/05/01）</h3><p>搜集姓名、生日、Email、邮政编码、健康数据与设备 ID。「我们不会在未经你同意的情况下，将个人数据提供给第三方。」</p>`,
+    sheet: '答题卡', sheetLead: '每题都要写下证据来自哪个文件。', stage1: '第一阶段・找出破绽', stage2: '第二阶段・找出夜鹭',
+    sq: ['1. 夜鹭关掉了 GPS，照片的元数据还是泄露了哪些信息？', '2. 照片「画面本身」泄露了什么？', '3. 爆料文的「文本」泄露了什么？', '4. 夜鹭是谁？列出至少三条独立证据。'],
+    marks: '符合打 ○，排除打 ✕。', clue: '线索', clueRows: ['收到备忘录', '时区 +09:00', '手机型号', '照片画面', '写作风格'], sep: '　',
+    bonus: '加分题', b1: 'B1. 就算夜鹭把 EXIF 全部清干净，还有一个地方会透露手机品牌。是哪里？', b2: 'B2. 有两位嫌疑人第一眼很容易误判。是谁？为什么？',
+    hints: '提示', hintsLead: '真的卡住再看。用纸遮住，一次只露出一条，并记下看了几条。', hint: (i, t) => `提示 ${i}・${t}`,
+    hintList: [['从照片开始', '夜鹭说关掉了 GPS。文件 04 里，除了 GPS 之外，还有哪些字段不是「拍摄参数」？'], ['时区', '「+09:00」不是台湾的时区。对照附录的时区表，再看文件 06 的差勤表，9/14 晚上谁在哪里？新加坡要小心。'], ['手机型号', 'BYOD 登记表是三月的数据。这半年有没有人换过手机？看看文件 08 的 Slack，以及文件 09 的社交平台帖子。'], ['照片画面', '文件 03 的两个放大区：便条纸能对照差勤表的住宿安排，贴纸和笔记本颜色能在 Slack 与社交平台帖子里找到对应。'], ['文本', '比较中英文之间有没有空格、标点是全角还是半角、句尾的「以上。」有没有句号。有一个人的习惯也很像，但那天晚上在台北。'], ['加分题', '看看论坛附件的文件名，再看附录的文件名规则。']],
+    stop: '停', stopBody: '破案了吗？<br>翻过这页就是真相。还没写完答题卡的话，请回到前面。', stopNote: '接下来的解答页上下颠倒印刷，把整份文件转过来就能阅读。',
+    truth: '真相', named: name => `夜鹭是${name}。`, trapsH3: '<h3>陷阱</h3>',
+    key: `<div class="key"><b>答题卡对答案</b><br>
+  1. 手机型号、拍摄时区（GPS 确实关掉了）　2. 酒店便条纸、笔记本上的贴纸　3. 用字与标点习惯<br>
+  加分 B1：论坛保留了源文件名 PXL_…，「PXL_」是 Pixel 相机的命名格式。加分 B2：见上方「陷阱」。<br>
+  <b>自评</b>　没看提示、一次指认正确：洋葱首席调查员　·　看了 3 条以内提示：资深隐私志愿者　·　其他：见习调查员</div>`,
   },
   en: {
     lang: 'en', title: 'Night Heron', sub: 'A photo with “location turned off”. How many secrets can it still tell?',
@@ -223,33 +132,16 @@ const T = {
   },
 };
 
-export function buildPdf({ caseDir, out, solution, pxlSize, srcDir: printDir, lang = 'zh' }) {
-  const C = loadCase(caseDir, pxlSize, lang);
+export function buildPdf({ caseDir, out, solution, assetSizes, srcDir, lang = 'zh' }) {
+  const pxlSize = assetSizes['PXL_20260914_144712345.jpg'];
+  const C = loadCase(caseDir, lang, EXPORTS, { __PXL_SIZE__: pxlSize });
   const L = T[lang];
-  // The print page holds the ending in plain text: keep it outside the served site, and
-  // reach the images from there through a relative path, whatever --out names the site.
-  const srcDir = printDir || join(out, '..', 'pdf-src');
-  const A = relative(srcDir, join(out, 'assets')).split(sep).join('/') + '/';
+  const A = assetsFrom(srcDir, out);
   const color = Object.fromEntries(C.PEOPLE.map(p => [p.name, p.color]));
-  const file = (no, [title, lead], body) => `<section class="file"><span class="tag">FILE ${no}</span><h1>${title}</h1>${lead ? `<p class="lead">${lead}</p>` : ''}${body}</section>`;
-  const csv = (text) => {
-    const lines = text.split('\n');
-    const rows = lines.filter(l => !l.startsWith('#')).map(l => l.split(','));
-    return `<table><tr>${rows[0].map(h => `<th>${esc(h)}</th>`).join('')}</tr>${rows.slice(1).map(r => `<tr>${r.map(x => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table>${lines.filter(l => l.startsWith('#')).map(l => `<p class="note">※ ${esc(l.slice(1).trim())}</p>`).join('')}`;
-  };
 
   /* the opening chat, following the first reply at every turn */
-  const chat = [];
   let tick = 3;
-  const at = () => '21:' + String(Math.min(17, Math.floor(tick++ * 0.6) + 3)).padStart(2, '0');
-  for (let id = 'n1', guard = 0; id && guard < 40; guard++) {
-    const node = C.INTRO[id];
-    node.msgs.forEach(text => chat.push({ text, t: at() }));
-    if (node.file) { chat.push({ sys: L.zipSys }); id = node.next; continue; }
-    if (node.end) break;
-    if (node.choices) { chat.push({ text: node.choices[0][0], me: true, t: at() }); id = node.choices[0][1]; continue; }
-    id = node.next;
-  }
+  const chat = introChat(C.INTRO, L.zipSys, () => '21:' + String(Math.min(17, Math.floor(tick++ * 0.6) + 3)).padStart(2, '0'));
 
   /* profiles: "name | role | age" (｜ in Chinese) followed by an indented description */
   const profiles = Object.fromEntries([...C.TEXTS[C.FILE_KEYS.profiles].matchAll(/^(.+?)\s*[｜|]\s*.+\n\s+(.+)$/gm)].map(m => [m[1].trim(), m[2]]));
@@ -267,39 +159,14 @@ export function buildPdf({ caseDir, out, solution, pxlSize, srcDir: printDir, la
 
   const exif = C.EXIF_PXL.map(([k, v]) => `<span class="k">${k.padEnd(27)}</span>: ${esc(v)}`).join('\n');
 
-  /* solution: neutral heading, split across two upside-down pages */
-  const prefix = C.SOL_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const titleRe = new RegExp(`<h2 class="sol-title">${prefix}(.+?)</h2>\\s*<p>`);
-  const culprit = (solution.match(titleRe) || [])[1];
-  if (!culprit) throw new Error('solution has no culprit title');
-  const sol = solution.replace(titleRe, `<h2 class="sol-title">${L.truth}</h2>\n<p>${L.named(culprit)}`);
-  const cut = sol.indexOf(L.trapsH3);
-  if (cut < 0) throw new Error('solution has no traps section');
-
   const html = `<!doctype html>
 <html lang="${L.lang}"><head><meta charset="utf-8"><title>${L.title}</title><style>${CSS}</style></head><body>
 
-<section class="full cover">
-  <div class="kicker">PRIVACY MYSTERY · CASE FILE 01</div>
-  <div><h1>${L.title}</h1><div class="sub">${L.sub}</div></div>
-  <div class="meta">
-    ${L.meta}
-    <div class="warn">${L.warn}</div>
-  </div>
-</section>
+${cover('01', L)}
 
-<section class="file"><span class="tag">BRIEFING</span><h1>${L.briefing}</h1>
-<p class="lead">${L.briefLead}</p>
-<div class="card"><h3 style="margin-top:0">${L.job}</h3>${L.jobBody}</div>
-<h2>${L.task}</h2>
-<div class="card">${L.taskBody}</div>
-<h2>${L.rules}</h2>
-<ul>${L.ruleItems.map(r => `<li>${r}</li>`).join('')}</ul>
-<h2>${L.files}</h2>
-<div class="card index">${L.fileNames.map((t, i) => `<div><span class="mono">${String(i + 1).padStart(2, '0')}</span>　${t}</div>`).join('')}</div>
-</section>
+${briefing(L)}
 
-${file('01', L.f01, `<div class="chat"><p class="sys">${L.opening}</p>${chat.map(m => m.sys ? `<p class="sys">${esc(m.sys)}</p>` : `<div class="bub ${m.me ? 'me' : 'them'}">${esc(m.text)}<span class="t">${m.t}</span></div>`).join('')}</div>`)}
+${file('01', L.f01, chatHTML(L.opening, chat))}
 
 ${file('02', L.f02, `<div class="forum"><div class="bar">${L.forumBar}</div><div class="body">
 <div class="title">${L.postTitle}</div>
@@ -331,35 +198,18 @@ ${file('10', L.f10, L.appendix.replace('__CAT__', `${A}social/cat.jpg`))}
 <div class="q"><b>${L.sq[1]}</b><div class="opts">${C.Q2.map(([, l]) => '□ ' + l).join(L.sep)}</div><div class="line"></div></div>
 <div class="q"><b>${L.sq[2]}</b><div class="opts">${C.Q3.map(([, l]) => '○ ' + l).join(L.sep)}</div><div class="line"></div></div>
 <h3>${L.stage2}</h3><p class="note">${L.marks}</p>
-<table class="grid"><tr><th style="width:28%">${L.clue}</th>${C.PEOPLE.map(p => `<th>${p.name}</th>`).join('')}</tr>${L.clueRows.map((r, i) => `<tr><td>${r}</td>${C.PEOPLE.map(() => `<td>${i === 0 ? '○' : ''}</td>`).join('')}</tr>`).join('')}</table>
+${grid(L, C.PEOPLE)}
 <div class="q" style="margin-top:4mm"><b>${L.sq[3]}</b><div class="line"></div><div class="line"></div></div>
 <h3>${L.bonus}</h3>
 <div class="q"><b>${L.b1}</b><div class="line"></div></div>
 <div class="q"><b>${L.b2}</b><div class="line"></div></div>
 </section>
 
-<section class="file"><span class="tag">HINTS</span><h1>${L.hints}</h1><p class="lead">${L.hintsLead}</p>
-${L.hintList.map(([t, h], i) => `<div class="hint"><b>${L.hint(i + 1, t)}</b>${esc(h)}</div>`).join('')}
-</section>
+${hintsSection(L)}
 
-<section class="full stop"><div class="big">${L.stop}</div><p>${L.stopBody}</p><p style="font-size:9pt;color:#777">${L.stopNote}</p></section>
-
-<section class="flip"><div class="flip-in">${sol.slice(0, cut)}</div></section>
-<section class="flip"><div class="flip-in">${sol.slice(cut)}${L.key}</div></section>
+${stopAndSolution(L, splitSolution(solution, C.SOL_PREFIX, L))}
 
 </body></html>`;
 
-  mkdirSync(srcDir, { recursive: true });
-  const htmlPath = join(srcDir, 'night-heron.html');
-  writeFileSync(htmlPath, html);
-
-  const chrome = findChrome();
-  if (!chrome) return { pdf: null, html: htmlPath };
-  const pdf = join(out, 'night-heron.pdf');
-  // Chrome writes its user agent (OS and version) into the PDF's Creator field;
-  // a game about leaky metadata should not ship one, so give it a neutral name.
-  const args = ['--headless=new', '--disable-gpu', '--no-pdf-header-footer', '--user-agent=anoni.net mystery', `--print-to-pdf=${pdf}`, pathToFileURL(htmlPath).href];
-  if (process.getuid && process.getuid() === 0) args.unshift('--no-sandbox');
-  const r = spawnSync(chrome, args, { stdio: 'ignore', timeout: 120000 });
-  return { pdf: r.status === 0 && existsSync(pdf) ? pdf : null, html: htmlPath };
+  return printPdf({ html, srcDir, out, name: 'night-heron' });
 }

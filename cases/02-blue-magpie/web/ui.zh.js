@@ -14,7 +14,6 @@ const UI = Object.assign({}, ENGINE_UI, {
   sticky2: '拆穿扣款信和假網站',
   sticky3: '幫她把帳號拿回來',
   sticky4: '找出資料從誰手上流出',
-  langHref: '../en/blue-magpie/',
   clockDate: '12月9日 週三 ',
   termDate: 'Wed Dec  9',
   lockedToast: ['還不能開始調查', '先和芷寧聊完、收下她整理的資料。'],
@@ -53,6 +52,7 @@ const UI = Object.assign({}, ENGINE_UI, {
   usageGrep: '用法：grep [-i] &lt;要找的字&gt; &lt;檔案...&gt;</span>\n<span class="d">例如：grep -i authentication *.eml',
   usageWhois: '用法：whois &lt;網域&gt;</span>\n<span class="d">例如：whois beatbird.app',
   usageDig: '用法：dig txt &lt;網域&gt;</span>\n<span class="d">例如：dig txt kq3fz.idv.tw',
+  digNone: '（沒有 TXT 紀錄）',
   // board
   noClues: '還沒有發現。讀信件、查網域、用小工具檢查，找到的線索都會記錄在這裡。',
   noPins: '在網頁、信件、表格旁按「📌 釘選」，就會存到這裡。',
