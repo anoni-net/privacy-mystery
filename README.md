@@ -113,7 +113,7 @@ CASE_KEY=案件01的兇手全名 CASE_KEY_02=案件02的兇手全名 node script
 
 輸出在 `dist/mystery/`，把整個資料夾放到網站的 `/mystery/` 底下即可。最上層是正體中文的大廳，`zh-cn/` 是简体中文版，`en/` 是英文版，每個案件在自己的代號底下，例如 `/mystery/night-heron/`。建置出來的頁面不會向其他網站發出請求，也不載入網路字型，唯一的例外是玩家在回饋頁按下送出時（見下方「建議與回饋」）。
 
-`--target clearnet` 與 `--target onion` 只給 anoni.net 部署用（見下方「anoni.net 的部署」），`--out <資料夾>` 可以改變輸出位置。
+`--target clearnet`、`--target onion` 與 `--target ipfs` 只給 anoni.net 部署用（見下方「anoni.net 的部署」），`--out <資料夾>` 可以改變輸出位置。
 
 > [!IMPORTANT]
 > 部署時一定要設定每個案件的鑰匙：案件 01 是 `CASE_KEY`，其他案件是 `CASE_KEY_<編號>`（例如 `CASE_KEY_02`）。靜態版的結局頁是一般的 HTML，建置時必須解開解答。缺了某個案件的鑰匙，那個案件就只建置互動版，大廳和互動版裡也不會出現靜態版與 PDF 的連結。靜態版的結局明文只會出現在部署出去的網站上，不會進 repo。
@@ -142,10 +142,11 @@ anoni.net 的主機用 cron 每 5 分鐘執行 `tools/deploy-m6.sh`，拉取 `ma
 
 鑰匙放在主機的 `/home/ubuntu/.config/mystery-case-key`（案件 01）與 `/home/ubuntu/.config/mystery-case-key-02`（案件 02），權限 600。沒有案件 01 的鑰匙時不發布。案件 02 的鑰匙還沒放上去時照常發布，只是藍鵲事件先不提供靜態版與 PDF，放上去之後的下一輪會自動重建。
 
-部署時建置兩份：
+部署時建置三份：
 
 - `--target clearnet` 給 `anoni.net/mystery/`，互動版會載入流量統計
 - `--target onion` 給 onion 站，連到 anoni.net 的網址改成對應的 onion 位址，不載入流量統計
+- `--target ipfs` 給 anoni.net 的 IPFS 鏡像，整個網站掛在閘道的根目錄。連到 anoni.net 的網址改成根目錄的相對路徑（`/docs/`、`/mystery/`），分享預覽的網址維持 `https://anoni.net/mystery/`，不載入流量統計。志工 pin 過的內容收不回來、也無法修正，所以這一份不讀鑰匙，只建置互動版，結局的明文不放上去。閘道在 Cloudflare 後面，`/mystery/` 的回應一樣要帶 `Cache-Control: no-transform`
 
 主機上沒有安裝瀏覽器，PDF 版用 docker 裡的 Chromium 產生。映像由 `tools/pdf/Dockerfile` 建立（Debian 的 `chromium` 加上 `fonts-noto-cjk`），`tools/chrome-docker.sh` 透過 `CHROME_PATH` 接上 `scripts/pdf-kit.mjs`，容器沒有網路。Dockerfile 改了之後，下一次部署會重建映像。
 
@@ -337,7 +338,7 @@ CASE_KEY=<case 01 culprit's full name> CASE_KEY_02=<case 02 culprit's full name>
 
 The output goes to `dist/mystery/`; put the whole folder under `/mystery/` on a web server. The top level is the Traditional Chinese lobby, `zh-cn/` is the Simplified Chinese edition, `en/` is the English edition, and each case lives under its slug, for example `/mystery/night-heron/`. The pages make no requests to other sites and load no web fonts, except when a player presses submit on the feedback page (see "Feedback" below).
 
-`--target clearnet` and `--target onion` are for the anoni.net deployment only (see "Deployment on anoni.net" below), and `--out <dir>` changes the output directory.
+`--target clearnet`, `--target onion` and `--target ipfs` are for the anoni.net deployment only (see "Deployment on anoni.net" below), and `--out <dir>` changes the output directory.
 
 > [!IMPORTANT]
 > Always set every case's key when deploying: `CASE_KEY` for case 01 and `CASE_KEY_<number>` for the others (such as `CASE_KEY_02`). The static edition's ending is plain HTML, so the build has to decrypt the solution. A case whose key is missing is built as the interactive edition only, and neither the lobby nor the interactive page links to its static edition or PDF. The decrypted ending only ever appears on the deployed site and is never committed.
@@ -366,10 +367,11 @@ A cron job on the anoni.net server runs `tools/deploy-m6.sh` every 5 minutes: it
 
 The keys live on the server in `/home/ubuntu/.config/mystery-case-key` (case 01) and `/home/ubuntu/.config/mystery-case-key-02` (case 02), mode 600. Without case 01's key nothing is published. Until case 02's key is in place, releases go out as usual but Blue Magpie has no static edition or PDF; the next run after the key appears rebuilds with them.
 
-The deployment builds twice:
+The deployment builds three times:
 
 - `--target clearnet` for `anoni.net/mystery/`, where the interactive edition loads analytics
 - `--target onion` for the onion site, with links to anoni.net rewritten to the matching onion addresses and no analytics
+- `--target ipfs` for anoni.net's IPFS mirror, which mounts the whole site at the gateway's root: links to anoni.net become root-relative (`/docs/`, `/mystery/`), the social preview URLs stay on `https://anoni.net/mystery/`, and there are no analytics. This build ignores the keys and has the interactive editions only, because what volunteers pin can't be taken back or corrected, so the plain-text endings stay off it. The gateway sits behind Cloudflare, so `/mystery/` there needs `Cache-Control: no-transform` too
 
 The server has no browser installed, so the PDF is printed by Chromium in a container. The image is built from `tools/pdf/Dockerfile` (Debian's `chromium` plus `fonts-noto-cjk`), and `tools/chrome-docker.sh` connects it to `scripts/pdf-kit.mjs` through `CHROME_PATH`. The container has no network access. When the Dockerfile changes, the next deployment rebuilds the image.
 

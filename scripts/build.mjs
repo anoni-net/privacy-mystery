@@ -6,11 +6,15 @@
 // Every case's interactive page is the shared engine (engine/index.src.html with the
 // engine's interface text) plus the case's own files: case.js (story data), web/ui.<lang>.js
 // (its interface text), web/game.js (its behaviour), web/sites.css and web/assets/.
-// Usage: [CASE_KEY=<culprit name>] node scripts/build.mjs [--target clearnet|onion] [--out <dir>] [--fragment <file>] [--drafts]
+// Usage: [CASE_KEY=<culprit name>] node scripts/build.mjs [--target clearnet|onion|ipfs] [--out <dir>] [--fragment <file>] [--drafts]
 //   --target clearnet adds anoni.net's self-hosted Umami to the interactive page
 //   (scripts/analytics.html). --target onion rewrites links to anoni.net, and the feedback
 //   page's form server, into the onion addresses and loads no analytics. Without --target the build has neither, which is
 //   what local previews and other hosts want.
+//   --target ipfs is the copy in anoni.net's IPFS mirror, which mounts the whole site at the
+//   gateway's root: links to anoni.net become root-relative (/docs/, /mystery/), preview tags
+//   keep their absolute URLs, and no analytics are loaded. It ignores the keys and builds only
+//   the interactive pages, because what volunteers pin can't be taken back or corrected.
 //   --out writes somewhere other than dist/mystery/.
 //   --fragment also writes the Chinese page without the <html>/<head> wrapper (for previews
 //   that supply their own document skeleton).
@@ -60,6 +64,17 @@ const TARGETS = {
       ['https://anoni.net/', `http://${ONION}/`],
     ],
   },
+  ipfs: {
+    interactiveOnly: true,
+    // A rule that maps a URL to itself keeps it: preview images and og:url need absolute
+    // URLs, and Gears and the API aren't in the mirror
+    rewrites: [
+      ['content="https://anoni.net/', 'content="https://anoni.net/'],
+      ['https://anoni.net/gears', 'https://anoni.net/gears'],
+      ['https://anoni.net/api', 'https://anoni.net/api'],
+      ['https://anoni.net/', '/'],
+    ],
+  },
 };
 const targetName = arg('--target');
 if (targetName && !TARGETS[targetName]) { console.error('unknown --target ' + targetName); process.exit(1); }
@@ -72,7 +87,7 @@ const LANGS = [
   { code: 'en', dir: 'en', caseFile: 'case.en.js', ui: 'ui.en.js', solution: 'solution.en.enc' },
 ];
 const langsOf = caseDir => LANGS.filter(l => [join(caseDir, l.caseFile), join(caseDir, 'web', l.ui), join(caseDir, l.solution)].every(existsSync));
-const keyOf = m => (process.env[m.number === '01' ? 'CASE_KEY' : 'CASE_KEY_' + m.number] || '').trim();
+const keyOf = m => target.interactiveOnly ? '' : (process.env[m.number === '01' ? 'CASE_KEY' : 'CASE_KEY_' + m.number] || '').trim();
 const kb = file => Math.max(1, Math.round(statSync(file).size / 1024)) + ' KB';
 const listFiles = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>
   e.isDirectory() ? listFiles(join(dir, e.name)).map(f => e.name + '/' + f) : [e.name]);
@@ -108,7 +123,7 @@ caseDirs.forEach((caseDir, ci) => {
   // The static version and the PDF hold the ending, so they need the key. Without it the case
   // is built as if it had no print editions yet: no links to them anywhere, lobby included.
   if (manifest.printEditions && !key) {
-    console.warn(`${manifest.slug}: key not set (${manifest.number === '01' ? 'CASE_KEY' : 'CASE_KEY_' + manifest.number}), built without the static version and the PDF.`);
+    if (!target.interactiveOnly) console.warn(`${manifest.slug}: key not set (${manifest.number === '01' ? 'CASE_KEY' : 'CASE_KEY_' + manifest.number}), built without the static version and the PDF.`);
     manifest.printEditions = false;
   }
   const assets = existsSync(join(web, 'assets')) ? listFiles(join(web, 'assets')) : [];
@@ -205,11 +220,10 @@ for (const lang of lobbyLangs) {
 if (target.rewrites) {
   const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>
     e.isDirectory() ? walk(join(dir, e.name)) : e.name.endsWith('.html') ? [join(dir, e.name)] : []);
-  for (const file of walk(out)) {
-    let html = readFileSync(file, 'utf8');
-    for (const [from, to] of target.rewrites) html = html.split(from).join(to);
-    writeFileSync(file, html);
-  }
+  // One pass, and at each position the first rule that matches wins
+  const to = new Map(target.rewrites);
+  const re = new RegExp(target.rewrites.map(([from]) => from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+  for (const file of walk(out)) writeFileSync(file, readFileSync(file, 'utf8').replace(re, m => to.get(m)));
 }
 
 // The service worker (scripts/sw.js): for each language, the files it keeps for offline play,
