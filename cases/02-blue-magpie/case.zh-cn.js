@@ -71,13 +71,13 @@ const HINTS = [
 /* ---------- chat ---------- */
 const AWU_BASE = [
   { sys: '— 互助站内部频道 —' },
-  { tm: '21:21', text: '芷宁的案子交给你了。法扶的咨询律师转介过来的，她的涟漪账号被人接走过。' },
+  { tm: '21:21', text: '芷宁的案子交给你了。一位义务律师转介过来的，她的涟漪账号被人接走过。' },
   { tm: '21:21', text: '两件事：搞清楚这套诈骗怎么骗到她，还有她的数据是从哪里流出去的。' },
   { tm: '21:22', text: '卡住就按「给我提示」。看越多提示，结案评级会越低。' },
 ];
 /* Opening conversation: each node shows 芷宁's messages, then waits for the player's reply, a file transfer, or ends. */
 const INTRO = {
-  n1:  { msgs: ['你好，我是周芷宁。法扶的律师说，技术上的事可以找你们。', '我被骗了……应该说，差一点被骗。'], choices: [['你好，我是今晚值班的志愿者。你现在安全吗？', 'n2a'], ['先别急。发生什么事，从头说。', 'n2b']] },
+  n1:  { msgs: ['你好，我是周芷宁。帮我的义务律师说，技术上的事可以找你们。', '我被骗了……应该说，差一点被骗。'], choices: [['你好，我是今晚值班的志愿者。你现在安全吗？', 'n2a'], ['先别急。发生什么事，从头说。', 'n2b']] },
   n2a: { msgs: ['钱没有被转走。可是我的涟漪账号被别人用了。'], next: 'n3' },
   n2b: { msgs: ['好。'], next: 'n3' },
   n3:  { msgs: ['礼拜一晚上我收到一封 BeatBird 的信，说我的「睡眠分析高端方案」已经开通，每个月扣 3,480。', '我根本没申请过。信里叫我自己去搜索「BeatBird 会员中心 官方」看详情。'], choices: [['你照着搜索了？', 'n4']] },
@@ -85,7 +85,7 @@ const INTRO = {
   n5a: { msgs: ['可是隔天，我朋友阿哲问我为什么要他帮我买游戏点卡。', '我没有传过那种消息。'], next: 'n6' },
   n5b: { msgs: ['用涟漪扫的，他说涟漪扫比较快。', '隔天我朋友阿哲问我为什么要他帮我买游戏点卡，我没有传过。'], next: 'n6' },
   n6:  { msgs: ['还有一件事让我很怕：那封信知道我的全名、手机，还知道我最近平均只睡 5 小时 12 分。', '那是 BeatBird 手环量的。他们怎么会知道？'], choices: [['我们会一起查。你手上有那封信吗？', 'n7']] },
-  n7:  { msgs: ['有，我把原始信件、跟阿哲的对话、还有我能截的图都整理好了。', '对了，我用面具邮箱，每个服务一个别名，清单也放进去了。'], file: true, next: 'n8' },
+  n7:  { msgs: ['有，我把原始信件、跟阿哲的对话、还有我能截的图都整理好了。信里的手机号码我遮了中间三位。', '对了，我用面具邮箱，每个服务一个别名，清单也放进去了。'], file: true, next: 'n8' },
   n8:  { msgs: [], choices: [['收到了。今晚就帮你查。', 'n9']] },
   n9:  { msgs: ['谢谢。我会一直在在线。'], end: true },
 };
@@ -135,7 +135,7 @@ Content-Type: text/plain; charset=utf-8
 
 您的 BeatBird 睡眠分析高端方案已成功开通，相关配套服务皆已就绪。
 
-• 会员账号：0937264118
+• 会员账号：0937***118
 • 绑定设备：BeatBird Band 3
 • 近 30 日平均睡眠：5 小时 12 分
 • 服务方案：睡眠分析高端方案（月缴）
@@ -147,12 +147,12 @@ Content-Type: text/plain; charset=utf-8
 
 感谢您的支持，祝您一夜好眠！
 BeatBird 营运团队 敬上
-公司地址：台北市内湖区瑞光路 588 号 8 楼
+公司地址：台北市内湖区雾港路 588 号 8 楼
 
 --=_bb7c
 Content-Type: text/html; charset=utf-8
 
-<div style="font-family:sans-serif;max-width:520px"><p style="font-size:20px;font-weight:700;color:#c2410c">BeatBird</p><p>亲爱的会员您好：周芷宁</p><p>您的 BeatBird 睡眠分析高端方案已成功开通，相关配套服务皆已就绪。</p><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:3px 10px 3px 0;color:#666">会员账号</td><td>0937264118</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">绑定设备</td><td>BeatBird Band 3</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">近 30 日平均睡眠</td><td>5 小时 12 分</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">服务方案</td><td>睡眠分析高端方案（月缴）</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">每期共计</td><td><b>3,480 NT</b>，按月依约延续</td></tr></table><p>请在浏览器搜索 <b>[BeatBird 会员中心 官方]</b> 查看详情或取消。</p><p style="color:#888;font-size:12px">BeatBird 营运团队 敬上<br>公司地址：新北市三重区重新路五段 609 巷 12 号</p></div>
+<div style="font-family:sans-serif;max-width:520px"><p style="font-size:20px;font-weight:700;color:#c2410c">BeatBird</p><p>亲爱的会员您好：周芷宁</p><p>您的 BeatBird 睡眠分析高端方案已成功开通，相关配套服务皆已就绪。</p><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:3px 10px 3px 0;color:#666">会员账号</td><td>0937***118</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">绑定设备</td><td>BeatBird Band 3</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">近 30 日平均睡眠</td><td>5 小时 12 分</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">服务方案</td><td>睡眠分析高端方案（月缴）</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">每期共计</td><td><b>3,480 NT</b>，按月依约延续</td></tr></table><p>请在浏览器搜索 <b>[BeatBird 会员中心 官方]</b> 查看详情或取消。</p><p style="color:#888;font-size:12px">BeatBird 营运团队 敬上<br>公司地址：新北市三重区云帆路五段 609 巷 12 号</p></div>
 
 --=_bb7c--
 `;
@@ -181,7 +181,7 @@ BeatBird 不会寄信要你搜索客服、不会要你扫 QR code，也不会要
 订阅与付款请一律在 App 的「账号 › 订阅」查看。
 
 心跳鸟科技股份有限公司
-台北市内湖区洲子街 88 号 3 楼
+台北市内湖区雾港路 88 号 3 楼
 `;
 const CHAT_LOG = `涟漪 · 与 阿哲 的对话（周芷宁导出）
 [12/08 13:05] 周芷宁: 在吗？可以帮我一个忙吗
@@ -254,7 +254,7 @@ const BB_INBOX = `陷阱邮箱收件记录（BeatBird 数据保护室监看）�
   主题：许书豪，睡眠分析高端方案 按月依约延续 3,480 NT
   内文节录：
     亲爱的会员您好：许书豪
-    • 会员账号：0912558107
+    • 会员账号：0912***107
     • 绑定设备：BeatBird Band 2
     • 近 30 日平均睡眠：{avg_sleep_30d}
     • 浏览器搜索 [BeatBird 会员中心 官方] 查看详情或取消
@@ -285,7 +285,7 @@ const LEAKS = {
   'zhining.chou@mistmail.tw': [['好物团购网', '2024-04', '姓名、电话、Email、收件地址'], ['StreamBox 旧论坛', '2021-10', 'Email、哈希过的密码']],
 };
 const COMPANIES = {
-  '53018827': ['心跳鸟科技股份有限公司', '台北市内湖区洲子街 88 号 3 楼', '2018-11-02', '核准设立'],
+  '53018827': ['心跳鸟科技股份有限公司', '台北市内湖区雾港路 88 号 3 楼', '2018-11-02', '核准设立'],
   '87654321': null,
 };
 const FORUM_THREADS = [
@@ -383,7 +383,7 @@ function makeSites(ctx) {
   function fakeSite(host, rest) {
     const st = ctx.state();
     const bar = `<div class="fk-bar"><span class="fk-logo">BeatBird</span><span>会员中心</span><nav>${a(host, '首页')}${a(host + '/cancel', '取消自动续约')}${a(host + '/support', '在线客服')}</nav></div>`;
-    const foot = `<div class="fk-foot">© 2026 贝特博德数字科技有限公司　统一编号 87654321<br>台北市内湖区瑞光路 588 号 8 楼　客服邮箱 bb.member.care@mistmail.tw</div>`;
+    const foot = `<div class="fk-foot">© 2026 贝特博德数字科技有限公司　统一编号 87654321<br>台北市内湖区雾港路 588 号 8 楼　客服邮箱 bb.member.care@mistmail.tw</div>`;
     let body;
     if (rest === '/cancel') {
       body = st.flags.cancelSent
@@ -406,7 +406,7 @@ function makeSites(ctx) {
     return `<div class="site"><div class="bb-hero"><div class="bb-logo">BeatBird</div><h1>睡得好，活得好。</h1><p>追踪你的睡眠、心率与生理周期。</p></div><div class="wrap"><div class="bb-alert"><b>防诈公告</b>　近期有人冒用 BeatBird 名义寄送「高端方案扣款」通知。BeatBird 不会要你搜索客服、扫描 QR code 或操作网银。${a('beatbird.app/notice', '看完整公告 →', 'color:#c2410c')}</div><p>${ctx.pin('beatbird.app', 'BeatBird 官方：不会要你搜索客服、扫 QR code 或操作网银；订阅一律在 App 内查看。')}</p></div></div>`;
   }
   function bbNotice() {
-    return `<div class="site"><div class="wrap"><div class="bb-logo">BeatBird</div><h1 style="font-size:24px">防诈公告</h1><p class="muted">2026-12-07 更新</p><p>近期部分会员收到「睡眠分析高端方案 按月依约延续 3,480 NT」的信件。这不是 BeatBird 发出的，我们没有这个方案。</p><ul><li>BeatBird 的信只会从 <span class="mono">@beatbird.app</span> 发出。</li><li>我们不会要你搜索「官方客服」、加入任何专员的聊天账号，或扫描 QR code。</li><li>我们不会要你到 ATM 或网银「解除扣款」。</li><li>订阅与付款请一律在 App 的「账号 › 订阅」查看。</li></ul><p>我们已经报案，并由数据保护长追查信中会员数据的来源。有疑问请拨 165 反诈骗专线。</p><p>${ctx.pin('BeatBird 防诈公告', '真的信只会从 @beatbird.app 发出；没有「睡眠分析高端方案」。')}</p><p class="muted" style="font-size:12px">心跳鸟科技股份有限公司　统一编号 53018827　台北市内湖区洲子街 88 号 3 楼</p></div></div>`;
+    return `<div class="site"><div class="wrap"><div class="bb-logo">BeatBird</div><h1 style="font-size:24px">防诈公告</h1><p class="muted">2026-12-07 更新</p><p>近期部分会员收到「睡眠分析高端方案 按月依约延续 3,480 NT」的信件。这不是 BeatBird 发出的，我们没有这个方案。</p><ul><li>BeatBird 的信只会从 <span class="mono">@beatbird.app</span> 发出。</li><li>我们不会要你搜索「官方客服」、加入任何专员的聊天账号，或扫描 QR code。</li><li>我们不会要你到 ATM 或网银「解除扣款」。</li><li>订阅与付款请一律在 App 的「账号 › 订阅」查看。</li></ul><p>我们已经报案，并由数据保护长追查信中会员数据的来源。有疑问请拨 165 反诈骗专线。</p><p>${ctx.pin('BeatBird 防诈公告', '真的信只会从 @beatbird.app 发出；没有「睡眠分析高端方案」。')}</p><p class="muted" style="font-size:12px">心跳鸟科技股份有限公司　统一编号 53018827　台北市内湖区雾港路 88 号 3 楼</p></div></div>`;
   }
 
   /* ---------- 雾港小工具 ---------- */

@@ -4,7 +4,7 @@
 export const T = {
   zh: {
     static: {
-      title: '藍鵲事件', lead: '一封沒有連結的扣款通知，怎麼把人的帳號整個接走？', intro: '你是霧港隱私互助站的志工。今晚，法扶的律師轉介來一位差點被騙的上班族。', open: '打開加密訊息',
+      title: '藍鵲事件', lead: '一封沒有連結的扣款通知，怎麼把人的帳號整個接走？', intro: '你是霧港隱私互助站的志工。今晚，一位義務律師轉介來一個差點被騙的上班族。', open: '打開加密訊息',
       aside: ['這是不需要 JavaScript 的靜態版，給 Tor Browser「最安全」等級或停用 JavaScript 的瀏覽器使用。內容和互動版相同，但不會記錄你的進度，建議準備紙筆，或打開「調查筆記」頁一起使用。',
         '能執行 JavaScript 的話，可以玩<a href="../">互動版</a>。', '<a href="../../">回到委託板</a>，看看其他案件。',
         '想離線或印出來玩：<a href="../blue-magpie.pdf" download="藍鵲事件.pdf">下載 PDF 版</a>（解答在最後幾頁，上下顛倒印刷）。'],
@@ -36,7 +36,7 @@ export const T = {
       warn: '最後幾頁是解答，上下顛倒印刷。破案之前，請不要翻到最後。',
       briefing: '遊戲說明', briefLead: '你是「霧港隱私互助站」的志工。我們幫助需要匿名的人，也幫被騙、被冒用、被追蹤的人把自己拿回來。',
       job: '今晚的委託',
-      jobBody: '<p>上班族<b>周芷寧</b>收到一封 BeatBird「睡眠分析進階方案」每月扣款 3,480 的通知。信裡沒有連結，只叫她自己搜尋客服。她照做了，掃了一個「驗證會員身分」的 QR code，隔天朋友就收到「她」傳來的借錢訊息。</p><p style="margin:0">更讓她害怕的是：那封信知道她的全名、手機，還知道她最近平均只睡 5 小時 12 分。法扶的律師把她轉介給互助站。你要拆穿這套詐騙，並找出<b>是誰把會員資料流了出去</b>。</p>',
+      jobBody: '<p>上班族<b>周芷寧</b>收到一封 BeatBird「睡眠分析進階方案」每月扣款 3,480 的通知。信裡沒有連結，只叫她自己搜尋客服。她照做了，掃了一個「驗證會員身分」的 QR code，隔天朋友就收到「她」傳來的借錢訊息。</p><p style="margin:0">更讓她害怕的是：那封信知道她的全名、手機，還知道她最近平均只睡 5 小時 12 分。義務律師把她轉介給互助站。你要拆穿這套詐騙，並找出<b>是誰把會員資料流了出去</b>。</p>',
       task: '你的任務', taskBody: '<p><b>第一階段・拆穿詐騙</b>　這封信和假網站用了哪些手法？那個 QR code 做了什麼？</p><p style="margin:0"><b>第二階段・找出藍鵲</b>　詐騙名單是從哪裡來的？只靠檔案裡的資訊，把六位下載者縮小到一人。答案寫在後面的答題卡上。</p>',
       rules: '規則', ruleItems: ['破案需要的資訊都在檔案 01–10 裡，不需要上網。', '<b>不要掃描檔案裡的 QR code。</b>調查員已經用不會開啟連結的工具讀過它，結果在檔案 05。', '每一條結論都要有<b>證據</b>支撐。看起來最可疑的人，不一定是做了這件事的人。', '卡關時看答題卡後面的提示，每一條都會影響最後的自評。', '解答在最後，前面有一頁黑色的「停」。'],
       files: '檔案', fileNames: ['芷寧的加密訊息', '扣款通知（芷寧收到的信）', 'BeatBird 真的電子報', '搜尋結果與「會員中心」', '調查員的查詢紀錄', '芷寧的手機', '面具信箱別名與外洩查詢', '匿名論壇討論串', 'BeatBird 資料保護長的紀錄', '附錄：網路上查得到的資料'],
@@ -55,7 +55,7 @@ export const T = {
       f09: ['BeatBird 資料保護長的紀錄', '阿霧查到詐騙信寄到只給 BeatBird 的別名之後，聯絡了 BeatBird 資料保護長唐啟文。他傳來以下資料，並要求在證據確定之前不要對外講任何名字。'],
       f10: ['附錄：網路上查得到的資料', '調查員查得到的公開資訊。'],
       appendix: `<h3>BeatBird 防詐公告（2026-12-07 更新）</h3><p>近期部分會員收到「睡眠分析進階方案 按月依約延續 3,480 NT」的信件。這不是 BeatBird 寄出的，我們沒有這個方案。BeatBird 的信只會從 <span class="mono">@beatbird.app</span> 寄出；我們不會要你搜尋「官方客服」、加入專員的聊天帳號、掃描 QR code，也不會要你到 ATM 或網銀「解除扣款」。</p>
-<h3>公司登記查詢</h3><table><tr><th>統一編號</th><th>結果</th></tr><tr><td class="mono">53018827</td><td>心跳鳥科技股份有限公司，台北市內湖區洲子街 88 號 3 樓，2018-11-02 核准設立</td></tr><tr><td class="mono">87654321</td><td>查無登記資料</td></tr></table>
+<h3>公司登記查詢</h3><table><tr><th>統一編號</th><th>結果</th></tr><tr><td class="mono">53018827</td><td>心跳鳥科技股份有限公司，台北市內湖區霧港路 88 號 3 樓，2018-11-02 核准設立</td></tr><tr><td class="mono">87654321</td><td>查無登記資料</td></tr></table>
 <h3>165 反詐騙專線：假冒 App 扣款、解除分期</h3><ul><li>收到「已開通」「按月扣款」的通知，先不要照信上說的去搜尋客服。自己打開 App，或撥原本就知道的官方電話確認。</li><li>官方不會要你到 ATM 或網銀「解除扣款」，也不會要你掃 QR code「驗證身分」。</li><li>通訊軟體被接上陌生裝置：到「已連結的裝置」移除它，開啟兩步驟驗證，並通知親友。</li></ul>
 <h3>網址怎麼看</h3><p>網址的「註冊網域」是頂級網域（.com、.app）前面那一段，例如 <span class="mono">mail.beatbird.app</span> 的註冊網域是 <span class="mono">beatbird.app</span>。註冊網域前面的部分是子網域，網域擁有者想取什麼名字都可以。有些字母看起來和英文一樣，其實是其他文字（例如西里爾字母 е），那就是另一個網域。</p>`,
       sheet: '答題卡', sheetLead: '每題都要寫下證據來自哪個檔案。', stage1: '第一階段・拆穿詐騙', stage2: '第二階段・找出藍鵲',
@@ -74,7 +74,7 @@ export const T = {
   },
   'zh-cn': {
     static: {
-      title: '蓝鹊事件', lead: '一封没有链接的扣款通知，怎么把人的账号整个接走？', intro: '你是雾港隐私互助站的志愿者。今晚，法扶的律师转介来一位差点被骗的上班族。', open: '打开加密消息',
+      title: '蓝鹊事件', lead: '一封没有链接的扣款通知，怎么把人的账号整个接走？', intro: '你是雾港隐私互助站的志愿者。今晚，一位义务律师转介来一个差点被骗的上班族。', open: '打开加密消息',
       aside: ['这是不需要 JavaScript 的静态版，给 Tor Browser「最安全」等级或停用 JavaScript 的浏览器使用。内容和交互版相同，但不会记录你的进度，建议准备纸笔，或打开「调查笔记」页一起使用。',
         '能运行 JavaScript 的话，可以玩<a href="../">交互版</a>。', '<a href="../../">回到委托板</a>，看看其他案件。',
         '想离线或打印出来玩：<a href="../blue-magpie.pdf" download="蓝鹊事件.pdf">下载 PDF 版</a>（解答在最后几页，上下颠倒印刷）。'],
@@ -106,7 +106,7 @@ export const T = {
       warn: '最后几页是解答，上下颠倒印刷。破案之前，请不要翻到最后。',
       briefing: '游戏说明', briefLead: '你是「雾港隐私互助站」的志愿者。我们帮助需要匿名的人，也帮被骗、被冒用、被追踪的人把自己拿回来。',
       job: '今晚的委托',
-      jobBody: '<p>上班族<b>周芷宁</b>收到一封 BeatBird「睡眠分析高端方案」每月扣款 3,480 的通知。信里没有链接，只叫她自己搜索客服。她照做了，扫了一个「验证会员身份」的 QR code，隔天朋友就收到「她」传来的借钱消息。</p><p style="margin:0">更让她害怕的是：那封信知道她的全名、手机，还知道她最近平均只睡 5 小时 12 分。法扶的律师把她转介给互助站。你要拆穿这套诈骗，并找出<b>是谁把会员数据流了出去</b>。</p>',
+      jobBody: '<p>上班族<b>周芷宁</b>收到一封 BeatBird「睡眠分析高端方案」每月扣款 3,480 的通知。信里没有链接，只叫她自己搜索客服。她照做了，扫了一个「验证会员身份」的 QR code，隔天朋友就收到「她」传来的借钱消息。</p><p style="margin:0">更让她害怕的是：那封信知道她的全名、手机，还知道她最近平均只睡 5 小时 12 分。义务律师把她转介给互助站。你要拆穿这套诈骗，并找出<b>是谁把会员数据流了出去</b>。</p>',
       task: '你的任务', taskBody: '<p><b>第一阶段・拆穿诈骗</b>　这封信和假网站用了哪些手法？那个 QR code 做了什么？</p><p style="margin:0"><b>第二阶段・找出蓝鹊</b>　诈骗名单是从哪里来的？只靠文件里的信息，把六位下载者缩小到一人。答案写在后面的答题卡上。</p>',
       rules: '规则', ruleItems: ['破案需要的信息都在文件 01–10 里，不需要上网。', '<b>不要扫描文件里的 QR code。</b>调查员已经用不会打开链接的工具读过它，结果在文件 05。', '每一条结论都要有<b>证据</b>支撑。看起来最可疑的人，不一定是做了这件事的人。', '卡关时看答题卡后面的提示，每一条都会影响最后的自评。', '解答在最后，前面有一页黑色的「停」。'],
       files: '文件', fileNames: ['芷宁的加密消息', '扣款通知（芷宁收到的信）', 'BeatBird 真的电子报', '搜索结果与「会员中心」', '调查员的查找记录', '芷宁的手机', '面具邮箱别名与泄露查找', '匿名论坛讨论串', 'BeatBird 数据保护长的记录', '附录：网络上查得到的数据'],
@@ -125,7 +125,7 @@ export const T = {
       f09: ['BeatBird 数据保护长的记录', '阿雾查到诈骗信寄到只给 BeatBird 的别名之后，联系了 BeatBird 数据保护长唐启文。他传来以下数据，并要求在证据确定之前不要对外讲任何名字。'],
       f10: ['附录：网络上查得到的数据', '调查员查得到的公开信息。'],
       appendix: `<h3>BeatBird 防诈公告（2026-12-07 更新）</h3><p>近期部分会员收到「睡眠分析高端方案 按月依约延续 3,480 NT」的信件。这不是 BeatBird 发出的，我们没有这个方案。BeatBird 的信只会从 <span class="mono">@beatbird.app</span> 发出；我们不会要你搜索「官方客服」、加入专员的聊天账号、扫描 QR code，也不会要你到 ATM 或网银「解除扣款」。</p>
-<h3>公司登记查找</h3><table><tr><th>统一编号</th><th>结果</th></tr><tr><td class="mono">53018827</td><td>心跳鸟科技股份有限公司，台北市内湖区洲子街 88 号 3 楼，2018-11-02 核准设立</td></tr><tr><td class="mono">87654321</td><td>查无登记数据</td></tr></table>
+<h3>公司登记查找</h3><table><tr><th>统一编号</th><th>结果</th></tr><tr><td class="mono">53018827</td><td>心跳鸟科技股份有限公司，台北市内湖区雾港路 88 号 3 楼，2018-11-02 核准设立</td></tr><tr><td class="mono">87654321</td><td>查无登记数据</td></tr></table>
 <h3>165 反诈骗专线：假冒 App 扣款、解除分期</h3><ul><li>收到「已开通」「按月扣款」的通知，先不要照信上说的去搜索客服。自己打开 App，或拨原本就知道的官方电话确认。</li><li>官方不会要你到 ATM 或网银「解除扣款」，也不会要你扫 QR code「验证身份」。</li><li>通信软件被接上陌生设备：到「已关联的设备」移除它，打开两步骤验证，并通知亲友。</li></ul>
 <h3>网址怎么看</h3><p>网址的「注册域名」是顶级域名（.com、.app）前面那一段，例如 <span class="mono">mail.beatbird.app</span> 的注册域名是 <span class="mono">beatbird.app</span>。注册域名前面的部分是子域名，域名拥有者想取什么名字都可以。有些字母看起来和英文一样，其实是其他文本（例如西里尔字母 е），那就是另一个域名。</p>`,
       sheet: '答题卡', sheetLead: '每题都要写下证据来自哪个文件。', stage1: '第一阶段・拆穿诈骗', stage2: '第二阶段・找出蓝鹊',
@@ -144,7 +144,7 @@ export const T = {
   },
   en: {
     static: {
-      title: 'Blue Magpie', lead: 'How does a billing notice with no link take over someone’s whole account?', intro: 'You volunteer at the Mistport Privacy Aid. Tonight, a legal aid lawyer has referred an office worker who was nearly scammed.', open: 'Open the encrypted message',
+      title: 'Blue Magpie', lead: 'How does a billing notice with no link take over someone’s whole account?', intro: 'You volunteer at the Mistport Privacy Aid. Tonight, a pro bono lawyer has referred an office worker who was nearly scammed.', open: 'Open the encrypted message',
       aside: ['This is the static version: no JavaScript needed, for Tor Browser’s “Safest” level or browsers with JavaScript off. It has the same case as the interactive version but doesn’t save your progress, so keep pen and paper handy, or use the Notes page.',
         'If your browser runs JavaScript, try the <a href="../">interactive version</a>.', '<a href="../../">Back to the case board</a> for other cases.',
         'To play offline or on paper: <a href="../blue-magpie.pdf" download="blue-magpie.pdf">download the PDF</a> (solution on the last pages, printed upside down).'],
@@ -176,7 +176,7 @@ export const T = {
       warn: 'The last pages are the solution, printed upside down. Don’t turn to the back until you’ve solved the case.',
       briefing: 'How to play', briefLead: 'You volunteer at the Mistport Privacy Aid. We help people who need to stay anonymous, and people who have been scammed, impersonated or tracked to take themselves back.',
       job: 'Tonight’s request',
-      jobBody: '<p>Office worker <b>Chou Chih-ning</b> got a notice that BeatBird’s “Sleep Analysis Premium Plan” would charge her 3,480 a month. The email had no link; it only told her to search for support. She did, scanned a QR code to “verify her membership”, and the next day her friend got a message from “her” asking for money.</p><p style="margin:0">What scares her most: the email knew her full name, her phone number, and that she has been sleeping 5 hours 12 minutes a night on average. A legal aid lawyer referred her to the aid station. Take the scam apart and find out <b>who leaked the member data</b>.</p>',
+      jobBody: '<p>Office worker <b>Chou Chih-ning</b> got a notice that BeatBird’s “Sleep Analysis Premium Plan” would charge her 3,480 a month. The email had no link; it only told her to search for support. She did, scanned a QR code to “verify her membership”, and the next day her friend got a message from “her” asking for money.</p><p style="margin:0">What scares her most: the email knew her full name, her phone number, and that she has been sleeping 5 hours 12 minutes a night on average. A pro bono lawyer referred her to the aid station. Take the scam apart and find out <b>who leaked the member data</b>.</p>',
       task: 'Your task', taskBody: '<p><b>Stage one · take the scam apart</b>  Which tricks did the email and the fake site use? What did the QR code do?</p><p style="margin:0"><b>Stage two · find Blue Magpie</b>  Where did the scammers’ list come from? Using only what’s in this file, narrow six people down to one. Write your answers on the answer sheet at the back.</p>',
       rules: 'Rules', ruleItems: ['Everything you need is in files 01–10. No internet required.', '<b>Don’t scan the QR code in this file.</b> The investigator has read it with a tool that doesn’t open links; the result is in file 05.', 'Back every conclusion with <b>evidence</b>. The person who looks most suspicious isn’t always the one who did it.', 'If you’re stuck, the hints follow the answer sheet. Each one counts against your final rank.', 'The solution is at the very back, behind a black “stop” page.'],
       files: 'Files', fileNames: ['Chih-ning’s encrypted messages', 'The billing notice (Chih-ning’s email)', 'BeatBird’s real newsletter', 'Search results and the “Member Centre”', 'The investigator’s lookups', 'Chih-ning’s phone', 'MaskMail aliases and breach checks', 'Anonymous forum thread', 'BeatBird’s data protection records', 'Appendix: what anyone can look up'],
@@ -195,7 +195,7 @@ export const T = {
       f09: ['BeatBird’s data protection records', 'Once Fog found the scam went to an alias only BeatBird had, the aid station contacted Tang Chi-wen, BeatBird’s data protection officer. Tang sent the following, and asked that no names be made public until the evidence is solid.'],
       f10: ['Appendix: what anyone can look up', 'Public information the investigator found.'],
       appendix: `<h3>BeatBird scam warning (updated 2026-12-07)</h3><p>Some members have received emails titled “Sleep Analysis Premium Plan renewal monthly as agreed 3,480 NT”. BeatBird did not send them, and we have no such plan. BeatBird only ever emails from <span class="mono">@beatbird.app</span>. We will never ask you to search for “official support”, add an agent’s chat account, scan a QR code, or “cancel a payment” at an ATM or in online banking.</p>
-<h3>Company registry lookup</h3><table><tr><th>Business number</th><th>Result</th></tr><tr><td class="mono">53018827</td><td>BeatBird Technology Co., Ltd., 3F, No. 88, Zhouzi St, Neihu District, Taipei; registered 2018-11-02</td></tr><tr><td class="mono">87654321</td><td>No company registered</td></tr></table>
+<h3>Company registry lookup</h3><table><tr><th>Business number</th><th>Result</th></tr><tr><td class="mono">53018827</td><td>BeatBird Technology Co., Ltd., 3F, No. 88, Wugang Rd, Neihu District, Taipei; registered 2018-11-02</td></tr><tr><td class="mono">87654321</td><td>No company registered</td></tr></table>
 <h3>165 Anti-Fraud Hotline: fake app charges and “cancelling instalments”</h3><ul><li>If a notice says a plan is “now active” or “billed monthly”, don’t search for the support it points you to. Open the app yourself, or call a number you already know is official.</li><li>Real companies never ask you to “cancel a payment” at an ATM or in online banking, or to scan a QR code to “verify your identity”.</li><li>If an unknown device has joined your messaging app, remove it under “Linked devices”, turn on two-step verification and tell your friends and family.</li></ul>
 <h3>How to read a web address</h3><p>An address’s “registered domain” is the part just before the top-level domain (.com, .app): the registered domain of <span class="mono">mail.beatbird.app</span> is <span class="mono">beatbird.app</span>. Anything before the registered domain is a subdomain, and the domain’s owner can call it whatever they like. Some letters look like English ones but come from another alphabet (such as the Cyrillic е); then it is a different domain.</p>`,
       sheet: 'Answer sheet', sheetLead: 'For every answer, note which file your evidence comes from.', stage1: 'Stage one · take the scam apart', stage2: 'Stage two · find Blue Magpie',

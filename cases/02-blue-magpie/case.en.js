@@ -70,13 +70,13 @@ const HINTS = [
 /* ---------- chat ---------- */
 const AWU_BASE = [
   { sys: '— Mistport Privacy Aid · internal channel —' },
-  { tm: '21:21', text: 'Chih-ning’s case is yours. A legal aid lawyer referred her to us: someone took over her Ripple account.' },
+  { tm: '21:21', text: 'Chih-ning’s case is yours. A pro bono lawyer referred her to us: someone took over her Ripple account.' },
   { tm: '21:21', text: 'Two things: work out how this scam got her, and where her data leaked from.' },
   { tm: '21:22', text: 'If you’re stuck, press “Give me a hint”. The more hints, the lower your rank for the case.' },
 ];
 /* Opening conversation: each node shows Chih-ning's messages, then waits for the player's reply, a file transfer, or ends. */
 const INTRO = {
-  n1:  { msgs: ['Hi, I’m Chou Chih-ning. My legal aid lawyer said you could help with the technical side.', 'I got scammed… or nearly did.'], choices: [['Hi, I’m the volunteer on duty tonight. Are you safe right now?', 'n2a'], ['No rush. Tell me what happened from the start.', 'n2b']] },
+  n1:  { msgs: ['Hi, I’m Chou Chih-ning. My pro bono lawyer said you could help with the technical side.', 'I got scammed… or nearly did.'], choices: [['Hi, I’m the volunteer on duty tonight. Are you safe right now?', 'n2a'], ['No rush. Tell me what happened from the start.', 'n2b']] },
   n2a: { msgs: ['No money was taken. But someone else has been using my Ripple account.'], next: 'n3' },
   n2b: { msgs: ['OK.'], next: 'n3' },
   n3:  { msgs: ['On Monday night I got an email from BeatBird saying my “Sleep Analysis Premium” plan was active, at 3,480 a month.', 'I never signed up for it. The email told me to search for “BeatBird Member Centre Official” for details.'], choices: [['And you searched for it?', 'n4']] },
@@ -84,7 +84,7 @@ const INTRO = {
   n5a: { msgs: ['But the next day my friend Che asked why I wanted him to buy me game credit.', 'I never sent anything like that.'], next: 'n6' },
   n5b: { msgs: ['With Ripple. He said Ripple scans faster.', 'The next day my friend Che asked why I wanted him to buy me game credit. I never sent that.'], next: 'n6' },
   n6:  { msgs: ['And one more thing scares me: the email knew my full name, my phone number, and that I’ve been sleeping 5 hours 12 minutes a night on average.', 'That comes from my BeatBird band. How would they know?'], choices: [['We’ll find out together. Do you still have the email?', 'n7']] },
-  n7:  { msgs: ['Yes. I’ve put together the original email, my chat with Che and the screenshots I could take.', 'Oh, and I use MaskMail, a different alias for each service. The list is in there too.'], file: true, next: 'n8' },
+  n7:  { msgs: ['Yes. I’ve put together the original email, my chat with Che and the screenshots I could take. I’ve masked the middle of the phone number in the email.', 'Oh, and I use MaskMail, a different alias for each service. The list is in there too.'], file: true, next: 'n8' },
   n8:  { msgs: [], choices: [['Got it. I’ll look into it tonight.', 'n9']] },
   n9:  { msgs: ['Thank you. I’ll stay online.'], end: true },
 };
@@ -134,7 +134,7 @@ Dear Valued Member: Chou Chih-ning
 
 Your BeatBird Sleep Analysis Premium Plan has been successfully activated, all related services are now ready.
 
-• Member account: 0937264118
+• Member account: 0937***118
 • Linked device: BeatBird Band 3
 • Average sleep, last 30 days: 5 hrs 12 min
 • Service plan: Sleep Analysis Premium Plan (monthly)
@@ -146,12 +146,12 @@ Your BeatBird Sleep Analysis Premium Plan has been successfully activated, all r
 
 Thank you for your support and wish you a good night's sleep!
 Sincerely, BeatBird Operations Team
-Company address: 8F, No. 588, Ruiguang Rd, Neihu District, Taipei
+Company address: 8F, No. 588, Wugang Rd, Neihu District, Taipei
 
 --=_bb7c
 Content-Type: text/html; charset=utf-8
 
-<div style="font-family:sans-serif;max-width:520px"><p style="font-size:20px;font-weight:700;color:#c2410c">BeatBird</p><p>Dear Valued Member: Chou Chih-ning</p><p>Your BeatBird Sleep Analysis Premium Plan has been successfully activated, all related services are now ready.</p><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:3px 10px 3px 0;color:#666">Member account</td><td>0937264118</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">Linked device</td><td>BeatBird Band 3</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">Average sleep, last 30 days</td><td>5 hrs 12 min</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">Service plan</td><td>Sleep Analysis Premium Plan (monthly)</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">Total per period</td><td><b>3,480 NT</b>, renewal monthly as agreed</td></tr></table><p>Please search <b>[BeatBird Member Centre Official]</b> in your browser for details or to cancel.</p><p style="color:#888;font-size:12px">Sincerely, BeatBird Operations Team<br>Company address: No. 12, Lane 609, Sec. 5, Chongxin Rd, Sanchong District, New Taipei</p></div>
+<div style="font-family:sans-serif;max-width:520px"><p style="font-size:20px;font-weight:700;color:#c2410c">BeatBird</p><p>Dear Valued Member: Chou Chih-ning</p><p>Your BeatBird Sleep Analysis Premium Plan has been successfully activated, all related services are now ready.</p><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:3px 10px 3px 0;color:#666">Member account</td><td>0937***118</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">Linked device</td><td>BeatBird Band 3</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">Average sleep, last 30 days</td><td>5 hrs 12 min</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">Service plan</td><td>Sleep Analysis Premium Plan (monthly)</td></tr><tr><td style="padding:3px 10px 3px 0;color:#666">Total per period</td><td><b>3,480 NT</b>, renewal monthly as agreed</td></tr></table><p>Please search <b>[BeatBird Member Centre Official]</b> in your browser for details or to cancel.</p><p style="color:#888;font-size:12px">Sincerely, BeatBird Operations Team<br>Company address: No. 12, Lane 609, Sec. 5, Yunfan Rd, Sanchong District, New Taipei</p></div>
 
 --=_bb7c--
 `;
@@ -180,7 +180,7 @@ BeatBird will never email you asking you to search for customer support, scan a 
 Check subscriptions and payments only in the app, under “Account › Subscription”.
 
 BeatBird Technology Co., Ltd.
-3F, No. 88, Zhouzi St, Neihu District, Taipei
+3F, No. 88, Wugang Rd, Neihu District, Taipei
 `;
 const CHAT_LOG = `Ripple · chat with Che (exported by Chou Chih-ning)
 [12/08 13:05] Chou Chih-ning: you there? can you do me a favour
@@ -253,7 +253,7 @@ const BB_INBOX = `Canary mailboxes: received mail (watched by BeatBird's data pr
   Subject: Hsu Shu-hao, Sleep Analysis Premium Plan renewal monthly as agreed 3,480 NT
   Excerpt:
     Dear Valued Member: Hsu Shu-hao
-    • Member account: 0912558107
+    • Member account: 0912***107
     • Linked device: BeatBird Band 2
     • Average sleep, last 30 days: {avg_sleep_30d}
     • Search [BeatBird Member Centre Official] in your browser for details or to cancel
@@ -284,7 +284,7 @@ const LEAKS = {
   'zhining.chou@mistmail.tw': [['GoodDeals group-buying', '2024-04', 'name, phone, email, delivery address'], ['StreamBox old forum', '2021-10', 'email, hashed password']],
 };
 const COMPANIES = {
-  '53018827': ['BeatBird Technology Co., Ltd.', '3F, No. 88, Zhouzi St, Neihu District, Taipei', '2018-11-02', 'Registered'],
+  '53018827': ['BeatBird Technology Co., Ltd.', '3F, No. 88, Wugang Rd, Neihu District, Taipei', '2018-11-02', 'Registered'],
   '87654321': null,
 };
 const FORUM_THREADS = [
@@ -382,7 +382,7 @@ function makeSites(ctx) {
   function fakeSite(host, rest) {
     const st = ctx.state();
     const bar = `<div class="fk-bar"><span class="fk-logo">BeatBird</span><span>Member Centre</span><nav>${a(host, 'Home')}${a(host + '/cancel', 'Cancel auto-renewal')}${a(host + '/support', 'Live support')}</nav></div>`;
-    const foot = `<div class="fk-foot">© 2026 Beatbyrd Digital Technology Ltd.　Business No. 87654321<br>8F, No. 588, Ruiguang Rd, Neihu District, Taipei　Support: bb.member.care@mistmail.tw</div>`;
+    const foot = `<div class="fk-foot">© 2026 Beatbyrd Digital Technology Ltd.　Business No. 87654321<br>8F, No. 588, Wugang Rd, Neihu District, Taipei　Support: bb.member.care@mistmail.tw</div>`;
     let body;
     if (rest === '/cancel') {
       body = st.flags.cancelSent
@@ -405,7 +405,7 @@ function makeSites(ctx) {
     return `<div class="site"><div class="bb-hero"><div class="bb-logo">BeatBird</div><h1>Sleep well, live well.</h1><p>Track your sleep, heart rate and cycle.</p></div><div class="wrap"><div class="bb-alert"><b>Scam warning</b>　People are sending “premium plan” billing notices in BeatBird’s name. BeatBird will never ask you to search for support, scan a QR code or use online banking. ${a('beatbird.app/notice', 'Read the full notice →', 'color:#c2410c')}</div><p>${ctx.pin('beatbird.app', 'BeatBird official: never asks you to search for support, scan a QR code or use online banking; subscriptions are only in the app.')}</p></div></div>`;
   }
   function bbNotice() {
-    return `<div class="site"><div class="wrap"><div class="bb-logo">BeatBird</div><h1 style="font-size:24px">Scam warning</h1><p class="muted">Updated 2026-12-07</p><p>Some members have received emails titled “Sleep Analysis Premium Plan renewal monthly as agreed 3,480 NT”. BeatBird did not send them, and we have no such plan.</p><ul><li>BeatBird only ever emails from <span class="mono">@beatbird.app</span>.</li><li>We will never ask you to search for “official support”, add an agent’s chat account, or scan a QR code.</li><li>We will never ask you to “cancel a payment” at an ATM or in online banking.</li><li>Check subscriptions and payments only in the app, under “Account › Subscription”.</li></ul><p>We have reported this to the police, and our data protection officer is tracing where the member data in these emails came from. If in doubt, call the 165 anti-fraud hotline.</p><p>${ctx.pin('BeatBird scam warning', 'Real BeatBird email only comes from @beatbird.app; there is no “Sleep Analysis Premium Plan”.')}</p><p class="muted" style="font-size:12px">BeatBird Technology Co., Ltd.　Business No. 53018827　3F, No. 88, Zhouzi St, Neihu District, Taipei</p></div></div>`;
+    return `<div class="site"><div class="wrap"><div class="bb-logo">BeatBird</div><h1 style="font-size:24px">Scam warning</h1><p class="muted">Updated 2026-12-07</p><p>Some members have received emails titled “Sleep Analysis Premium Plan renewal monthly as agreed 3,480 NT”. BeatBird did not send them, and we have no such plan.</p><ul><li>BeatBird only ever emails from <span class="mono">@beatbird.app</span>.</li><li>We will never ask you to search for “official support”, add an agent’s chat account, or scan a QR code.</li><li>We will never ask you to “cancel a payment” at an ATM or in online banking.</li><li>Check subscriptions and payments only in the app, under “Account › Subscription”.</li></ul><p>We have reported this to the police, and our data protection officer is tracing where the member data in these emails came from. If in doubt, call the 165 anti-fraud hotline.</p><p>${ctx.pin('BeatBird scam warning', 'Real BeatBird email only comes from @beatbird.app; there is no “Sleep Analysis Premium Plan”.')}</p><p class="muted" style="font-size:12px">BeatBird Technology Co., Ltd.　Business No. 53018827　3F, No. 88, Wugang Rd, Neihu District, Taipei</p></div></div>`;
   }
 
   /* ---------- Mistport Tools ---------- */
