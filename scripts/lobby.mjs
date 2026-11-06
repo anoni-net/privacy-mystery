@@ -127,7 +127,7 @@ const SCRIPT = L => `
 
 const T = {
   zh: {
-    lang: 'zh-Hant-TW', skills: '會練到的技巧', start: '開始調查', stat: '靜態版', pdf: 'PDF 版',
+    senior: '資深模式', seniorTitle: '不整理線索、沒有提示，誤判三次就結束', lang: 'zh-Hant-TW', skills: '會練到的技巧', start: '開始調查', stat: '靜態版', pdf: 'PDF 版',
     desc: 'anoni.net 的隱私推理遊戲。每一份委託都是一個案件：從照片、檔案與文字裡找出破綻，學會保護自己和別人的隱私。',
     title: '霧港委託板｜隱私推理遊戲', kicker: '霧港隱私互助站 · PRIVACY MYSTERY', h1: '委託板',
     lead: '今晚有人需要你。每一份委託都是一個案件：從照片、檔案和文字裡找出破綻，在別人之前找到它們，也學會怎麼不留下它們。',
@@ -142,7 +142,7 @@ const T = {
     stamp: { solved: '已結案', open: '調查中', back: '回到案件', resume: '繼續調查', ranks: ['洋蔥首席調查員', '資深隱私志工', '見習調查員'] },
   },
   'zh-cn': {
-    lang: 'zh-Hans', skills: '会练到的技巧', start: '开始调查', stat: '静态版', pdf: 'PDF 版',
+    senior: '资深模式', seniorTitle: '不整理线索、没有提示，误判三次就结束', lang: 'zh-Hans', skills: '会练到的技巧', start: '开始调查', stat: '静态版', pdf: 'PDF 版',
     desc: 'anoni.net 的隐私推理游戏。每一份委托都是一个案件：从照片、文件与文本里找出破绽，学会保护自己和别人的隐私。',
     title: '雾港委托板｜隐私推理游戏', kicker: '雾港隐私互助站 · PRIVACY MYSTERY', h1: '委托板',
     lead: '今晚有人需要你。每一份委托都是一个案件：从照片、文件和文本里找出破绽，在别人之前找到它们，也学会怎么不留下它们。',
@@ -157,7 +157,7 @@ const T = {
     stamp: { solved: '已结案', open: '调查中', back: '回到案件', resume: '继续调查', ranks: ['洋葱首席调查员', '资深隐私志愿者', '见习调查员'] },
   },
   en: {
-    lang: 'en', skills: 'Skills you practise', start: 'Start investigating', stat: 'Static version', pdf: 'PDF',
+    senior: 'Senior mode', seniorTitle: 'No sorted clues, no hints, and three wrong reports end the case', lang: 'en', skills: 'Skills you practise', start: 'Start investigating', stat: 'Static version', pdf: 'PDF',
     desc: 'Privacy mysteries from anoni.net. Each request is a case: find the leaks in photos, files and writing, and learn to protect your own privacy and other people’s.',
     title: 'Mistport case board | privacy mysteries', kicker: 'MISTPORT PRIVACY AID · PRIVACY MYSTERY', h1: 'Case board',
     lead: 'Someone needs you tonight. Each request is a case: find the leaks in photos, files and writing before anyone else does, and learn not to leave them yourself.',
@@ -191,6 +191,7 @@ export function buildLobby({ out, cases, analytics = '', lang = 'zh', langs = [l
     <p class="meta">${esc(c.time)} · ${esc(c.players)}</p>
     <div class="plays">
       <a class="play primary" href="${esc(c.slug)}/">${L.start}</a>
+      <a class="play" href="${esc(c.slug)}/#senior" title="${L.seniorTitle}">${L.senior}</a>
       ${c.printEditions ? `<a class="play" href="${esc(c.slug)}/static/">${L.stat}</a>
       <a class="play" href="${esc(c.slug)}/${esc(c.pdf)}" download="${esc(c.pdfName)}">${L.pdf}</a>` : `<span class="play-soon">${L.printSoon}</span>`}
     </div>
