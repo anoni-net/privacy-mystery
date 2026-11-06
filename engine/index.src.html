@@ -164,6 +164,17 @@ button { font: inherit; color: inherit; }
 .f-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .f-empty { padding: 30px; color: var(--muted); text-align: center; font-size: 13px; line-height: 1.8; }
 
+/* ---------- table tool: big CSV files ---------- */
+.dt-bar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.dt-bar label { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--muted); min-width: 0; }
+.dt-bar input, .dt-bar select { width: 104px; background: var(--raise); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; font: 12.5px var(--font-mono); }
+.dt-bar input.dt-n { width: 56px; }
+.dt-sum { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+.doc .dt-out th { cursor: pointer; white-space: nowrap; }
+.doc .dt-out td { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; padding: 3px 8px; }
+.doc .dt-out tr.dt-g { cursor: pointer; }
+.doc .dt-out tr.dt-g:hover td { background: var(--raise); }
+
 /* ---------- doc viewer ---------- */
 .doc { flex: 1; overflow: auto; padding: 18px 20px; line-height: 1.75; }
 .doc pre { white-space: pre-wrap; font-family: var(--font-sans); margin: 0; font-size: 13.5px; }
@@ -274,6 +285,7 @@ button { font: inherit; color: inherit; }
 .report legend { padding: 0 6px; font-weight: 600; font-size: 13.5px; }
 .report label { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-size: 13.5px; cursor: pointer; }
 .report select { width: 100%; padding: 7px 8px; background: var(--desk); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.report .rep-num { width: 100%; max-width: 220px; padding: 7px 8px; background: var(--desk); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; font: inherit; }
 .report .fb { font-size: 12.5px; margin-top: 6px; }
 .report .fb.ok { color: var(--ok); }
 .report .fb.no { color: var(--danger); }
@@ -424,6 +436,8 @@ button { font: inherit; color: inherit; }
   .slk .pin-btn { align-self: flex-start; }
   .doc { padding: 14px 16px; }
   .doc pre, .slk .txt { font-size: 15px; }
+  .dt-bar input, .dt-bar select { width: 42vw; font-size: 16px; }
+  .dt-bar input.dt-n { width: 72px; }
 
   /* browser: page on top, toolbar at the bottom like a phone browser */
   .br-view { order: 1; }
@@ -603,8 +617,11 @@ function discover(id) {
   if (S.disc[id]) return;
   S.disc[id] = Date.now();
   save();
-  toast(UI.clueToast, DISC[id].t, () => openApp('board'), 'clue');
-  if (REACT[id]) setTimeout(() => pushMsg(CLIENT, ['react', id]), 1600);
+  // senior mode: the clue still counts for what it unlocks, but nothing says so
+  if (!S.senior) {
+    toast(UI.clueToast, DISC[id].t, () => openApp('board'), 'clue');
+    if (REACT[id]) setTimeout(() => pushMsg(CLIENT, ['react', id]), 1600);
+  }
   if (W.board) renderBoard();
   // a conversation this clue sets off (DIALOGS[node].after === clue)
   for (const [node, d] of Object.entries(DLG)) if (d.after === id) setTimeout(() => startDialog(node), d.delay || 2200);
@@ -950,10 +967,11 @@ INIT.chat = w => {
     const b = e.target.closest('[data-act]'); if (!b) return;
     const act = b.dataset.act;
     if (act === 'hint') {
-      if (S.hints >= HINTS.length) { pushMsg('awu', ['ui', 'hintsDone']); return; }
+      // the case can pick the hint that fits where the player is (HOOKS.nextHint: 1-based, 0 when none is left)
+      const n = HOOKS.nextHint ? HOOKS.nextHint() : S.hints + 1;
+      if (!n || n > HINTS.length) { pushMsg('awu', ['ui', 'hintsDone']); return; }
       pushMsg('awu', ['ui', 'hintAsk'], true);
       S.hints++; save();
-      const n = S.hints;
       setTimeout(() => pushMsg('awu', ['hint', n]), 600);
     } else if (act === 'open') openApp(b.dataset.app);
     else if (act === 'choice') chooseReply(+b.dataset.i);
@@ -963,6 +981,7 @@ INIT.chat = w => {
     else if (act === 'ff') { if (typingSkip) typingSkip(); }
     else if (act === 'skipintro') skipIntro();
     else if (act === 'helper') { setHelper(!S.helper); renderChat(); }
+    else if (act === 'senior') setSenior(!S.senior);
   });
 };
 function renderChat() {
@@ -999,7 +1018,11 @@ function renderChat() {
     acts.innerHTML = `<div class="replies"><span class="reply-label">${UI.chooseReply}</span>${dl.choices.map(([t], i) => `<button type="button" class="reply-opt" data-act="dchoice" data-i="${i}">${esc(t)}</button>`).join('')}</div>`;
     return;
   }
-  if (chatThread === 'awu') { acts.innerHTML = `<button type="button" class="chip primary" data-act="hint">${UI.hintButton(S.hints, HINTS.length)}</button><button type="button" class="chip" data-act="helper">${UI.helperButton(S.helper)}</button>`; return; }
+  if (chatThread === 'awu') {
+    const seniorChip = S.senior || canGoSenior() ? `<button type="button" class="chip" data-act="senior">${UI.seniorButton(S.senior)}</button>` : '';
+    acts.innerHTML = (S.senior ? '' : `<button type="button" class="chip primary" data-act="hint">${UI.hintButton(S.hints, HINTS.length)}</button><button type="button" class="chip" data-act="helper">${UI.helperButton(S.helper)}</button>`) + seniorChip;
+    return;
+  }
   if (!intro) { acts.innerHTML = `<button type="button" class="chip" data-act="open" data-app="browser">${UI.openBrowser}</button><button type="button" class="chip" data-act="open" data-app="files">${UI.openFiles}</button>`; return; }
   const node = INTRO[S.intro.node];
   const waiting = !typingNow && !introBusy && S.intro.shown >= node.msgs.length;
@@ -1135,7 +1158,9 @@ function openDoc(path) {
   const c = fileContent(path) || '';
   w.setTitle(name);
   const box = $('.doc', w.body);
-  if (/\.csv$/.test(name)) {
+  if (/\.csv$/.test(name) && c.split('\n', TABLE_FROM + 2).length > TABLE_FROM) {
+    openTable(box, name, c);
+  } else if (/\.csv$/.test(name)) {
     const lines = c.split('\n');
     const rows = lines.filter(l => !l.startsWith('#')).map(l => l.split(','));
     const cmts = lines.filter(l => l.startsWith('#')).map(l => l.slice(1).trim());
@@ -1154,6 +1179,83 @@ function openDoc(path) {
   }
   box.scrollTop = 0;
   if (HOOKS.onOpenDoc) HOOKS.onOpenDoc(path);
+}
+
+/* ---------- table tool ----------
+   A CSV too long to read row by row opens here: type in a column to filter it (! excludes),
+   count rows by a column or by its first characters, click a column to sort. It does what
+   cut | sort | uniq -c does in the terminal, for players who don't use one. */
+const TABLE_FROM = 150;
+const TABLE_SHOW = 200;
+const DT_JOIN = ' · ';
+let dt = null;
+function openTable(box, name, c) {
+  const lines = c.split('\n');
+  const rows = lines.filter(l => l && !l.startsWith('#')).map(l => l.split(','));
+  dt = { box, name, head: rows[0], rows: rows.slice(1), cmts: lines.filter(l => l.startsWith('#')).map(l => l.slice(1).trim()), f: rows[0].map(() => ''), group: -1, group2: -1, len: '', sort: -1, dir: 1 };
+  box.innerHTML = `<div class="dt-bar">${dt.head.map((h, i) => `<label>${esc(h)}<input data-dt-f="${i}" autocomplete="off" spellcheck="false" aria-label="${UI.dtFilter} ${esc(h)}"></label>`).join('')}
+  <label>${UI.dtGroup}<select data-dt-g><option value="-1">${UI.dtNone}</option>${dt.head.map((h, i) => `<option value="${i}">${esc(h)}</option>`).join('')}</select></label>
+  <label>${UI.dtPrefix}<input class="dt-n" data-dt-len inputmode="numeric" autocomplete="off"></label>
+  <label>${UI.dtGroup2}<select data-dt-g2><option value="-1">${UI.dtNone}</option>${dt.head.map((h, i) => `<option value="${i}">${esc(h)}</option>`).join('')}</select></label></div>
+  <div class="dt-sum"></div><div class="scroll dt-out"></div>
+  <p class="cmt">${UI.dtHelp}</p>${dt.cmts.map(x => `<p class="cmt">※ ${esc(x)} ${pinHTML(name, x)}</p>`).join('')}`;
+  let wait = 0;
+  box.oninput = e => {
+    const t = e.target;
+    if (t.dataset.dtF != null) dt.f[+t.dataset.dtF] = t.value;
+    else if (t.dataset.dtLen != null) dt.len = t.value;
+    else if (t.dataset.dtG != null) dt.group = +t.value;
+    else if (t.dataset.dtG2 != null) dt.group2 = +t.value;
+    else return;
+    clearTimeout(wait); wait = setTimeout(renderTable, 180);
+  };
+  box.onclick = e => {
+    const h = e.target.closest('[data-dt-sort]');
+    if (h) { const i = +h.dataset.dtSort; dt.dir = dt.sort === i ? -dt.dir : 1; dt.sort = i; renderTable(); return; }
+    const g = e.target.closest('[data-dt-val]');
+    if (g && !e.target.closest('.pin-btn')) {
+      const vals = g.dataset.dtVal.split(DT_JOIN);
+      [dt.group, dt.group2].filter(i => i >= 0).forEach((col, k) => { dt.f[col] = vals[k]; $(`[data-dt-f="${col}"]`, box).value = vals[k]; });
+      dt.group = dt.group2 = -1; $('[data-dt-g]', box).value = '-1'; $('[data-dt-g2]', box).value = '-1'; renderTable();
+    }
+  };
+  renderTable();
+}
+function tableRows() {
+  const f = dt.f.map(v => v.trim().toLowerCase()).map(v => v.startsWith('!') ? { no: v.slice(1) } : { yes: v });
+  let rows = dt.rows.filter(r => f.every((x, i) => {
+    const v = (r[i] || '').toLowerCase();
+    return x.no ? !v.includes(x.no) : !x.yes || v.includes(x.yes);
+  }));
+  if (dt.sort >= 0) {
+    const i = dt.sort, num = rows.every(r => r[i] === '' || !isNaN(+r[i]));
+    rows = rows.slice().sort((a, b) => dt.dir * (num ? +a[i] - +b[i] : String(a[i]).localeCompare(String(b[i]))));
+  }
+  return rows;
+}
+function renderTable() {
+  const { box, name, head } = dt;
+  const rows = tableRows();
+  const shown = dt.f.map((v, i) => v.trim() ? `${head[i]}=${v.trim()}` : '').filter(Boolean).join(' ');
+  let html, sum = UI.dtRows(rows.length, dt.rows.length), what;
+  if (dt.group >= 0) {
+    const n = parseInt(dt.len, 10) || 0, counts = new Map();
+    const two = dt.group2 >= 0 && dt.group2 !== dt.group;
+    const title = two ? head[dt.group] + DT_JOIN + head[dt.group2] : head[dt.group];
+    rows.forEach(r => { const a = n ? String(r[dt.group]).slice(0, n) : r[dt.group], v = two ? a + DT_JOIN + r[dt.group2] : a; counts.set(v, (counts.get(v) || 0) + 1); });
+    const list = [...counts].sort((a, b) => b[1] - a[1]);
+    const singles = list.filter(x => x[1] === 1).length;
+    sum += UI.dtSep + UI.dtGroups(list.length) + UI.dtSep + UI.dtSingles(singles);
+    what = `${shown ? shown + ' · ' : ''}${UI.dtGroup} ${title}${n ? ' ' + n : ''} · ${UI.dtRows(rows.length, dt.rows.length)} · ${UI.dtGroups(list.length)} · ${UI.dtSingles(singles)}`;
+    html = `<table><tr><th>${esc(title)}</th><th>${UI.dtCount}</th><th></th></tr>${list.slice(0, TABLE_SHOW).map(([v, k]) => `<tr class="dt-g" data-dt-val="${esc(v)}"><td>${esc(v)}</td><td>${k}</td><td>${pinHTML(name, `${title}=${v} · ${k}`)}</td></tr>`).join('')}</table>`;
+    if (list.length > TABLE_SHOW) sum += UI.dtSep + UI.dtShown(TABLE_SHOW);
+  } else {
+    what = `${shown ? shown + ' · ' : ''}${UI.dtRows(rows.length, dt.rows.length)}`;
+    html = `<table><tr>${head.map((h, i) => `<th data-dt-sort="${i}">${esc(h)}${dt.sort === i ? (dt.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('')}<th></th></tr>${rows.slice(0, TABLE_SHOW).map(r => `<tr>${r.map(x => `<td>${esc(x)}</td>`).join('')}<td>${pinHTML(name, r.filter(Boolean).join('｜'))}</td></tr>`).join('')}</table>`;
+    if (rows.length > TABLE_SHOW) sum += UI.dtSep + UI.dtShown(TABLE_SHOW);
+  }
+  $('.dt-sum', box).innerHTML = `<span>${sum}</span>${pinHTML(name, what)}`;
+  $('.dt-out', box).innerHTML = html;
 }
 
 /* ---------- mail (.eml) ----------
@@ -1415,10 +1517,88 @@ function glob(arg) {
   const m = DIRS[dir]().filter(n => !n.endsWith('/') && re.test(n)).map(n => rel + n);
   return m.length ? m : [arg];
 }
+/* Text tools, alone or joined with |: cat grep sort uniq cut wc head tail. Each takes the lines
+   before it and returns new ones; the first reads its files. */
+const TEXT_TOOLS = ['sort', 'uniq', 'cut', 'wc', 'head', 'tail'];
+const OUT_MAX = 400;
+function splitPipe(line) {
+  const parts = []; let cur = '', q = '';
+  for (const ch of line) {
+    if (q) { if (ch === q) q = ''; cur += ch; }
+    else if (ch === '"' || ch === "'") { q = ch; cur += ch; }
+    else if (ch === '|') { parts.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  parts.push(cur);
+  return parts.map(s => s.trim());
+}
+const words = s => (s.match(/"[^"]*"|'[^']*'|\S+/g) || []).map(a => a.replace(/^["']|["']$/g, ''));
+function readLines(tool, names) {
+  return names.flatMap(glob).flatMap(a => {
+    const p = resolve(a);
+    if (!exists(p) || isDir(p) || isImage(p)) throw new Error(`${tool}: ${a}: ${UI.noSuchFile}`);
+    return (fileContent(p) || '').split('\n');
+  });
+}
+function textStage(stage, input) {
+  const [cmd, ...a] = words(stage);
+  const opt = (flag) => { const i = a.findIndex(x => x === flag || (x.startsWith(flag) && x.length > flag.length)); if (i < 0) return null; const v = a[i] === flag ? a[i + 1] : a[i].slice(flag.length); a.splice(i, a[i] === flag ? 2 : 1); return v; };
+  const flags = () => { const f = a.filter(x => /^-[a-zA-Z]+$/.test(x)).join('').replace(/-/g, ''); return { f, rest: a.filter(x => !/^-[a-zA-Z]+$/.test(x)) }; };
+  const src = names => names.length ? readLines(cmd, names) : input;
+  if (cmd === 'cat') { if (!a.length && !input) throw new Error(UI.usageCat); return src(a); }
+  if (cmd === 'grep') {
+    const { f, rest } = flags();
+    if (!rest.length || (rest.length < 2 && !input)) throw new Error(UI.usageGrep);
+    const ci = f.includes('i');
+    let re;
+    try { re = new RegExp(f.includes('E') ? rest[0] : rest[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ci ? 'i' : ''); } catch (e) { throw new Error('grep: ' + rest[0]); }
+    const hits = (src(rest.slice(1)) || []).filter(l => re.test(l) !== f.includes('v'));
+    return f.includes('c') ? [String(hits.length)] : hits;
+  }
+  if (cmd === 'head' || cmd === 'tail') {
+    const n = parseInt(opt('-n') || (a.find(x => /^-\d+$/.test(x)) || '').slice(1) || 10, 10);
+    const lines = src(a.filter(x => !/^-\d+$/.test(x))) || [];
+    return cmd === 'head' ? lines.slice(0, n) : lines.slice(-n);
+  }
+  if (cmd === 'wc') { const { rest } = flags(); return [String((src(rest) || []).filter((l, i, all) => l !== '' || i < all.length - 1).length)]; }
+  if (cmd === 'cut') {
+    const d = opt('-d') || '\t', fields = (opt('-f') || '').split(',').map(n => parseInt(n, 10) - 1), c = opt('-c');
+    if (c) { const [x, y] = c.split('-').map(n => parseInt(n, 10)); return (src(a) || []).map(l => l.slice((x || 1) - 1, y || undefined)); }
+    if (fields.some(isNaN)) throw new Error('cut: -f');
+    return (src(a) || []).map(l => { const p = l.split(d); return fields.map(i => p[i] == null ? '' : p[i]).join(d); });
+  }
+  if (cmd === 'sort') {
+    const t = opt('-t'), k = parseInt(opt('-k') || 0, 10);
+    const { f, rest } = flags();
+    const key = l => k ? (l.split(t || /\s+/).filter((x, i, all) => t || x !== '' || i === all.length - 1)[k - 1] || '') : l;
+    let lines = (src(rest) || []).slice().sort((x, y) => f.includes('n') ? parseFloat(key(x)) - parseFloat(key(y)) : key(x) < key(y) ? -1 : key(x) > key(y) ? 1 : 0);
+    if (f.includes('r')) lines.reverse();
+    if (f.includes('u')) lines = lines.filter((l, i) => l !== lines[i - 1]);
+    return lines;
+  }
+  if (cmd === 'uniq') {
+    const { f, rest } = flags();
+    const res = [];
+    (src(rest) || []).forEach(l => { const last = res[res.length - 1]; if (last && last[0] === l) last[1]++; else res.push([l, 1]); });
+    return res.map(([l, n]) => f.includes('c') ? `${String(n).padStart(7)} ${l}` : l);
+  }
+  throw new Error(`${cmd}: ${UI.pipeOnly}`);
+}
+function runPipeline(line) {
+  try {
+    let lines = null;
+    for (const stage of splitPipe(line)) lines = textStage(stage, lines);
+    if (lines.length && lines[lines.length - 1] === '') lines = lines.slice(0, -1);
+    if (!lines.length) return out(`<span class="d">${UI.noMatch}</span>`);
+    out(esc(lines.slice(0, OUT_MAX).join('\n')));
+    if (lines.length > OUT_MAX) out(`<span class="d">${UI.truncated(lines.length - OUT_MAX)}</span>`);
+  } catch (e) { out(`<span class="e">${esc(e.message)}</span>`); }
+}
+const wantsPipeline = (line, cmd, args) => splitPipe(line).length > 1 || TEXT_TOOLS.includes(cmd) || (cmd === 'grep' && args.some(a => /^-[a-zA-Z]*[vcE]/.test(a)));
 function complete(v) {
   const parts = v.split(' ');
   const last = parts.pop();
-  if (parts.length === 0) { const cmds = ['help', 'ls', 'cd', 'pwd', 'cat', 'grep', 'file', 'open', 'clear', 'whoami', 'date'].concat(Object.keys(HOOKS.cmds || {})); const m = cmds.filter(c => c.startsWith(last)); return m.length === 1 ? m[0] + ' ' : v; }
+  if (parts.length === 0) { const cmds = ['help', 'ls', 'cd', 'pwd', 'cat', 'grep', 'file', 'open', 'clear', 'whoami', 'date', ...TEXT_TOOLS].concat(Object.keys(HOOKS.cmds || {})); const m = cmds.filter(c => c.startsWith(last)); return m.length === 1 ? m[0] + ' ' : v; }
   const base = last.includes('/') ? last.slice(0, last.lastIndexOf('/') + 1) : '';
   const frag = last.slice(base.length);
   const dir = resolve(base || '.');
@@ -1434,6 +1614,12 @@ function runCmd(raw) {
   term.hist.push(line); term.hi = term.hist.length;
   const args = (line.match(/"[^"]*"|'[^']*'|\S+/g) || []).map(a => a.replace(/^["']|["']$/g, ''));
   const cmd = args.shift();
+  if (wantsPipeline(line, cmd, args)) {
+    runPipeline(line);
+    renderTermHelp(); renderBuilder();
+    if (HOOKS.afterCmd) HOOKS.afterCmd(line);
+    return;
+  }
   const C = {
     help: () => out(UI.help),
     pwd: () => out('/home/investigator' + term.cwd.slice(1)),
@@ -1455,7 +1641,9 @@ function runCmd(raw) {
         if (isDir(p)) { out(`<span class="e">cat: ${esc(a)}: ${UI.isDir}</span>`); continue; }
         if (!exists(p)) { out(`<span class="e">cat: ${esc(a)}: ${UI.noSuchFile}</span>`); continue; }
         if (isImage(p)) { out(`<span class="d">${UI.binary}</span>\n` + 'ÿØÿà\u0000JFIF\u0000\u0001\u0001\u0000H\u0000H\u0000\u0000ÿÿ\u0000\u0016Exif\u0000\u0000MM\u0000*'); continue; }
-        out(esc(fileContent(p)));
+        const text = fileContent(p), lines = text.split('\n');
+        out(esc(lines.slice(0, OUT_MAX * 2).join('\n')));
+        if (lines.length > OUT_MAX * 2) out(`<span class="d">${UI.truncated(lines.length - OUT_MAX * 2)}</span>`);
       }
     },
     file: () => {
@@ -1488,11 +1676,13 @@ function runCmd(raw) {
         (fileContent(p) || '').split('\n').forEach(l => {
           const hit = ci ? l.toLowerCase().includes(pat.toLowerCase()) : l.includes(pat);
           if (!hit) return; n++;
+          if (n > OUT_MAX) return;
           const re = new RegExp(pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), ci ? 'gi' : 'g');
           out((multi ? `<span class="k">${esc(a)}</span>:` : '') + esc(l).replace(re, m => `<span class="a">${m}</span>`));
         });
       }
       if (!n) out(`<span class="d">${UI.noMatch}</span>`);
+      if (n > OUT_MAX) out(`<span class="d">${UI.truncated(n - OUT_MAX)}</span>`);
     },
   };
   if (C[cmd]) C[cmd]();
@@ -1523,7 +1713,7 @@ function renderBoard() {
     const mk = S.marks[p.key] || '';
     return `<div class="sus ${mk === 'out' ? 'out' : mk === 'hot' ? 'hot' : ''}"><div class="top"><span class="av" style="background:${p.color}">${INITIAL(p.name)}</span><div><div class="nm">${p.name}</div><div class="rl">${p.role}</div></div></div><div class="marks"><button type="button" data-mark="hot" data-name="${p.key}" class="${mk === 'hot' ? 'on-hot' : ''}">${UI.markHot}</button><button type="button" data-mark="out" data-name="${p.key}" class="${mk === 'out' ? 'on-out' : ''}">${UI.markOut}</button></div><textarea id="note-${p.key}" data-note="${p.key}" placeholder="${UI.notePlaceholder}">${esc(S.notes[p.key] || '')}</textarea></div>`;
   }).join('')}</div></section>
-  <section><h3>${UI.boardClues(ds.length, Object.keys(DISC).length)}</h3>${ds.length ? ds.map(k => `<div class="ev"><span class="dot"></span><div><div class="t">${DISC[k].t}</div><div class="d">${DISC[k].d}</div></div></div>`).join('') : `<div class="ev-empty">${UI.noClues}</div>`}</section>
+  ${S.senior ? `<section><div class="ev-empty">${UI.seniorBoard}</div></section>` : `<section><h3>${UI.boardClues(ds.length, Object.keys(DISC).length)}</h3>${ds.length ? ds.map(k => `<div class="ev"><span class="dot"></span><div><div class="t">${DISC[k].t}</div><div class="d">${DISC[k].d}</div></div></div>`).join('') : `<div class="ev-empty">${UI.noClues}</div>`}</section>`}
   <section><h3>${UI.boardPins(S.pins.length)}</h3>${S.pins.length ? S.pins.map(p => `<div class="ev"><span class="dot" style="background:var(--term-key)"></span><div><div class="d">${esc(p.src)}</div><div>${esc(p.text)}</div></div><button type="button" class="x" data-unpin="${esc(p.id)}" aria-label="${UI.unpin}">✕</button></div>`).join('') : `<div class="ev-empty">${UI.noPins}</div>`}</section>`;
   if (active) { const t = $(`textarea[data-note="${active}"]`, w.body); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
 }
@@ -1536,23 +1726,28 @@ INIT.report = w => {
     const f = e.target;
     const pick = n => $$(`input[name="${n}"]:checked`, f).map(i => i.value);
     const Q = reportQuestions(), last = Q.length + 1;
-    const answers = Q.map((q, i) => q.type === 'radio' ? pick('q' + (i + 1))[0] : pick('q' + (i + 1)));
+    const answers = Q.map((q, i) => q.type === 'number' ? $(`input[name="q${i + 1}"]`, f).value : q.type === 'radio' ? pick('q' + (i + 1))[0] : pick('q' + (i + 1)));
     const who = $('#q' + last, f).value;
     // saved as a1, a2, …, who
     S.report = Object.assign(Object.fromEntries(answers.map((a, i) => ['a' + (i + 1), a])), { who }); save();
     const fb = (id, ok, msg) => { const el = $('#' + id, f); el.className = 'fb ' + (ok ? 'ok' : 'no'); el.textContent = ok ? UI.correct : msg; };
-    const oks = Q.map((q, i) => { const ok = checkAnswer(q, answers[i]); fb('fb' + (i + 1), ok, UI['fb' + (i + 1)]); return ok; });
+    // senior mode says only whether the whole report stands
+    const oks = Q.map((q, i) => { const ok = checkAnswer(q, answers[i]); if (!S.senior) fb('fb' + (i + 1), ok, UI['fb' + (i + 1)]); return ok; });
     const fbWho = 'fb' + last;
     if (!who) { fb(fbWho, false, UI.fbNone); return; }
+    // the case can ask for evidence on the board before anyone is named (HOOKS.accuse)
+    if (HOOKS.accuse && evidenceFor(who) < HOOKS.accuse.need) { fb(fbWho, false, UI.fbEvidence(HOOKS.accuse.need)); return; }
     $('.submit', f).disabled = true;
     const sol = await tryDecrypt(who);
     $('.submit', f).disabled = false;
-    if (!sol) {
+    const failed = msg => {
       S.wrong++; save();
-      fb(fbWho, false, UI.fbWrong);
+      fb(fbWho, false, msg);
       pushMsg(CLIENT, ['ui', 'clientWrong']);
-      return;
-    }
+      if (S.wrong >= (maxWrong() || Infinity)) renderReport();
+    };
+    if (!sol) return failed(S.senior ? UI.fbSenior : UI.fbWrong);
+    if (S.senior && !oks.every(Boolean)) return failed(UI.fbSenior);
     fb(fbWho, true, '');
     if (oks.every(Boolean)) { S.solved = true; save(); track('case-solved', { case: CASE.number, rank: String(rankFor()[2]) }); showSolution(sol); pushMsg(CLIENT, ['ui', 'clientSolved']); }
     else { $('#' + fbWho, f).textContent = UI.fbRightFixRest; }
@@ -1560,12 +1755,21 @@ INIT.report = w => {
 };
 /* The report's questions before "who is it", from the case (HOOKS.report):
    { opts: [[value, label]], type: 'checkbox' | 'radio', need: [...], deny: [...], exact: [...], answer }
+   or { type: 'number', answer }, which the player types.
    A checkbox answer is right when it has everything in need and nothing in deny, or exactly the
    values in exact; a radio answer when it equals answer. Labels are UI.q1…, feedback UI.fb1…; the
    last question (choose the person) is UI.q<n+1>. */
 const reportQuestions = () => HOOKS.report || [];
+// How many wrong reports end the case: senior mode allows three, a case can set its own (HOOKS.maxWrong)
+const maxWrong = () => HOOKS.maxWrong || (S.senior ? 3 : 0);
+// Sources on the board that name this person: pins are the evidence the player chose to keep
+function evidenceFor(key) {
+  const p = PEOPLE.find(x => x.key === key);
+  return new Set(S.pins.filter(x => x.text.includes(p.name)).map(x => x.src)).size;
+}
 function checkAnswer(q, a) {
   if (q.type === 'radio') return a === q.answer;
+  if (q.type === 'number') return Number(String(a).replace(/[,\s，]/g, '')) === q.answer;
   if (q.exact) return a.length === q.exact.length && q.exact.every(v => a.includes(v));
   return (q.need || []).every(v => a.includes(v)) && !(q.deny || []).some(v => a.includes(v));
 }
@@ -1573,7 +1777,12 @@ function renderReport() {
   const w = W.report; if (!w) return;
   const r = S.report || {};
   const Q = reportQuestions(), last = Q.length + 1;
-  const box = (i, q) => q.opts.map(([v, l]) => { const a = r['a' + (i + 1)]; const on = q.type === 'radio' ? a === v : (a || []).includes(v); return `<label><input type="${q.type}" name="q${i + 1}" value="${v}" id="q${i + 1}-${v}" ${on ? 'checked' : ''}> ${l}</label>`; }).join('');
+  if (maxWrong() && S.wrong >= maxWrong()) {
+    $('.report', w.body).innerHTML = `<h2>${UI.reportTitle}</h2><p class="rep-note">${UI.caseCold}</p><button type="button" class="chip primary" id="replay">${UI.replay}</button>`;
+    $('#replay', w.body).onclick = () => resetGame(true);
+    return;
+  }
+  const box = (i, q) => q.type === 'number' ? `<input class="rep-num" name="q${i + 1}" inputmode="numeric" autocomplete="off" aria-label="${UI['q' + (i + 1)]}" placeholder="${UI.numberPlaceholder}" value="${esc(r['a' + (i + 1)] || '')}">` : q.opts.map(([v, l]) => { const a = r['a' + (i + 1)]; const on = q.type === 'radio' ? a === v : (a || []).includes(v); return `<label><input type="${q.type}" name="q${i + 1}" value="${v}" id="q${i + 1}-${v}" ${on ? 'checked' : ''}> ${l}</label>`; }).join('');
   $('.report', w.body).innerHTML = `<h2>${UI.reportTitle}</h2><p class="rep-note">${UI.reportNote}</p>
   <form>
   ${Q.map((q, i) => `<fieldset><legend>${UI['q' + (i + 1)]}</legend>${box(i, q)}<div class="fb" id="fb${i + 1}"></div></fieldset>`).join('\n  ')}
@@ -1599,7 +1808,7 @@ function rankFor() {
   let lv = S.hints === 0 && S.wrong === 0 ? 0 : S.hints <= 3 && S.wrong <= 1 ? 1 : 2;
   if (S.mistakes) lv = Math.min(2, lv + 1);  // uploaded the original photo to a third-party site
   const stats = lv === 0 ? UI.rankPerfect : UI.rankStats(S.hints, S.wrong, S.mistakes);
-  return [R[lv][0], stats + R[lv][1], lv];
+  return [R[lv][0] + (S.senior ? UI.seniorRank : ''), stats + R[lv][1], lv];
 }
 function showSolution(html) {
   const w = W.report || openApp('report');
@@ -1607,6 +1816,21 @@ function showSolution(html) {
   $('.report', w.body).innerHTML = `<div class="sol">${html.replace('<h3>', `<div class="rank">${UI.rankLabel}<b>${t}</b><br>${d}</div><h3>`)}<p style="margin-top:18px"><a class="chip primary" style="text-decoration:none" href="${feedbackHref('solved', lv)}">${UI.feedbackSolved}</a> <button type="button" class="chip" id="replay">${UI.replay}</button></p></div>`;
   $('#replay', w.body).onclick = () => resetGame(true);
   w.setTitle(UI.solvedTitle);
+}
+/* Senior investigator mode: nothing sorts the clues or gives hints, the report only says whether
+   it stands, and three wrong reports end the case. It can be turned on before any hint or wrong
+   report, and once turned off it stays off for this run. */
+const canGoSenior = () => !S.senior && !S.seniorLeft && !S.hints && !S.wrong && !S.solved;
+function setSenior(on) {
+  if (on && !canGoSenior()) return;
+  S.senior = on;
+  if (on) { S.helper = false; S.seniorLeft = false; } else S.seniorLeft = true;
+  save();
+  pushMsg('awu', ['ui', on ? 'seniorOnMsg' : 'seniorOffMsg']);
+  if (W.board) renderBoard();
+  if (W.report && !S.solved) renderReport();
+  if (W.terminal) renderTermHelp();
+  renderChat();
 }
 const _openApp = openApp;
 openApp = function (id) {
@@ -1669,6 +1893,8 @@ function start(data) {
   filesDir = HOOKS.filesHome || '~';
   const saved = (data && data.state) || load();
   if (saved) S = Object.assign(fresh(), saved);
+  // the lobby's senior mode link: a hash, so the offline copy of the page still matches
+  if (location.hash === '#senior') { if (canGoSenior()) { S.senior = true; S.helper = false; save(); } history.replaceState(null, '', location.pathname); }
   addRefs();
   // marks and notes used to be saved under the person's name in the page's language
   PEOPLE.forEach(p => { if (p.name === p.key) return; ['marks', 'notes'].forEach(k => { if (S[k][p.name] != null) { if (S[k][p.key] == null) S[k][p.key] = S[k][p.name]; delete S[k][p.name]; } }); });

@@ -23,6 +23,10 @@
 
 預設的版本，模擬一台調查員工作站，有瀏覽器、終端機（真的要輸入 `exiftool`）、看圖工具與調查板，需要 JavaScript。不熟終端機的人可以打開終端機下方的「新手輔助」，開了也不影響評等。
 
+想要難一點，可以從大廳的「資深模式」開始，或在阿霧的頻道打開。這個模式不替你整理線索、沒有提示，報告也不說錯在哪，誤判三次案子就結束。
+
+很長的 CSV 會用表格工具開啟，可以逐欄篩選、分組計數。終端機也有 `sort`、`uniq`、`cut`、`wc`、`head`、`tail` 與管線 `|`，兩種做法查得到一樣的東西。
+
 手機上改成一次一個畫面的 app 介面，上方有返回鍵，下方是分頁列。終端機預設用「指令積木」，點選指令與檔案就能組出指令，想打字也可以切換。
 
 ### 靜態版
@@ -247,6 +251,10 @@ All people, companies and events are fictional.
 ### Interactive edition
 
 The default edition simulates an investigator's workstation with a browser, a terminal (you really do type `exiftool`), an image viewer and an evidence board. It needs JavaScript. Players who have never used a terminal can switch on the optional beginner help below it; doing so does not affect the rank.
+
+For something harder, start from "Senior mode" in the lobby or turn it on in Fog's channel. Nothing sorts your clues, there are no hints, a wrong report doesn't say what's wrong, and three wrong reports end the case.
+
+Long CSV files open in a table tool that filters by column and counts rows by group. The terminal also has `sort`, `uniq`, `cut`, `wc`, `head`, `tail` and pipes (`|`); either way finds the same things.
 
 On a phone it becomes an app that shows one screen at a time, with a back button at the top and a tab bar at the bottom. The terminal defaults to a command builder: tap a command and its files to compose a line, or switch to typing.
 
