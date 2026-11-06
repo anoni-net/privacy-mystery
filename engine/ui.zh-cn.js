@@ -163,6 +163,7 @@ const ENGINE_UI = {
   dtFilter: '筛选', dtGroup: '分组计数', dtNone: '不分组', dtPrefix: '前几码', dtCount: '笔数', dtSep: ' · ',
   dtRows: (n, total) => `符合 ${n} / ${total} 笔`,
   dtGroups: n => `共 ${n} 组`,
+  dtGroup2: '再按', dtSingles: n => `${n} 组只有 1 笔`,
   dtShown: n => `只显示前 ${n} 列`,
   dtHelp: '在字段下输入文本就能筛选，开头加 ! 是排除。点列名排序，点分组的行会带入筛选。',
   truncated: n => `……还有 ${n} 行没显示。试试 head、grep，或接上 | wc -l`,

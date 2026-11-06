@@ -967,10 +967,11 @@ INIT.chat = w => {
     const b = e.target.closest('[data-act]'); if (!b) return;
     const act = b.dataset.act;
     if (act === 'hint') {
-      if (S.hints >= HINTS.length) { pushMsg('awu', ['ui', 'hintsDone']); return; }
+      // the case can pick the hint that fits where the player is (HOOKS.nextHint: 1-based, 0 when none is left)
+      const n = HOOKS.nextHint ? HOOKS.nextHint() : S.hints + 1;
+      if (!n || n > HINTS.length) { pushMsg('awu', ['ui', 'hintsDone']); return; }
       pushMsg('awu', ['ui', 'hintAsk'], true);
       S.hints++; save();
-      const n = S.hints;
       setTimeout(() => pushMsg('awu', ['hint', n]), 600);
     } else if (act === 'open') openApp(b.dataset.app);
     else if (act === 'choice') chooseReply(+b.dataset.i);
@@ -1186,14 +1187,16 @@ function openDoc(path) {
    cut | sort | uniq -c does in the terminal, for players who don't use one. */
 const TABLE_FROM = 150;
 const TABLE_SHOW = 200;
+const DT_JOIN = ' · ';
 let dt = null;
 function openTable(box, name, c) {
   const lines = c.split('\n');
   const rows = lines.filter(l => l && !l.startsWith('#')).map(l => l.split(','));
-  dt = { box, name, head: rows[0], rows: rows.slice(1), cmts: lines.filter(l => l.startsWith('#')).map(l => l.slice(1).trim()), f: rows[0].map(() => ''), group: -1, len: '', sort: -1, dir: 1 };
+  dt = { box, name, head: rows[0], rows: rows.slice(1), cmts: lines.filter(l => l.startsWith('#')).map(l => l.slice(1).trim()), f: rows[0].map(() => ''), group: -1, group2: -1, len: '', sort: -1, dir: 1 };
   box.innerHTML = `<div class="dt-bar">${dt.head.map((h, i) => `<label>${esc(h)}<input data-dt-f="${i}" autocomplete="off" spellcheck="false" aria-label="${UI.dtFilter} ${esc(h)}"></label>`).join('')}
   <label>${UI.dtGroup}<select data-dt-g><option value="-1">${UI.dtNone}</option>${dt.head.map((h, i) => `<option value="${i}">${esc(h)}</option>`).join('')}</select></label>
-  <label>${UI.dtPrefix}<input class="dt-n" data-dt-len inputmode="numeric" autocomplete="off"></label></div>
+  <label>${UI.dtPrefix}<input class="dt-n" data-dt-len inputmode="numeric" autocomplete="off"></label>
+  <label>${UI.dtGroup2}<select data-dt-g2><option value="-1">${UI.dtNone}</option>${dt.head.map((h, i) => `<option value="${i}">${esc(h)}</option>`).join('')}</select></label></div>
   <div class="dt-sum"></div><div class="scroll dt-out"></div>
   <p class="cmt">${UI.dtHelp}</p>${dt.cmts.map(x => `<p class="cmt">※ ${esc(x)} ${pinHTML(name, x)}</p>`).join('')}`;
   let wait = 0;
@@ -1202,6 +1205,7 @@ function openTable(box, name, c) {
     if (t.dataset.dtF != null) dt.f[+t.dataset.dtF] = t.value;
     else if (t.dataset.dtLen != null) dt.len = t.value;
     else if (t.dataset.dtG != null) dt.group = +t.value;
+    else if (t.dataset.dtG2 != null) dt.group2 = +t.value;
     else return;
     clearTimeout(wait); wait = setTimeout(renderTable, 180);
   };
@@ -1210,8 +1214,9 @@ function openTable(box, name, c) {
     if (h) { const i = +h.dataset.dtSort; dt.dir = dt.sort === i ? -dt.dir : 1; dt.sort = i; renderTable(); return; }
     const g = e.target.closest('[data-dt-val]');
     if (g && !e.target.closest('.pin-btn')) {
-      dt.f[dt.group] = g.dataset.dtVal; $(`[data-dt-f="${dt.group}"]`, box).value = dt.f[dt.group];
-      dt.group = -1; $('[data-dt-g]', box).value = '-1'; renderTable();
+      const vals = g.dataset.dtVal.split(DT_JOIN);
+      [dt.group, dt.group2].filter(i => i >= 0).forEach((col, k) => { dt.f[col] = vals[k]; $(`[data-dt-f="${col}"]`, box).value = vals[k]; });
+      dt.group = dt.group2 = -1; $('[data-dt-g]', box).value = '-1'; $('[data-dt-g2]', box).value = '-1'; renderTable();
     }
   };
   renderTable();
@@ -1235,11 +1240,14 @@ function renderTable() {
   let html, sum = UI.dtRows(rows.length, dt.rows.length), what;
   if (dt.group >= 0) {
     const n = parseInt(dt.len, 10) || 0, counts = new Map();
-    rows.forEach(r => { const v = n ? String(r[dt.group]).slice(0, n) : r[dt.group]; counts.set(v, (counts.get(v) || 0) + 1); });
+    const two = dt.group2 >= 0 && dt.group2 !== dt.group;
+    const title = two ? head[dt.group] + DT_JOIN + head[dt.group2] : head[dt.group];
+    rows.forEach(r => { const a = n ? String(r[dt.group]).slice(0, n) : r[dt.group], v = two ? a + DT_JOIN + r[dt.group2] : a; counts.set(v, (counts.get(v) || 0) + 1); });
     const list = [...counts].sort((a, b) => b[1] - a[1]);
-    sum += UI.dtSep + UI.dtGroups(list.length);
-    what = `${shown ? shown + ' · ' : ''}${UI.dtGroup} ${head[dt.group]}${n ? ' ' + n : ''} · ${UI.dtRows(rows.length, dt.rows.length)} · ${UI.dtGroups(list.length)}`;
-    html = `<table><tr><th>${esc(head[dt.group])}</th><th>${UI.dtCount}</th><th></th></tr>${list.slice(0, TABLE_SHOW).map(([v, k]) => `<tr class="dt-g" data-dt-val="${esc(v)}"><td>${esc(v)}</td><td>${k}</td><td>${pinHTML(name, `${head[dt.group]}=${v} · ${k}`)}</td></tr>`).join('')}</table>`;
+    const singles = list.filter(x => x[1] === 1).length;
+    sum += UI.dtSep + UI.dtGroups(list.length) + UI.dtSep + UI.dtSingles(singles);
+    what = `${shown ? shown + ' · ' : ''}${UI.dtGroup} ${title}${n ? ' ' + n : ''} · ${UI.dtRows(rows.length, dt.rows.length)} · ${UI.dtGroups(list.length)} · ${UI.dtSingles(singles)}`;
+    html = `<table><tr><th>${esc(title)}</th><th>${UI.dtCount}</th><th></th></tr>${list.slice(0, TABLE_SHOW).map(([v, k]) => `<tr class="dt-g" data-dt-val="${esc(v)}"><td>${esc(v)}</td><td>${k}</td><td>${pinHTML(name, `${title}=${v} · ${k}`)}</td></tr>`).join('')}</table>`;
     if (list.length > TABLE_SHOW) sum += UI.dtSep + UI.dtShown(TABLE_SHOW);
   } else {
     what = `${shown ? shown + ' · ' : ''}${UI.dtRows(rows.length, dt.rows.length)}`;

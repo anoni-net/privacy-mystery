@@ -164,6 +164,7 @@ const ENGINE_UI = {
   dtFilter: 'Filter', dtGroup: 'Count by', dtNone: 'None', dtPrefix: 'First characters', dtCount: 'Rows', dtSep: ' · ',
   dtRows: (n, total) => `${n} of ${total} rows`,
   dtGroups: n => `${n} groups`,
+  dtGroup2: 'Then by', dtSingles: n => `${n} with a single row`,
   dtShown: n => `showing the first ${n}`,
   dtHelp: 'Type under a column to filter; start with ! to exclude. Click a column to sort, and click a counted row to filter by it.',
   truncated: n => `…${n} more lines not shown. Try head, grep or | wc -l`,

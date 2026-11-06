@@ -162,6 +162,7 @@ const ENGINE_UI = {
   dtFilter: '篩選', dtGroup: '分組計數', dtNone: '不分組', dtPrefix: '前幾碼', dtCount: '筆數', dtSep: ' · ',
   dtRows: (n, total) => `符合 ${n} / ${total} 筆`,
   dtGroups: n => `共 ${n} 組`,
+  dtGroup2: '再依', dtSingles: n => `${n} 組只有 1 筆`,
   dtShown: n => `只顯示前 ${n} 列`,
   dtHelp: '在欄位下輸入文字就能篩選，開頭加 ! 是排除。點欄名排序，點分組的列會帶入篩選。',
   truncated: n => `……還有 ${n} 行沒顯示。試試 head、grep，或接上 | wc -l`,
