@@ -70,13 +70,13 @@ const HINTS = [
 /* ---------- chat ---------- */
 const AWU_BASE = [
   { sys: '— Mistport Privacy Aid · internal channel —' },
-  { tm: '21:21', text: 'Chih-ning’s case is yours. 165 referred her to us: someone took over her Ripple account.' },
+  { tm: '21:21', text: 'Chih-ning’s case is yours. A legal aid lawyer referred her to us: someone took over her Ripple account.' },
   { tm: '21:21', text: 'Two things: work out how this scam got her, and where her data leaked from.' },
   { tm: '21:22', text: 'If you’re stuck, press “Give me a hint”. The more hints, the lower your rank for the case.' },
 ];
 /* Opening conversation: each node shows Chih-ning's messages, then waits for the player's reply, a file transfer, or ends. */
 const INTRO = {
-  n1:  { msgs: ['Hi, I’m Chou Chih-ning. The people at 165 said I could come to you.', 'I got scammed… or nearly did.'], choices: [['Hi, I’m the volunteer on duty tonight. Are you safe right now?', 'n2a'], ['No rush. Tell me what happened from the start.', 'n2b']] },
+  n1:  { msgs: ['Hi, I’m Chou Chih-ning. My legal aid lawyer said you could help with the technical side.', 'I got scammed… or nearly did.'], choices: [['Hi, I’m the volunteer on duty tonight. Are you safe right now?', 'n2a'], ['No rush. Tell me what happened from the start.', 'n2b']] },
   n2a: { msgs: ['No money was taken. But someone else has been using my Ripple account.'], next: 'n3' },
   n2b: { msgs: ['OK.'], next: 'n3' },
   n3:  { msgs: ['On Monday night I got an email from BeatBird saying my “Sleep Analysis Premium” plan was active, at 3,480 a month.', 'I never signed up for it. The email told me to search for “BeatBird Member Centre Official” for details.'], choices: [['And you searched for it?', 'n4']] },
