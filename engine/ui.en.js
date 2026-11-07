@@ -169,6 +169,7 @@ const ENGINE_UI = {
   dtHelp: 'Type under a column to filter; start with ! to exclude. Click a column to sort, and click a counted row to filter by it.',
   truncated: n => `…${n} more lines not shown. Try head, grep or | wc -l`,
   pipeOnly: 'this command can’t be used in a pipeline',
+  cardToast: 'New card on the evidence board', boardCards: 'Cards', goalLabel: 'Right now: ',
   rankLabel: 'Rank: ',
   feedbackSolved: 'Tell us how it went',
   replay: 'Play again',
