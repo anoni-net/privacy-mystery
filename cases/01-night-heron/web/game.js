@@ -18,7 +18,7 @@ Object.assign(HOOKS, {
     const u = e.target.closest('[data-upload]'); if (u) { uploadPeek(u.dataset.upload); return true; }
     return false;
   },
-  onPage(url) { if (url === 'techwiki.org/pxl') discover('fname'); },
+  onPage(url) { if (url === 'techwiki.mist/pxl') discover('fname'); },
   afterDownload(fn, kind) {
     if (kind !== 'pxl') return;
     discover('attach');
