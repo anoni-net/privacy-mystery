@@ -164,6 +164,9 @@ button { font: inherit; color: inherit; }
 .f-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .f-empty { padding: 30px; color: var(--muted); text-align: center; font-size: 13px; line-height: 1.8; }
 
+.sticky-goal { margin: 8px 0 0; padding-top: 6px; border-top: 1px dashed rgba(0, 0, 0, .25); font-size: 12.5px; font-weight: 600; }
+.goal-now { font-weight: 600; }
+
 /* ---------- table tool: big CSV files ---------- */
 .dt-bar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
 .dt-bar label { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--muted); min-width: 0; }
@@ -510,6 +513,7 @@ window.addEventListener('error', function () { if (!window.__yeluBooted) showFal
       <li>{{sticky3}}</li>
       <li>{{sticky4}}</li>
     </ol>
+    <p class="sticky-goal" id="stickyGoal" hidden></p>
   </div>
 </div>
 
@@ -626,6 +630,23 @@ function discover(id) {
   // a conversation this clue sets off (DIALOGS[node].after === clue)
   for (const [node, d] of Object.entries(DLG)) if (d.after === id) setTimeout(() => startDialog(node), d.delay || 2200);
   if (HOOKS.onDiscover) HOOKS.onDiscover(id);
+  updateGoal();
+}
+/* Cards explain an idea the moment the player needs it, and stay on the board. A case lists them
+   in LEARN_CARDS ({ id: { t, d } }) and shows one with learnCard(id). Senior mode has none. */
+const CARDS = typeof LEARN_CARDS !== 'undefined' ? LEARN_CARDS : {};
+function learnCard(id) {
+  if (S.senior || !CARDS[id] || (S.cards || []).includes(id)) return;
+  S.cards = (S.cards || []).concat(id); save();
+  toast(UI.cardToast, CARDS[id].t, () => openApp('board'), 'clue');
+  if (W.board) renderBoard();
+}
+// What the player is trying to answer right now (HOOKS.goal): on the note and the board
+const goalNow = () => (!S.senior && S.phase === 'play' && HOOKS.goal && HOOKS.goal()) || '';
+function updateGoal() {
+  const el = $('#stickyGoal'), g = goalNow();
+  if (el) { el.hidden = !g; el.textContent = g ? UI.goalLabel + g : ''; }
+  if (W.board) renderBoard();
 }
 /* Chat messages are saved with a reference to where their text comes from (r) as well as the
    text itself, and shown in the language of the page. Both languages share one save, so a
@@ -1256,6 +1277,8 @@ function renderTable() {
   }
   $('.dt-sum', box).innerHTML = `<span>${sum}</span>${pinHTML(name, what)}`;
   $('.dt-out', box).innerHTML = html;
+  // the case can notice what the player counted (HOOKS.onTable)
+  if (HOOKS.onTable && dt.group >= 0) HOOKS.onTable(name, head[dt.group]);
 }
 
 /* ---------- mail (.eml) ----------
@@ -1708,12 +1731,15 @@ function renderBoard() {
   const left = PEOPLE.filter(p => S.marks[p.key] !== 'out').length;
   const ds = Object.keys(DISC).filter(k => S.disc[k]).sort((a, b) => S.disc[a] - S.disc[b]);
   const active = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.note;
+  const goal = goalNow(), cards = S.senior ? [] : (S.cards || []).filter(c => CARDS[c]);
   $('.board', w.body).innerHTML = `
+  ${goal ? `<section><div class="ev-empty goal-now">${esc(UI.goalLabel + goal)}</div></section>` : ''}
   <section><h3>${UI.boardSuspects(left)}</h3><div class="sus-grid">${PEOPLE.map(p => {
     const mk = S.marks[p.key] || '';
     return `<div class="sus ${mk === 'out' ? 'out' : mk === 'hot' ? 'hot' : ''}"><div class="top"><span class="av" style="background:${p.color}">${INITIAL(p.name)}</span><div><div class="nm">${p.name}</div><div class="rl">${p.role}</div></div></div><div class="marks"><button type="button" data-mark="hot" data-name="${p.key}" class="${mk === 'hot' ? 'on-hot' : ''}">${UI.markHot}</button><button type="button" data-mark="out" data-name="${p.key}" class="${mk === 'out' ? 'on-out' : ''}">${UI.markOut}</button></div><textarea id="note-${p.key}" data-note="${p.key}" placeholder="${UI.notePlaceholder}">${esc(S.notes[p.key] || '')}</textarea></div>`;
   }).join('')}</div></section>
   ${S.senior ? `<section><div class="ev-empty">${UI.seniorBoard}</div></section>` : `<section><h3>${UI.boardClues(ds.length, Object.keys(DISC).length)}</h3>${ds.length ? ds.map(k => `<div class="ev"><span class="dot"></span><div><div class="t">${DISC[k].t}</div><div class="d">${DISC[k].d}</div></div></div>`).join('') : `<div class="ev-empty">${UI.noClues}</div>`}</section>`}
+  ${cards.length ? `<section><h3>${UI.boardCards}</h3>${cards.map(c => `<div class="ev"><span class="dot"></span><div><div class="t">${esc(CARDS[c].t)}</div><div class="d">${esc(CARDS[c].d)}</div></div></div>`).join('')}</section>` : ''}
   <section><h3>${UI.boardPins(S.pins.length)}</h3>${S.pins.length ? S.pins.map(p => `<div class="ev"><span class="dot" style="background:var(--term-key)"></span><div><div class="d">${esc(p.src)}</div><div>${esc(p.text)}</div></div><button type="button" class="x" data-unpin="${esc(p.id)}" aria-label="${UI.unpin}">✕</button></div>`).join('') : `<div class="ev-empty">${UI.noPins}</div>`}</section>`;
   if (active) { const t = $(`textarea[data-note="${active}"]`, w.body); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
 }
@@ -1827,7 +1853,7 @@ function setSenior(on) {
   if (on) { S.helper = false; S.seniorLeft = false; } else S.seniorLeft = true;
   save();
   pushMsg('awu', ['ui', on ? 'seniorOnMsg' : 'seniorOffMsg']);
-  if (W.board) renderBoard();
+  updateGoal();
   if (W.report && !S.solved) renderReport();
   if (W.terminal) renderTermHelp();
   renderChat();
@@ -1882,6 +1908,7 @@ function boot() {
   $('#sticky').hidden = S.phase === 'intro';
   renderDock();
   openApp('chat');
+  updateGoal();
   tick();
   if (S.phase === 'intro') setTimeout(runIntro, 700);
   else if (S.dlg) setTimeout(runDialog, 700);  // a conversation left halfway

@@ -168,6 +168,7 @@ const ENGINE_UI = {
   dtHelp: '在字段下输入文本就能筛选，开头加 ! 是排除。点列名排序，点分组的行会带入筛选。',
   truncated: n => `……还有 ${n} 行没显示。试试 head、grep，或接上 | wc -l`,
   pipeOnly: '这个命令不能接在管线里',
+  cardToast: '新小卡已放到调查板', boardCards: '小卡', goalLabel: '现在要回答：',
   rankLabel: '评级：',
   feedbackSolved: '留下游玩感想',
   replay: '重新开始一局',

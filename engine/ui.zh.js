@@ -167,6 +167,7 @@ const ENGINE_UI = {
   dtHelp: '在欄位下輸入文字就能篩選，開頭加 ! 是排除。點欄名排序，點分組的列會帶入篩選。',
   truncated: n => `……還有 ${n} 行沒顯示。試試 head、grep，或接上 | wc -l`,
   pipeOnly: '這個指令不能接在管線裡',
+  cardToast: '新小卡已放到調查板', boardCards: '小卡', goalLabel: '現在要回答：',
   rankLabel: '評等：',
   feedbackSolved: '留下遊玩感想',
   replay: '重新開始一局',
