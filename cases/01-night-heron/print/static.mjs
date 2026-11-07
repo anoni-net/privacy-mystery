@@ -141,7 +141,7 @@ export function buildStatic({ caseDir, sitesCss, out, solution, assetSizes, lang
     makeSites: C.makeSites,
     bookmarks: C.BOOKMARKS,
     slugOf: (path, q, qs) => {
-      if (path === 'picnote.social/search') return 'picnote-search-' + short(q);
+      if (path === 'picnote.mist/search') return 'picnote-search-' + short(q);
       if (path.startsWith('exifpeek.example')) return qs ? 'exifpeek-uploaded' : 'exifpeek';
     },
     ctx: ({ link, state }) => ({

@@ -16,7 +16,7 @@ const PEOPLE = [
 const COLOR = Object.fromEntries(PEOPLE.map(p => [p.name, p.color]));
 const INITIAL = name => (PEOPLE.find(p => p.name === name) || {}).initial || String(name)[0];
 
-const BOOKMARKS = [['MistSearch', 'mist.search'], ['Nameless Square', 'wuming.forum'], ['PicNote', 'picnote.social'], ['TechWiki', 'techwiki.org/exif']];
+const BOOKMARKS = [['MistSearch', 'mist.search'], ['Nameless Square', 'wuming.forum'], ['PicNote', 'picnote.mist'], ['TechWiki', 'techwiki.mist/exif']];
 const EXPORT_DIR = 'heron-export';
 const FILE_KEYS = { recipients: 'recipients.txt', profiles: 'profiles.txt', attendance: 'attendance_0912-0916.csv', byod: 'byod_202603.csv' };
 const EXPORT_FILES = Object.values(FILE_KEYS);
@@ -196,16 +196,16 @@ const SEARCH_INDEX = [
   { url: 'beatbird.app', title: 'BeatBird | Sleep well, live well', snip: 'Track your sleep, heart rate and cycle. We care about your privacy.', kw: ['beatbird'] },
   { url: 'beatbird.app/privacy', title: 'Privacy policy - BeatBird', snip: 'We never share your personal data with third parties without your consent. Last updated: 2024/05/01', kw: ['beatbird', 'privacy policy', 'privacy'] },
   { url: 'hotel-sakura.jp', title: 'Hotel Sakura Shinjuku', snip: 'Six minutes from Shinjuku Station South Exit. Every room has our own notepad and pen.', kw: ['sakura', 'hotel', 'shinjuku', 'notepad', 'saku'] },
-  { url: 'worldclock.info', title: 'World time zones: UTC offsets | WorldClock', snip: 'UTC+8: Taipei, Singapore, Hong Kong… UTC+9: Tokyo, Seoul…', kw: ['time zone', 'timezone', 'utc', '+09', '+9', 'gmt', 'offset', 'singapore', 'tokyo', 'seoul'] },
-  { url: 'techwiki.org/exif', title: 'EXIF - TechWiki', snip: 'EXIF is the metadata a camera writes into a photo: device, time, time zone and GPS…', kw: ['exif', 'metadata', 'exiftool', 'photo', 'gps'] },
+  { url: 'worldclock.mist', title: 'World time zones: UTC offsets | WorldClock', snip: 'UTC+8: Taipei, Singapore, Hong Kong… UTC+9: Tokyo, Seoul…', kw: ['time zone', 'timezone', 'utc', '+09', '+9', 'gmt', 'offset', 'singapore', 'tokyo', 'seoul'] },
+  { url: 'techwiki.mist/exif', title: 'EXIF - TechWiki', snip: 'EXIF is the metadata a camera writes into a photo: device, time, time zone and GPS…', kw: ['exif', 'metadata', 'exiftool', 'photo', 'gps'] },
   { url: 'exifpeek.example', title: 'Free online EXIF viewer | ExifPeek', snip: 'No software to install! Upload a photo and see its camera model, time and location instantly.', kw: ['exif', 'online', 'viewer', 'metadata', 'photo info', 'tool'] },
-  { url: 'techwiki.org/pxl', title: 'How phone cameras name their files - TechWiki', snip: 'Google Pixel: PXL_date_time.jpg (UTC). iPhone: IMG_1234.HEIC…', kw: ['pxl', 'pixel', 'file name', 'filename', 'naming', 'img_'] },
-  { url: 'osfest.tw/2026', title: 'Open Source Fest 2026 | Limited Onion Cat stickers', snip: 'Taipei, 8/22–8/23. This year’s giveaway: 300 Onion Cat stickers.', kw: ['onion cat', 'sticker', 'open source', 'osfest', 'cat', 'fest'] },
+  { url: 'techwiki.mist/pxl', title: 'How phone cameras name their files - TechWiki', snip: 'Google Pixel: PXL_date_time.jpg (UTC). iPhone: IMG_1234.HEIC…', kw: ['pxl', 'pixel', 'file name', 'filename', 'naming', 'img_'] },
+  { url: 'osfest.mist/2026', title: 'Open Source Fest 2026 | Limited Onion Cat stickers', snip: 'Taipei, 8/22–8/23. This year’s giveaway: 300 Onion Cat stickers.', kw: ['onion cat', 'sticker', 'open source', 'osfest', 'cat', 'fest'] },
   { url: 'news.example.tw/beatbird', title: 'BeatBird accused of selling health data; Dingyue Insurance says deal still under review | Tech News', snip: 'BeatBird said it will "pursue the leaker" and stressed that all data is de-identified.', kw: ['beatbird', 'dingyue', 'news', 'leak', 'insurance'] },
   { url: 'anoni.net/docs/', ext: 'https://anoni.net/docs/', title: 'anoni.net | Docs', snip: 'Global privacy issues, brought home to Taiwan. Concepts, tools and guides. (A real website; opens in a new tab. Mostly in Chinese.)', kw: ['privacy', 'anonymity', 'tor', 'anoni', 'exif', 'metadata', 'de-anonymisation', 'deanonymization'] },
 ];
 // people → profile results
-Object.entries(PIC).forEach(([h, p]) => SEARCH_INDEX.push({ url: 'picnote.social/@' + h, title: `${p.name} (@${h}) • PicNote`, snip: p.bio + ' · ' + p.posts.length + (p.posts.length === 1 ? ' post' : ' posts'), kw: [p.name.toLowerCase(), h, h.split(/[._]/)[0], p.name.split(' ')[0].toLowerCase()] }));
+Object.entries(PIC).forEach(([h, p]) => SEARCH_INDEX.push({ url: 'picnote.mist/@' + h, title: `${p.name} (@${h}) • PicNote`, snip: p.bio + ' · ' + p.posts.length + (p.posts.length === 1 ? ' post' : ' posts'), kw: [p.name.toLowerCase(), h, h.split(/[._]/)[0], p.name.split(' ')[0].toLowerCase()] }));
 
 const Q1 = [['gps', 'GPS location'], ['model', 'Phone model'], ['tz', 'Time zone'], ['name', "Photographer's name"], ['time', 'Time taken']];
 const Q2 = [['note', 'Hotel notepad'], ['sticker', 'Sticker on the laptop'], ['window', 'View from the window'], ['account', 'Logged-in account on screen'], ['cup', 'Café name on the cup']];
@@ -271,15 +271,15 @@ function makeSites(ctx) {
     if (path === 'mist.search' || path === 'mist.search/') return q ? searchResults(q) : searchHome();
     if (path === 'wuming.forum' || path === 'wuming.forum/') return forumHome();
     if (path === 'wuming.forum/t/88231') return forumPost();
-    if (path === 'picnote.social' || path === 'picnote.social/') return picHome();
-    if (path === 'picnote.social/search') return picSearch(q);
-    if (path.startsWith('picnote.social/@')) return picProfile(path.slice(16));
+    if (path === 'picnote.mist' || path === 'picnote.mist/') return picHome();
+    if (path === 'picnote.mist/search') return picSearch(q);
+    if (path.startsWith('picnote.mist/@')) return picProfile(path.slice('picnote.mist/@'.length));
     if (path === 'hotel-sakura.jp') return hotelPage();
-    if (path === 'worldclock.info') return clockPage();
-    if (path === 'techwiki.org/exif') return wikiExif();
-    if (path === 'techwiki.org/pxl') return wikiPxl();
+    if (path === 'worldclock.mist') return clockPage();
+    if (path === 'techwiki.mist/exif') return wikiExif();
+    if (path === 'techwiki.mist/pxl') return wikiPxl();
     if (path === 'exifpeek.example' || path === 'exifpeek.example/') return exifPeek();
-    if (path === 'osfest.tw/2026') return osPage();
+    if (path === 'osfest.mist/2026') return osPage();
     if (path === 'beatbird.app') return bbHome();
     if (path === 'beatbird.app/privacy') return bbPrivacy();
     if (path === 'news.example.tw/beatbird') return newsPage();
@@ -318,14 +318,14 @@ function makeSites(ctx) {
   ${FORUM_REPLIES.map(([f, t, x, url]) => `<div class="f-reply"><span class="mono muted" style="font-size:11.5px">${f} · ${t}</span><br>${esc(x)}${url ? ' ' + a(url, esc(url)) : ''}</div>`).join('')}
   </div></div>`;
   }
-  const picBar = (v = '') => `<div class="p-bar"><a class="p-logo" ${ctx.href('picnote.social')}>PicNote</a>${ctx.form('picnote.social/search?q=', v, 'p-search', 'Search users or names', 'Search')}</div>`;
+  const picBar = (v = '') => `<div class="p-bar"><a class="p-logo" ${ctx.href('picnote.mist')}>PicNote</a>${ctx.form('picnote.mist/search?q=', v, 'p-search', 'Search users or names', 'Search')}</div>`;
   function picHome() {
     return `<div class="site">${picBar()}<div class="wrap"><h2 style="margin-top:0">Explore</h2><p class="muted">Search for a name or a handle. Anyone can see posts from public accounts.</p><div style="max-width:360px;margin-top:10px;border-radius:12px;overflow:hidden">${img('social/cat.jpg', 'Onion Cat sticker')}</div><p class="muted" style="font-size:12.5px">Trending: #OpenSourceFest2026 #OnionCat</p></div></div>`;
   }
   function picSearch(q) {
     const ql = q.toLowerCase();
     const hits = Object.entries(PIC).filter(([h, p]) => h.includes(ql) || p.name.toLowerCase().includes(ql));
-    return `<div class="site">${picBar(q)}<div class="wrap"><p class="muted">Results for “${esc(q)}”</p>${hits.length ? hits.map(([h, p]) => `<a class="p-user" ${ctx.href('picnote.social/@' + h)}><span class="p-av" style="background:${p.color}">${INITIAL(p.name)}</span><span><b>${esc(p.name)}</b><br><span class="muted">@${h} · ${esc(p.bio)}</span></span></a>`).join('') : `<p>No matching accounts. This person may not use PicNote, or keeps the account private.</p>`}</div></div>`;
+    return `<div class="site">${picBar(q)}<div class="wrap"><p class="muted">Results for “${esc(q)}”</p>${hits.length ? hits.map(([h, p]) => `<a class="p-user" ${ctx.href('picnote.mist/@' + h)}><span class="p-av" style="background:${p.color}">${INITIAL(p.name)}</span><span><b>${esc(p.name)}</b><br><span class="muted">@${h} · ${esc(p.bio)}</span></span></a>`).join('') : `<p>No matching accounts. This person may not use PicNote, or keeps the account private.</p>`}</div></div>`;
   }
   function picProfile(h) {
     const p = PIC[h];
@@ -349,7 +349,7 @@ function makeSites(ctx) {
   <h3>Common fields</h3><div class="w-scroll"><table><tr><th>Field</th><th>Meaning</th></tr><tr><td>Make / Camera Model Name</td><td>Device maker and model</td></tr><tr><td>Date/Time Original</td><td>When it was taken (local time)</td></tr><tr><td>Offset Time Original</td><td>The time zone offset when it was taken, e.g. +08:00</td></tr><tr><td>GPS Position</td><td>Where it was taken (if location was on)</td></tr><tr><td>Software</td><td>Software that processed the image</td></tr></table></div>
   <h3>How to read it</h3><p>The command-line tool <code>exiftool</code> is the most common way: <code>exiftool file.jpg</code></p>
   <h3>Privacy risks</h3><p>Many people think turning off location is enough, but the device model, time zone and time stay in the file. <b>Big social networks</b> usually strip EXIF on upload; <b>forums, email attachments and cloud drives</b> often keep the original file.</p>
-  <p>Further reading: ${ext('https://anoni.net/docs/basics/', 'anoni.net concepts (external, in Chinese)', 'color:#1a3d8f')} · ${a('techwiki.org/pxl', 'How phone cameras name their files', 'color:#1a3d8f')}</p></div></div>`;
+  <p>Further reading: ${ext('https://anoni.net/docs/basics/', 'anoni.net concepts (external, in Chinese)', 'color:#1a3d8f')} · ${a('techwiki.mist/pxl', 'How phone cameras name their files', 'color:#1a3d8f')}</p></div></div>`;
   }
   function wikiPxl() {
     return `<div class="site wiki"><div class="w-bar">TechWiki</div><div class="wrap w-art"><h1>How phone cameras name their files</h1><p>Each brand’s camera app has its own default file names. Often the name alone tells you which device took the photo.</p>

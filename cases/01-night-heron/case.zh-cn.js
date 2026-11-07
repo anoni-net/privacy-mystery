@@ -18,7 +18,7 @@ const INITIAL = name => (PEOPLE.find(p => p.name === name) || {}).initial || Str
 
 /* Names the interface needs in this language: bookmarks, the exported folder and its files,
    and the helper's suggested commands. */
-const BOOKMARKS = [['雾搜', 'mist.search'], ['无名广场', 'wuming.forum'], ['PicNote', 'picnote.social'], ['TechWiki', 'techwiki.org/exif']];
+const BOOKMARKS = [['雾搜', 'mist.search'], ['无名广场', 'wuming.forum'], ['PicNote', 'picnote.mist'], ['TechWiki', 'techwiki.mist/exif']];
 const EXPORT_DIR = '夜鹭导出';
 const FILE_KEYS = { recipients: '收件名单.txt', profiles: '人物简介.txt', attendance: '差勤表_0912-0916.csv', byod: 'BYOD设备登记_202603.csv' };
 const EXPORT_FILES = Object.values(FILE_KEYS);
@@ -198,16 +198,16 @@ const SEARCH_INDEX = [
   { url: 'beatbird.app', title: 'BeatBird 心跳鸟｜睡得好，活得好', snip: '追踪睡眠、心率与生理周期。我们重视你的隐私。', kw: ['心跳鸟', 'beatbird', '心跳鸟科技'] },
   { url: 'beatbird.app/privacy', title: '隐私权政策 - BeatBird', snip: '我们不会在未经你同意的情况下，将个人数据提供给第三方。最后更新：2024/05/01', kw: ['心跳鸟', 'beatbird', '隐私权', '隐私'] },
   { url: 'hotel-sakura.jp', title: 'Hotel Sakura Shinjuku｜樱馆 新宿', snip: '新宿站南口徒步 6 分钟。客房备有本馆专属便条纸与圆珠笔。', kw: ['sakura', 'hotel', '酒店', '旅馆', '新宿', 'shinjuku', '樱', '便条纸', 'saku'] },
-  { url: 'worldclock.info', title: '世界时区对照表 UTC offset｜WorldClock', snip: 'UTC+8：台北、新加坡、香港……UTC+9：东京、首尔……', kw: ['时区', 'utc', 'timezone', '+09', '+9', 'gmt', 'offset', '时差', '新加坡', '东京', '首尔'] },
-  { url: 'techwiki.org/exif', title: 'EXIF - TechWiki', snip: '可交换图像文件格式（EXIF）是相机写进照片文件的元数据，包含设备、时间、时区与 GPS……', kw: ['exif', '元数据', 'metadata', 'exiftool', '照片', 'gps', '元数据', '中继数据'] },
+  { url: 'worldclock.mist', title: '世界时区对照表 UTC offset｜WorldClock', snip: 'UTC+8：台北、新加坡、香港……UTC+9：东京、首尔……', kw: ['时区', 'utc', 'timezone', '+09', '+9', 'gmt', 'offset', '时差', '新加坡', '东京', '首尔'] },
+  { url: 'techwiki.mist/exif', title: 'EXIF - TechWiki', snip: '可交换图像文件格式（EXIF）是相机写进照片文件的元数据，包含设备、时间、时区与 GPS……', kw: ['exif', '元数据', 'metadata', 'exiftool', '照片', 'gps', '元数据', '中继数据'] },
   { url: 'exifpeek.example', title: '免费在线 EXIF 查看器｜ExifPeek', snip: '不用安装任何软件！上传照片，立即查看相机型号、拍摄时间、位置等信息。', kw: ['exif', '在线', 'online', '查看', '查看', 'viewer', '元数据', 'metadata', '照片信息', '拍摄信息', '元数据'] },
-  { url: 'techwiki.org/pxl', title: '手机相机的文件命名规则 - TechWiki', snip: 'Google Pixel：PXL_年月日_时分秒毫秒.jpg（UTC 时间）。iPhone：IMG_1234.HEIC……', kw: ['pxl', 'pixel', '文件名', '命名', 'img_', 'filename'] },
-  { url: 'osfest.tw/2026', title: '开源嘉年华 2026｜限量洋葱猫贴纸', snip: '8/22–8/23 台北。今年纪念品：限量 300 张的洋葱猫贴纸。', kw: ['洋葱猫', '贴纸', 'sticker', '开源', '嘉年华', 'osfest', '猫'] },
+  { url: 'techwiki.mist/pxl', title: '手机相机的文件命名规则 - TechWiki', snip: 'Google Pixel：PXL_年月日_时分秒毫秒.jpg（UTC 时间）。iPhone：IMG_1234.HEIC……', kw: ['pxl', 'pixel', '文件名', '命名', 'img_', 'filename'] },
+  { url: 'osfest.mist/2026', title: '开源嘉年华 2026｜限量洋葱猫贴纸', snip: '8/22–8/23 台北。今年纪念品：限量 300 张的洋葱猫贴纸。', kw: ['洋葱猫', '贴纸', 'sticker', '开源', '嘉年华', 'osfest', '猫'] },
   { url: 'news.example.tw/beatbird', title: '心跳鸟被爆贩售健康数据 鼎岳保险：合作仍在评估｜科技新闻', snip: '心跳鸟科技发声明表示将「严正追查泄密者」，并强调所有数据皆经过去标识化处理。', kw: ['心跳鸟', 'beatbird', '鼎岳', '新闻', '泄密', '保险'] },
   { url: 'anoni.net/docs/', ext: 'https://anoni.net/docs/', title: 'anoni.net 匿名网络社群｜文档库', snip: '把全球网络隐私议题，带回台湾脉络。概念、工具、情境指南。（外部真实网站，会在新标签页打开）', kw: ['隐私', '匿名', 'tor', 'anoni', 'exif', '元数据', '去匿名化'] },
 ];
 // people → profile results
-Object.entries(PIC).forEach(([h, p]) => SEARCH_INDEX.push({ url: 'picnote.social/@' + h, title: `${p.name} (@${h}) • PicNote`, snip: p.bio + ' · ' + p.posts.length + ' 则帖子', kw: [p.name, h, h.split(/[._]/)[0]] }));
+Object.entries(PIC).forEach(([h, p]) => SEARCH_INDEX.push({ url: 'picnote.mist/@' + h, title: `${p.name} (@${h}) • PicNote`, snip: p.bio + ' · ' + p.posts.length + ' 则帖子', kw: [p.name, h, h.split(/[._]/)[0]] }));
 
 const Q1 = [['gps', 'GPS 位置'], ['model', '手机型号'], ['tz', '拍摄时区'], ['name', '拍摄者姓名'], ['time', '拍摄时间']];
 const Q2 = [['note', '酒店便条纸'], ['sticker', '笔记本上的贴纸'], ['window', '窗外景色'], ['account', '屏幕上的登录账号'], ['cup', '咖啡杯上的店名']];
@@ -281,15 +281,15 @@ function makeSites(ctx) {
     if (path === 'mist.search' || path === 'mist.search/') return q ? searchResults(q) : searchHome();
     if (path === 'wuming.forum' || path === 'wuming.forum/') return forumHome();
     if (path === 'wuming.forum/t/88231') return forumPost();
-    if (path === 'picnote.social' || path === 'picnote.social/') return picHome();
-    if (path === 'picnote.social/search') return picSearch(q);
-    if (path.startsWith('picnote.social/@')) return picProfile(path.slice(16));
+    if (path === 'picnote.mist' || path === 'picnote.mist/') return picHome();
+    if (path === 'picnote.mist/search') return picSearch(q);
+    if (path.startsWith('picnote.mist/@')) return picProfile(path.slice('picnote.mist/@'.length));
     if (path === 'hotel-sakura.jp') return hotelPage();
-    if (path === 'worldclock.info') return clockPage();
-    if (path === 'techwiki.org/exif') return wikiExif();
-    if (path === 'techwiki.org/pxl') return wikiPxl();
+    if (path === 'worldclock.mist') return clockPage();
+    if (path === 'techwiki.mist/exif') return wikiExif();
+    if (path === 'techwiki.mist/pxl') return wikiPxl();
     if (path === 'exifpeek.example' || path === 'exifpeek.example/') return exifPeek();
-    if (path === 'osfest.tw/2026') return osPage();
+    if (path === 'osfest.mist/2026') return osPage();
     if (path === 'beatbird.app') return bbHome();
     if (path === 'beatbird.app/privacy') return bbPrivacy();
     if (path === 'news.example.tw/beatbird') return newsPage();
@@ -328,14 +328,14 @@ function makeSites(ctx) {
   ${FORUM_REPLIES.map(([f, t, x, url]) => `<div class="f-reply"><span class="mono muted" style="font-size:11.5px">${f} · ${t}</span><br>${esc(x)}${url ? ' ' + a(url, esc(url)) : ''}</div>`).join('')}
   </div></div>`;
   }
-  const picBar = (v = '') => `<div class="p-bar"><a class="p-logo" ${ctx.href('picnote.social')}>PicNote</a>${ctx.form('picnote.social/search?q=', v, 'p-search', '搜索用户或姓名', '搜索')}</div>`;
+  const picBar = (v = '') => `<div class="p-bar"><a class="p-logo" ${ctx.href('picnote.mist')}>PicNote</a>${ctx.form('picnote.mist/search?q=', v, 'p-search', '搜索用户或姓名', '搜索')}</div>`;
   function picHome() {
     return `<div class="site">${picBar()}<div class="wrap"><h2 style="margin-top:0">探索</h2><p class="muted">输入姓名或账号，找找你想看的人。公开账号的帖子任何人都看得到。</p><div style="max-width:360px;margin-top:10px;border-radius:12px;overflow:hidden">${img('social/cat.jpg', '洋葱猫贴纸')}</div><p class="muted" style="font-size:12.5px">热门：#开源嘉年华2026 #洋葱猫</p></div></div>`;
   }
   function picSearch(q) {
     const ql = q.toLowerCase();
     const hits = Object.entries(PIC).filter(([h, p]) => h.includes(ql) || p.name.includes(q));
-    return `<div class="site">${picBar(q)}<div class="wrap"><p class="muted">「${esc(q)}」的搜索结果</p>${hits.length ? hits.map(([h, p]) => `<a class="p-user" ${ctx.href('picnote.social/@' + h)}><span class="p-av" style="background:${p.color}">${INITIAL(p.name)}</span><span><b>${esc(p.name)}</b><br><span class="muted">@${h} · ${esc(p.bio)}</span></span></a>`).join('') : `<p>找不到符合的账号。这个人可能没有 PicNote，或账号设为不公开。</p>`}</div></div>`;
+    return `<div class="site">${picBar(q)}<div class="wrap"><p class="muted">「${esc(q)}」的搜索结果</p>${hits.length ? hits.map(([h, p]) => `<a class="p-user" ${ctx.href('picnote.mist/@' + h)}><span class="p-av" style="background:${p.color}">${INITIAL(p.name)}</span><span><b>${esc(p.name)}</b><br><span class="muted">@${h} · ${esc(p.bio)}</span></span></a>`).join('') : `<p>找不到符合的账号。这个人可能没有 PicNote，或账号设为不公开。</p>`}</div></div>`;
   }
   function picProfile(h) {
     const p = PIC[h];
@@ -359,7 +359,7 @@ function makeSites(ctx) {
   <h3>常见字段</h3><div class="w-scroll"><table><tr><th>字段</th><th>说明</th></tr><tr><td>Make / Camera Model Name</td><td>设备制造商与型号</td></tr><tr><td>Date/Time Original</td><td>拍摄时间（当地时间）</td></tr><tr><td>Offset Time Original</td><td>拍摄时的时区偏移，例如 +08:00</td></tr><tr><td>GPS Position</td><td>拍摄位置（若相机打开定位）</td></tr><tr><td>Software</td><td>处理图像的软件版本</td></tr></table></div>
   <h3>如何读取</h3><p>命令行工具 <code>exiftool</code> 是最常用的方式：<code>exiftool 文件名.jpg</code></p>
   <h3>隐私风险</h3><p>很多人以为关闭定位就安全了，但设备型号、时区、时间等字段仍会保留。<b>大型社交平台</b>通常会在上传时清除 EXIF；<b>论坛、电子邮件附件、云端硬盘</b>则常常保留原始文件。</p>
-  <p>延伸阅读：${ext('https://anoni.net/docs/basics/', 'anoni.net 概念篇（外部网站）', 'color:#1a3d8f')}　·　${a('techwiki.org/pxl', '手机相机的文件命名规则', 'color:#1a3d8f')}</p></div></div>`;
+  <p>延伸阅读：${ext('https://anoni.net/docs/basics/', 'anoni.net 概念篇（外部网站）', 'color:#1a3d8f')}　·　${a('techwiki.mist/pxl', '手机相机的文件命名规则', 'color:#1a3d8f')}</p></div></div>`;
   }
   function wikiPxl() {
     return `<div class="site wiki"><div class="w-bar">TechWiki</div><div class="wrap w-art"><h1>手机相机的文件命名规则</h1><p>不同品牌的相机 App 有各自的默认文件名格式。光看文件名，常常就能猜出拍摄设备。</p>
