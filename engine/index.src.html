@@ -894,6 +894,7 @@ function acceptFile() {
 }
 function startPlay() {
   S.phase = 'play'; S.start = Date.now();
+  setTimeout(updateGoal, 0);
   track('case-start', { case: CASE.number });
   logIntro({ sys: UI.caseOpen, r: ['ui', 'caseOpen'] });
   S.unread.awu = 1; save();
